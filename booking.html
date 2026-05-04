@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking | Vasilina Panina</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <script src="nav.js"></script>
+    <section style="padding-top: 96px; padding-bottom: 128px; border-top: none;">
+        <div class="container">
+            <div style="grid-column: span 12;">
+                <h2 class="page-header reveal">
+                    <span lang="en">Booking & Availability</span>
+                    <span lang="th">จองคิวและตารางงาน</span>
+                </h2>
+                <p class="page-description reveal delay-1" style="max-width: 600px; margin: 0 0 0;">
+                    <span lang="en">Check availability or request a booking below. <br> Rates discussed upon inquiry.</span>
+                    <span lang="th">ตรวจสอบตารางงานหรือส่งคำขอจองคิวได้ที่ด้านล่าง <br>สามารถติดต่อเพื่อสอบถามราคาก่อนการจองคิว</span>
+                </p>
+
+                <!-- Cal inline embed code begins -->
+                <div style="width:100%;min-height:800px;margin-top: -64px;" id="my-cal-inline-booking-request"></div>
+                <script type="text/javascript">
+                  (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if(typeof namespace === "string"){cal.ns[namespace] = cal.ns[namespace] || api;p(cal.ns[namespace], ar);p(cal, ["initNamespace", namespace]);} else p(cal, ar); return;} p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
+                Cal("init", "booking-request", {origin:"https://app.cal.com"});
+                
+                  Cal.ns["booking-request"]("inline", {
+                    elementOrSelector:"#my-cal-inline-booking-request",
+                    config: {"layout":"month_view","useSlotsViewOnSmallScreen":"true","theme":"light"},
+                    calLink: "tan-patipan-khamwachirapitak-tt8rxi/booking-request",
+                  });
+                
+                  Cal.ns["booking-request"]("ui", {"theme":"light","cssVarsPerTheme":{"light":{"cal-brand":"#C9A74E"}},"hideEventTypeDetails":false,"layout":"month_view"});
+                  </script>
+                  <!-- Cal inline embed code ends -->
+
+                <div class="inquiry-section" style="text-align: center;">
+                    <h3 class="reveal">
+                        <span lang="en">Direct Inquiries</span>
+                        <span lang="th">ติดต่อสอบถาม</span>
+                    </h3>
+                    <div class="contact-list">
+                        <a href="https://line.me" target="_blank" rel="noopener noreferrer" class="btn-bold reveal delay-1">LINE</a>
+                        <a href="mailto:vasilina.panina2100@gmail.com" class="btn-bold reveal delay-2">Email</a>
+                        <a href="https://wa.me/79635032030" target="_blank" rel="noopener noreferrer" class="btn-bold reveal delay-3">WhatsApp</a>
+                        <a href="https://www.instagram.com/paninavasilina/" target="_blank" rel="noopener noreferrer" class="btn-bold reveal delay-4">INSTAGRAM</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="footer.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Reveal Animation Logic
+            const revealOptions = {
+                threshold: 0,
+                rootMargin: "0px 0px -200px 0px" // Triggers animation 200px before it enters the viewport
+            };
+
+            const revealObserver = new IntersectionObserver((entries) => {
+                let toReveal = entries.filter(e => e.isIntersecting && !e.target.classList.contains('active'));
+
+                if (toReveal.length > 1) {
+                    toReveal.sort((a, b) => {
+                    // Use pre-calculated observer properties to completely eliminate layout thrashing
+                    const rectA = a.boundingClientRect;
+                    const rectB = b.boundingClientRect;
+                        if (Math.abs(rectA.top - rectB.top) > 1) {
+                            return rectA.top - rectB.top;
+                        }
+                        return rectA.left - rectB.left;
+                    });
+                }
+
+                toReveal.forEach((entry, index) => {
+                    const el = entry.target;
+                    if (!Array.from(el.classList).some(cls => cls.startsWith('delay-'))) {
+                        el.style.transitionDelay = `${index * 0.1}s`;
+                    }
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            el.classList.add('active');
+                        });
+                revealObserver.unobserve(el);
+                    });
+                });
+            }, revealOptions);
+
+            document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+        });
+    </script>
+</body>
+</html>
