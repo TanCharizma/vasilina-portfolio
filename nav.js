@@ -168,18 +168,29 @@
         document.body.appendChild(cursor);
 
         let cursorVisible = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        let isCursorClicked = false;
 
         window.addEventListener('mousemove', (e) => {
             if (!cursorVisible) {
                 cursor.style.opacity = '1';
                 cursorVisible = true;
             }
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            // Hardware accelerated translation instead of layout-thrashing left/top
+            cursor.style.transform = `translate3d(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%), 0) scale(${isCursorClicked ? 0.7 : 1})`;
         });
 
-        document.addEventListener('mousedown', () => cursor.style.transform = 'translate(-50%, -50%) scale(0.7)');
-        document.addEventListener('mouseup', () => cursor.style.transform = 'translate(-50%, -50%) scale(1)');
+        document.addEventListener('mousedown', () => {
+            isCursorClicked = true;
+            cursor.style.transform = `translate3d(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%), 0) scale(0.7)`;
+        });
+        document.addEventListener('mouseup', () => {
+            isCursorClicked = false;
+            cursor.style.transform = `translate3d(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%), 0) scale(1)`;
+        });
 
         // Event delegation for hover states
         document.addEventListener('mouseover', (e) => {

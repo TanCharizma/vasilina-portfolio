@@ -407,6 +407,7 @@ nav.on-hero:not(.scrolled) .theme-toggle {
     animation: heroFadeIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    will-change: transform; /* Offloads parallax strictly to the GPU */
 }
 
 .hero-content p {
@@ -611,6 +612,7 @@ section {
     position: relative;
     z-index: 1;
     background-color: var(--surface);
+    will-change: transform, opacity; /* Pre-allocates memory for hover state */
     transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -648,6 +650,7 @@ section {
     background-color: var(--surface);
     position: relative;
     z-index: 1; /* Establishes clean stacking context */
+    will-change: transform, box-shadow; /* Eliminates hover stutter */
     transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
