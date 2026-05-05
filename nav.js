@@ -168,9 +168,12 @@
         document.body.appendChild(cursor);
 
         let cursorVisible = false;
-        let mouseX = 0;
-        let mouseY = 0;
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let cursorX = mouseX;
+        let cursorY = mouseY;
         let isCursorClicked = false;
+        let currentScale = 1;
 
         window.addEventListener('mousemove', (e) => {
             if (!cursorVisible) {
@@ -179,18 +182,21 @@
             }
             mouseX = e.clientX;
             mouseY = e.clientY;
-            // Hardware accelerated translation instead of layout-thrashing left/top
-            cursor.style.transform = `translate3d(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%), 0) scale(${isCursorClicked ? 0.7 : 1})`;
         });
 
-        document.addEventListener('mousedown', () => {
-            isCursorClicked = true;
-            cursor.style.transform = `translate3d(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%), 0) scale(0.7)`;
-        });
-        document.addEventListener('mouseup', () => {
-            isCursorClicked = false;
-            cursor.style.transform = `translate3d(calc(${mouseX}px - 50%), calc(${mouseY}px - 50%), 0) scale(1)`;
-        });
+        document.addEventListener('mousedown', () => isCursorClicked = true);
+        document.addEventListener('mouseup', () => isCursorClicked = false);
+
+        const renderCursor = () => {
+            cursorX += (mouseX - cursorX) * 0.2; // Smooth tracking
+            cursorY += (mouseY - cursorY) * 0.2; // Smooth tracking
+            currentScale += ((isCursorClicked ? 0.7 : 1) - currentScale) * 0.2; // Smooth scaling
+            
+            // Split translations to completely avoid calc() lag in Safari
+            cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%) scale(${currentScale})`;
+            requestAnimationFrame(renderCursor);
+        };
+        requestAnimationFrame(renderCursor);
 
         // Event delegation for hover states
         document.addEventListener('mouseover', (e) => {
