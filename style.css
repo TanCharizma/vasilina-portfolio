@@ -402,12 +402,14 @@ nav.on-hero:not(.scrolled) .theme-toggle {
     background: #ccc url('image/hero/IMG_1225.webp') no-repeat center 10%/cover;
     z-index: 0;
     transform-origin: center 20%;
-    opacity: 1;
-    transform: scale(1);
-    animation: heroFadeIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+    opacity: 0; /* Base state is invisible while loading */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     will-change: transform; /* Offloads parallax strictly to the GPU */
+}
+
+.hero.loaded .hero-bg {
+    animation: heroFadeIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-content p {

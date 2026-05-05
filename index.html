@@ -227,12 +227,22 @@
         document.querySelectorAll('header[id], section[id]').forEach(section => navObserver.observe(section));
 
         // Reveal Sections on Scroll
-        // Hero elements should reveal immediately since they are at the bottom of the viewport on load
-        setTimeout(() => {
-            document.querySelectorAll('.hero .reveal').forEach(el => {
-                el.classList.add('active');
-            });
-        }, 100);
+        // Wait for the Hero Image to fully download before triggering the entrance animations
+        const heroSection = document.getElementById('hero');
+        const heroImgLoader = new Image();
+        heroImgLoader.src = 'image/hero/IMG_1225.webp';
+
+        const triggerHeroEntrance = () => {
+            heroSection.classList.add('loaded');
+            document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('active'));
+        };
+
+        if (heroImgLoader.complete) {
+            triggerHeroEntrance();
+        } else {
+            heroImgLoader.addEventListener('load', triggerHeroEntrance);
+            heroImgLoader.addEventListener('error', triggerHeroEntrance); // Failsafe if image breaks
+        }
 
         const revealOptions = {
             threshold: 0,
