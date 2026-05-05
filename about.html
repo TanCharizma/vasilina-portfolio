@@ -101,11 +101,30 @@
                 if (!Array.from(el.classList).some(cls => cls.startsWith('delay-'))) {
                     el.style.transitionDelay = `${index * 0.1}s`;
                 }
-                requestAnimationFrame(() => {
+
+                const images = el.tagName === 'IMG' ? [el] : Array.from(el.querySelectorAll('img'));
+                const pendingImages = images.filter(img => !img.complete);
+
+                const triggerActive = () => {
                     requestAnimationFrame(() => {
-                        el.classList.add('active');
+                        requestAnimationFrame(() => el.classList.add('active'));
                     });
-                });
+                };
+
+                if (pendingImages.length > 0) {
+                    let loadedCount = 0;
+                    pendingImages.forEach(img => {
+                        const checkLoad = () => {
+                            loadedCount++;
+                            if (loadedCount === pendingImages.length) triggerActive();
+                        };
+                        img.addEventListener('load', checkLoad, { once: true });
+                        img.addEventListener('error', checkLoad, { once: true });
+                    });
+                } else {
+                    triggerActive();
+                }
+                
                 revealObserver.unobserve(el);
             });
         }, revealOptions);
