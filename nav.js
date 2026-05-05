@@ -16,6 +16,33 @@
         navClass = 'scrolled';
     }
 
+    // Auto-inject Meta Tags based on config.js
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.CLIENT_CONFIG) {
+            const config = window.CLIENT_CONFIG;
+            // Gracefully handles both Vasilina's and the Master Templates' config structures
+            const description = config.tagline?.en || config.taglineEn || 'Portfolio'; 
+            const title = document.title;
+            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
+            
+            const setMeta = (attr, key, val) => {
+                let meta = document.querySelector(`meta[${attr}="${key}"]`);
+                if (!meta) {
+                    meta = document.createElement('meta');
+                    meta.setAttribute(attr, key);
+                    document.head.appendChild(meta);
+                }
+                meta.setAttribute('content', val);
+            };
+
+            setMeta('name', 'description', description);
+            setMeta('property', 'og:title', title);
+            setMeta('property', 'og:description', description);
+            setMeta('property', 'og:type', 'website');
+            setMeta('property', 'og:image', `${baseUrl}/image/hero/hero.webp`); // Absolute URL required for social cards
+        }
+    });
+
     const navHTML = `
     <nav class="${navClass}">
         <a href="${logoHref}" class="logo">Vasilina Panina</a>
@@ -188,9 +215,9 @@
         document.addEventListener('mouseup', () => isCursorClicked = false);
 
         const renderCursor = () => {
-            cursorX += (mouseX - cursorX) * 0.2; // Smooth tracking
-            cursorY += (mouseY - cursorY) * 0.2; // Smooth tracking
-            currentScale += ((isCursorClicked ? 0.7 : 1) - currentScale) * 0.2; // Smooth scaling
+            cursorX += (mouseX - cursorX) * 0.6; // Faster tracking
+            cursorY += (mouseY - cursorY) * 0.6; // Faster tracking
+            currentScale += ((isCursorClicked ? 0.7 : 1) - currentScale) * 0.4; // Smooth scaling
             
             // Split translations to completely avoid calc() lag in Safari
             cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%) scale(${currentScale})`;

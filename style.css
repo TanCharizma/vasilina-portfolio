@@ -1243,8 +1243,8 @@ footer {
 
 /* --- 7. CUSTOM CURSOR --- */
 @media (hover: hover) {
-    /* Hide default cursor on interactive elements */
-    html, body, a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img {
+    /* Hide default cursor universally to prevent native pointers from showing */
+    *, *::before, *::after {
         cursor: none !important;
     }
 
