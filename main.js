@@ -215,11 +215,17 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
         };
 
-        document.querySelectorAll('section img:not(.brand-logo)').forEach((img) => {
+        // Filter out any image that is a brand logo (by class or by folder path)
+        const galleryImages = Array.from(document.querySelectorAll('section img')).filter(img => {
+            return !img.classList.contains('brand-logo') && !img.src.includes('brand_icons');
+        });
+
+        galleryImages.forEach((img) => {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
                 const parentSection = img.closest('section');
-                currentSectionImages = Array.from(parentSection.querySelectorAll('img:not(.brand-logo)'))
+                currentSectionImages = Array.from(parentSection.querySelectorAll('img'))
+                    .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons'))
                     .sort((a, b) => Math.abs(a.getBoundingClientRect().top - b.getBoundingClientRect().top) > 100 
                         ? a.getBoundingClientRect().top - b.getBoundingClientRect().top 
                         : a.getBoundingClientRect().left - b.getBoundingClientRect().left);

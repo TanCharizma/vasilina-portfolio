@@ -227,14 +227,14 @@
 
         // Event delegation for hover states
         document.addEventListener('mouseover', (e) => {
-            if (e.target.closest('a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img, .mobile-toggle')) {
+            if (e.target.closest('a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img:not(.brand-logo):not([src*="brand_icons"]), .mobile-toggle')) {
                 cursor.classList.add('hover');
             }
         });
         
         document.addEventListener('mouseout', (e) => {
             // Only remove hover if we are actually leaving the interactive element entirely
-            if (!e.relatedTarget || !e.relatedTarget.closest('a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img, .mobile-toggle')) {
+            if (!e.relatedTarget || !e.relatedTarget.closest('a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img:not(.brand-logo):not([src*="brand_icons"]), .mobile-toggle')) {
                 cursor.classList.remove('hover');
             }
         });
