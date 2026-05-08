@@ -193,87 +193,15 @@
         <span lang="th">กลับขึ้นบน</span>
     </a>
 
-    <div id="imageModal" class="modal">
-        <span class="modal-nav modal-prev">&#10094;</span>
-        <img class="modal-content" id="img01">
-        <span class="modal-nav modal-next">&#10095;</span>
+    <div id="imageModal" class="modal" role="dialog" aria-modal="true" aria-label="Image Gallery">
+        <span class="modal-nav modal-prev" aria-label="Previous Image" role="button">&#10094;</span>
+        <img class="modal-content" id="img01" alt="Expanded image">
+        <span class="modal-nav modal-next" aria-label="Next Image" role="button">&#10095;</span>
     </div>
 
     <script src="footer.js"></script>
     <script src="main.js"></script>
 
-    <script>
-        // Back to Top button logic (kept strictly bound to scrolling viewports)
-        const backToTop = document.querySelector('.back-to-top');
-        let vh = window.innerHeight;
-        window.addEventListener('resize', () => vh = window.innerHeight, { passive: true });
-
-        let isScrollingToTop = false;
-        let scrollCheckInterval = null;
-        let scrollTimeout = null;
-
-        const evaluateBackToTop = () => {
-            if (!backToTop || isScrollingToTop) return;
-            if (window.scrollY > (vh * 0.5)) {
-                backToTop.classList.add('visible');
-            } else {
-                backToTop.classList.remove('visible');
-            }
-        };
-
-        if (backToTop) {
-            backToTop.addEventListener('click', (e) => {
-                e.preventDefault();
-                isScrollingToTop = true;
-                backToTop.style.opacity = '0';
-                backToTop.style.pointerEvents = 'none';
-                backToTop.classList.remove('visible');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                clearInterval(scrollCheckInterval);
-                clearTimeout(scrollTimeout);
-
-                const unlockButton = () => {
-                    isScrollingToTop = false;
-                    backToTop.style.opacity = '';
-                    backToTop.style.pointerEvents = '';
-                    evaluateBackToTop();
-                };
-
-                scrollCheckInterval = setInterval(() => {
-                    if (window.scrollY <= 0) {
-                        clearInterval(scrollCheckInterval);
-                        clearTimeout(scrollTimeout);
-                        unlockButton();
-                    }
-                }, 100);
-
-                scrollTimeout = setTimeout(() => {
-                    clearInterval(scrollCheckInterval);
-                    unlockButton();
-                }, 2000);
-            });
-
-            const interruptScroll = () => {
-                if (isScrollingToTop) {
-                    clearInterval(scrollCheckInterval);
-                    clearTimeout(scrollTimeout);
-                    isScrollingToTop = false;
-                    backToTop.style.opacity = '';
-                    backToTop.style.pointerEvents = '';
-                    evaluateBackToTop();
-                }
-            };
-
-            window.addEventListener('touchstart', interruptScroll, { passive: true });
-            window.addEventListener('wheel', interruptScroll, { passive: true });
-        }
-
-        window.addEventListener('scroll', () => {
-            window.requestAnimationFrame(() => {
-                evaluateBackToTop();
-            });
-        }, { passive: true });
-    </script>
 
 </body>
 </html>

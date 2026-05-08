@@ -4,6 +4,10 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
     
+    // Cache viewport height globally for scroll calculations
+    let vh = window.innerHeight;
+    window.addEventListener('resize', () => vh = window.innerHeight, { passive: true });
+    
     // --- 1. GLOBAL REVEAL ANIMATIONS ---
     const revealOptions = {
         threshold: 0,
@@ -109,9 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             heroImgLoader.addEventListener('error', triggerHeroEntrance);
         }
 
-        let vh = window.innerHeight;
-        window.addEventListener('resize', () => vh = window.innerHeight, { passive: true });
-
         let ticking = false;
         window.addEventListener('scroll', () => {
             if (!ticking) {
@@ -136,7 +137,70 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
     }
 
-    // --- 3. IMAGE MODAL LOGIC (With Keyboard Support) ---
+    // --- 3. BACK TO TOP LOGIC ---
+    const backToTop = document.querySelector('.back-to-top');
+    if (backToTop) {
+        let isScrollingToTop = false;
+        let scrollCheckInterval = null;
+        let scrollTimeout = null;
+
+        const evaluateBackToTop = () => {
+            if (!backToTop || isScrollingToTop) return;
+            if (window.scrollY > (vh * 0.5)) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        };
+
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            isScrollingToTop = true;
+            backToTop.style.opacity = '0';
+            backToTop.style.pointerEvents = 'none';
+            backToTop.classList.remove('visible');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            clearInterval(scrollCheckInterval);
+            clearTimeout(scrollTimeout);
+
+            const unlockButton = () => {
+                isScrollingToTop = false;
+                backToTop.style.opacity = '';
+                backToTop.style.pointerEvents = '';
+                evaluateBackToTop();
+            };
+
+            scrollCheckInterval = setInterval(() => {
+                if (window.scrollY <= 0) {
+                    clearInterval(scrollCheckInterval);
+                    clearTimeout(scrollTimeout);
+                    unlockButton();
+                }
+            }, 100);
+
+            scrollTimeout = setTimeout(() => {
+                clearInterval(scrollCheckInterval);
+                unlockButton();
+            }, 2000);
+        });
+
+        const interruptScroll = () => {
+            if (isScrollingToTop) {
+                clearInterval(scrollCheckInterval);
+                clearTimeout(scrollTimeout);
+                isScrollingToTop = false;
+                backToTop.style.opacity = '';
+                backToTop.style.pointerEvents = '';
+                evaluateBackToTop();
+            }
+        };
+
+        window.addEventListener('touchstart', interruptScroll, { passive: true });
+        window.addEventListener('wheel', interruptScroll, { passive: true });
+        window.addEventListener('scroll', () => window.requestAnimationFrame(evaluateBackToTop), { passive: true });
+    }
+
+    // --- 4. IMAGE MODAL LOGIC (With Keyboard Support) ---
     const modal = document.getElementById("imageModal");
     if (modal) {
         const modalImg = document.getElementById("img01");
@@ -146,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateModal = (index) => {
             currentImgIndex = index;
             modalImg.src = currentSectionImages[currentImgIndex].src;
+            modalImg.alt = currentSectionImages[currentImgIndex].alt || 'Expanded portfolio image';
             document.querySelector('.modal-prev').style.visibility = currentImgIndex === 0 ? 'hidden' : 'visible';
             document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
         };
