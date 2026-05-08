@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toReveal.sort((a, b) => {
                 const rectA = a.boundingClientRect;
                 const rectB = b.boundingClientRect;
-                if (Math.abs(rectA.top - rectB.top) > 1) {
+                if (Math.abs(rectA.top - rectB.top) > 100) {
                     return rectA.top - rectB.top;
                 }
                 return rectA.left - rectB.left;
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
         };
 
-        document.querySelectorAll('section img').forEach((img) => {
+        document.querySelectorAll('section img:not(.brand-logo)').forEach((img) => {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
                 const parentSection = img.closest('section');
