@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
                 const parentSection = img.closest('section');
-                currentSectionImages = Array.from(parentSection.querySelectorAll('img'))
+                currentSectionImages = Array.from(parentSection.querySelectorAll('img:not(.brand-logo)'))
                     .sort((a, b) => Math.abs(a.getBoundingClientRect().top - b.getBoundingClientRect().top) > 100 
                         ? a.getBoundingClientRect().top - b.getBoundingClientRect().top 
                         : a.getBoundingClientRect().left - b.getBoundingClientRect().left);
