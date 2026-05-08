@@ -55,64 +55,7 @@
     </section>
 
     <script src="footer.js"></script>
+    <script src="main.js"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Reveal Animation Logic
-            const revealOptions = {
-                threshold: 0,
-                rootMargin: "0px 0px -200px 0px" // Triggers animation 200px before it enters the viewport
-            };
-
-            const revealObserver = new IntersectionObserver((entries) => {
-                let toReveal = entries.filter(e => e.isIntersecting && !e.target.classList.contains('active'));
-
-                if (toReveal.length > 1) {
-                    toReveal.sort((a, b) => {
-                    // Use pre-calculated observer properties to completely eliminate layout thrashing
-                    const rectA = a.boundingClientRect;
-                    const rectB = b.boundingClientRect;
-                        if (Math.abs(rectA.top - rectB.top) > 1) {
-                            return rectA.top - rectB.top;
-                        }
-                        return rectA.left - rectB.left;
-                    });
-                }
-
-                toReveal.forEach((entry, index) => {
-                    const el = entry.target;
-                    if (!Array.from(el.classList).some(cls => cls.startsWith('delay-'))) {
-                        el.style.transitionDelay = `${index * 0.1}s`;
-                    }
-                    
-                    const images = el.tagName === 'IMG' ? [el] : Array.from(el.querySelectorAll('img'));
-                    const pendingImages = images.filter(img => !img.complete);
-
-                    const triggerActive = () => {
-                        requestAnimationFrame(() => {
-                            requestAnimationFrame(() => el.classList.add('active'));
-                        });
-                        revealObserver.unobserve(el);
-                    };
-
-                    if (pendingImages.length > 0) {
-                        let loadedCount = 0;
-                        pendingImages.forEach(img => {
-                            const checkLoad = () => {
-                                loadedCount++;
-                                if (loadedCount === pendingImages.length) triggerActive();
-                            };
-                            img.addEventListener('load', checkLoad, { once: true });
-                            img.addEventListener('error', checkLoad, { once: true });
-                        });
-                    } else {
-                        triggerActive();
-                    }
-                });
-            }, revealOptions);
-
-            document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-        });
-    </script>
 </body>
 </html>
