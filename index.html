@@ -155,6 +155,13 @@
                     <div><span lang="en">Hair</span><span lang="th">สีผม</span> / <span lang="en">Blonde</span><span lang="th">บลอนด์</span></div>
                     <div><span lang="en">Eyes</span><span lang="th">นัยน์ตา</span> / <span lang="en">Blue</span><span lang="th">สีฟ้า</span></div>   
                 </div>
+                <!-- Subtle Comp Card Button -->
+                <div class="reveal delay-1" id="compCardContainer" style="text-align: center; margin-top: 24px;">
+                    <a href="#" id="compCardBtn" class="btn-bold">
+                        <span lang="en">View Comp Card</span>
+                        <span lang="th">ดูคอมพ์การ์ด</span>
+                    </a>
+                </div>
             </div>
         </div>
     </section>
@@ -163,7 +170,7 @@
     <section id="digitals">
         <div class="container">
             <p class="section-label reveal">
-                <span lang="en">Snaps</span>
+                <span lang="en">Digitals</span>
                 <span lang="th">สแนปช็อต</span>
             </p>
             <div style="grid-column: span 12;">
@@ -197,6 +204,17 @@
         <span class="modal-nav modal-prev" aria-label="Previous Image" role="button">&#10094;</span>
         <img class="modal-content" id="img01" alt="Expanded image">
         <span class="modal-nav modal-next" aria-label="Next Image" role="button">&#10095;</span>
+    </div>
+
+    <!-- Dedicated Comp Card Modal -->
+    <div id="compCardModal" class="modal" role="dialog" aria-modal="true" aria-label="Comp Card">
+        <img class="modal-content" id="compCardImg" src="image/compcard.webp" alt="Client Comp Card" style="max-height: 80vh;">
+        <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2001; text-align: center; width: 100%;">
+            <a href="image/compcard.webp" id="compCardDownload" download="Vasilina_Comp_Card" class="btn-primary" style="box-shadow: 0 4px 24px rgba(0,0,0,0.4);">
+                <span lang="en">Download</span>
+                <span lang="th">ดาวน์โหลด</span>
+            </a>
+        </div>
     </div>
 
     <script src="footer.js"></script>

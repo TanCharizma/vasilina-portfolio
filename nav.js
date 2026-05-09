@@ -70,7 +70,7 @@
                         <span lang="th">สัดส่วน</span>
                     </a>
                     <a href="${isHomePage ? '#digitals' : 'index.html#digitals'}">
-                        <span lang="en">Snaps</span>
+                        <span lang="en">Digitals</span>
                         <span lang="th">สแนปช็อต</span>
                     </a>
                 </div>

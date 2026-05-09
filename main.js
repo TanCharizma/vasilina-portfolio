@@ -254,5 +254,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.key === 'ArrowRight' && currentImgIndex < currentSectionImages.length - 1) updateModal(currentImgIndex + 1);
             }
         });
+        
+        // Global Escape Key for Comp Card Modal
+        document.addEventListener('keydown', (e) => {
+            const compModal = document.getElementById('compCardModal');
+            if (e.key === 'Escape' && compModal && compModal.style.display === "block") {
+                compModal.style.display = "none";
+                document.body.style.overflow = 'auto';
+            }
+        });
+    }
+
+    // --- 5. COMP CARD LOGIC ---
+    const compCardBtn = document.getElementById('compCardBtn');
+    const compCardModal = document.getElementById('compCardModal');
+    const compCardImg = document.getElementById('compCardImg');
+    const compCardDownload = document.getElementById('compCardDownload');
+
+    if (compCardBtn && compCardModal) {
+        compCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            compCardModal.style.display = "block";
+            document.body.style.overflow = 'hidden'; // Stop background scrolling
+        });
+
+        compCardModal.onclick = (e) => {
+            // Close if clicking the background, but don't close if clicking the image or download button
+            if (e.target !== compCardImg && !compCardDownload.contains(e.target)) {
+                compCardModal.style.display = "none";
+                document.body.style.overflow = 'auto';
+            }
+        };
     }
 });
