@@ -936,6 +936,8 @@ section {
     left: 50%;
     transform: translate(-50%, -50%);
     object-fit: contain;
+    cursor: default; /* Overrides the parent pointer to tell the browser it's not a button */
+    -webkit-touch-callout: default; /* Explicitly forces the long-press 'Save Image' menu on iOS */
 }
 
 /* Modal Navigation */
