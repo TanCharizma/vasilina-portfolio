@@ -1007,7 +1007,7 @@ footer {
     grid-column: span 12;
     text-align: center;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     letter-spacing: 0.2em;
     padding-top: 16px;
