@@ -23,22 +23,22 @@
                 </p>
 
                 <!-- Cal inline embed code begins -->
-                <div style="width:100%;min-height:800px;margin-top: -64px;" id="my-cal-inline-booking-request"></div>
+                <div style="width:100%;min-height:820px;margin-top: -64px;" id="my-cal-inline-booking-request-จองว-นท-และ-เวลา"></div>
                 <script type="text/javascript">
                   (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if(typeof namespace === "string"){cal.ns[namespace] = cal.ns[namespace] || api;p(cal.ns[namespace], ar);p(cal, ["initNamespace", namespace]);} else p(cal, ar); return;} p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
-                Cal("init", "booking-request", {origin:"https://app.cal.com"});
+                Cal("init", "booking-request-จองว-นท-และ-เวลา", {origin:"https://app.cal.com"});
                 
-                  Cal.ns["booking-request"]("inline", {
-                    elementOrSelector:"#my-cal-inline-booking-request",
-                    config: {"layout":"month_view","useSlotsViewOnSmallScreen":"true","theme":"light"},
-                    calLink: "tan-patipan-khamwachirapitak-tt8rxi/booking-request",
+                  Cal.ns["booking-request-จองว-นท-และ-เวลา"]("inline", {
+                    elementOrSelector:"#my-cal-inline-booking-request-จองว-นท-และ-เวลา",
+                    config: {"layout":"month_view","useSlotsViewOnSmallScreen":"true"},
+                    calLink: "lina-panina/booking-request-จองว-นท-และ-เวลา",
                   });
                 
-                  Cal.ns["booking-request"]("ui", {"theme":"light","cssVarsPerTheme":{"light":{"cal-brand":"#C9A74E"}},"hideEventTypeDetails":false,"layout":"month_view"});
+                  Cal.ns["booking-request-จองว-นท-และ-เวลา"]("ui", {"cssVarsPerTheme":{"light":{"cal-brand":"#C9A74E"},"dark":{"cal-brand":"#C9A74E"}},"hideEventTypeDetails":false,"layout":"month_view","hideBranding":true});
                   </script>
                   <!-- Cal inline embed code ends -->
 
-                <div class="inquiry-section" style="text-align: center;">
+                <div class="inquiry-section" style="text-align: center; margin-top: -64px; position: relative; z-index: 10;">
                     <h3 class="reveal">
                         <span lang="en">Direct Inquiries</span>
                         <span lang="th">ติดต่อสอบถาม</span>

@@ -1140,7 +1140,7 @@ footer {
     .split-layout .bio p:first-of-type::first-letter { font-size: 64px; }
 
     /* Cal.com Widget & Booking Layout Adjustments for Tablets and below */
-    [id="my-cal-inline-booking-request"] { min-height: 600px !important; margin-top: 48px !important; }
+    [id^="my-cal-inline-booking-request"] { min-height: 600px !important; margin-top: 48px !important; }
     .inquiry-section { margin-top: 64px !important; }
 }
 
