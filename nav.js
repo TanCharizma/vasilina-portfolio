@@ -43,8 +43,12 @@
         }
     });
 
-    // Start the curtain hidden on the Homepage (so the luxury splash screen plays), but start it covering the screen on subpages.
-    const startClass = isHomePage ? '' : 'start-covered';
+    const isInternalNav = sessionStorage.getItem('internalNav') === 'true';
+    sessionStorage.removeItem('internalNav');
+    sessionStorage.removeItem('reverseNav'); // Clean up old data
+
+    // Start the curtain hidden on the Homepage (so the luxury splash screen plays), but start it covering the screen on subpages or if navigating back internally.
+    const startClass = (!isHomePage || isInternalNav) ? 'start-covered' : '';
 
     const navHTML = `
     <div class="app-transition-curtain ${startClass}" id="appCurtain"></div>
@@ -112,15 +116,24 @@
     document.addEventListener('DOMContentLoaded', () => {
         const curtain = document.getElementById('appCurtain');
         
-        // Subpage Entrance: Slide curtain out the top to reveal the new page
-        if (!isHomePage && curtain) {
+        // Bypass Splash Screen immediately if navigating back to the home page internally
+        if (isHomePage && isInternalNav) {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.removeAttribute('id'); // Disconnect from main.js timer
+                splash.style.display = 'none'; // Hide visually
+            }
+        }
+
+        // Page Entrance: Slide curtain out to reveal the new page
+        if ((!isHomePage || isInternalNav) && curtain) {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    curtain.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
-                    curtain.style.transform = 'translateY(-100%)';
+                    curtain.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s';
+                    curtain.classList.remove('start-covered', 'curtain-cover');
+                    document.body.classList.add('page-entrance');
                 });
             });
-            document.body.classList.add('page-entrance');
         }
 
         // Intercept all clicks to trigger the slide-over effect
@@ -142,31 +155,34 @@
 
             e.preventDefault();
 
+            // Store navigation intent for the next page load
+            sessionStorage.setItem('internalNav', 'true');
+
             // Close mobile menu if it's open so it doesn't glitch during transition
             if (navElement && navElement.classList.contains('nav-open')) {
                 navElement.classList.remove('nav-open');
                 document.body.style.overflow = '';
             }
 
-            // Reset curtain instantly to bottom, then animate it sliding up
+            // Cover screen with cinematic fade
             curtain.style.transition = 'none';
-            curtain.style.transform = 'translateY(100%)';
+            curtain.classList.remove('start-covered');
             
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    curtain.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
-                    curtain.style.transform = 'translateY(0)';
+                    curtain.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s';
+                    curtain.classList.add('curtain-cover');
                 });
             });
 
             // Wait for curtain to fully cover the screen, then navigate
-            setTimeout(() => window.location.href = href, 400);
+            setTimeout(() => window.location.href = href, 500);
         });
 
         // Failsafe for iOS Swipe-Back gesture (BFCache reset)
         window.addEventListener('pageshow', (e) => {
             if (e.persisted && curtain) {
-                curtain.style.transform = 'translateY(-100%)';
+                curtain.classList.remove('start-covered', 'curtain-cover');
             }
         });
     });
