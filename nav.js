@@ -43,7 +43,11 @@
         }
     });
 
+    // Start the curtain hidden on the Homepage (so the luxury splash screen plays), but start it covering the screen on subpages.
+    const startClass = isHomePage ? '' : 'start-covered';
+
     const navHTML = `
+    <div class="app-transition-curtain ${startClass}" id="appCurtain"></div>
     <nav class="${navClass}">
         <a href="${logoHref}" class="logo">Vasilina Panina</a>
         <div class="nav-links">
@@ -103,6 +107,69 @@
 
     // After injection, get the nav element
     const navElement = document.querySelector('nav');
+
+    // --- NATIVE APP TRANSITION LOGIC ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const curtain = document.getElementById('appCurtain');
+        
+        // Subpage Entrance: Slide curtain out the top to reveal the new page
+        if (!isHomePage && curtain) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    curtain.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+                    curtain.style.transform = 'translateY(-100%)';
+                });
+            });
+            document.body.classList.add('page-entrance');
+        }
+
+        // Intercept all clicks to trigger the slide-over effect
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link || !curtain) return;
+            
+            const href = link.getAttribute('href');
+            
+            // Ignore external links, mailto, phone numbers, new tabs, and hashes
+            if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.includes('http') || link.getAttribute('target') === '_blank' || link.classList.contains('back-to-top') || e.ctrlKey || e.metaKey) {
+                return;
+            }
+
+            // Ignore if linking to the exact same page
+            const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+            let targetPath = href.split('/').pop().split('#')[0] || 'index.html';
+            if (currentPath === targetPath) return;
+
+            e.preventDefault();
+
+            // Close mobile menu if it's open so it doesn't glitch during transition
+            if (navElement && navElement.classList.contains('nav-open')) {
+                navElement.classList.remove('nav-open');
+                document.body.style.overflow = '';
+            }
+
+            // Reset curtain instantly to bottom, then animate it sliding up
+            curtain.style.transition = 'none';
+            curtain.style.transform = 'translateY(100%)';
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    curtain.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+                    curtain.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Wait for curtain to fully cover the screen, then navigate
+            setTimeout(() => window.location.href = href, 400);
+        });
+
+        // Failsafe for iOS Swipe-Back gesture (BFCache reset)
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted && curtain) {
+                curtain.style.transform = 'translateY(-100%)';
+            }
+        });
+    });
 
     // Handle active class for non-homepage links
     if (!isHomePage) {

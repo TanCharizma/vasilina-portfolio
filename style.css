@@ -1304,3 +1304,28 @@ footer {
         border: 1px solid var(--gold);
     }
 }
+
+/* --- 8. NATIVE APP TRANSITION ENGINE --- */
+.app-transition-curtain {
+    position: fixed;
+    inset: 0;
+    background-color: var(--bg);
+    z-index: 9999999;
+    pointer-events: none;
+    transform: translateY(100%); /* Default state: hidden below the screen */
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-transition-curtain.start-covered {
+    transform: translateY(0);
+    transition: none; /* Instantly covers the screen to hide browser flashes */
+}
+
+.page-entrance section, .page-entrance header, .page-entrance footer {
+    animation: pageContentSlideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes pageContentSlideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
