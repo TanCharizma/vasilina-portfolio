@@ -207,12 +207,44 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentSectionImages = [];
         let currentImgIndex = 0;
         
-        const updateModal = (index) => {
-            currentImgIndex = index;
-            modalImg.src = currentSectionImages[currentImgIndex].src;
-            modalImg.alt = currentSectionImages[currentImgIndex].alt || 'Expanded portfolio image';
-            document.querySelector('.modal-prev').style.visibility = currentImgIndex === 0 ? 'hidden' : 'visible';
-            document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
+        const updateModal = (index, direction = 0) => {
+            const finalizeUpdate = () => {
+                currentImgIndex = index;
+                modalImg.src = currentSectionImages[currentImgIndex].src;
+                modalImg.alt = currentSectionImages[currentImgIndex].alt || 'Expanded portfolio image';
+                document.querySelector('.modal-prev').style.visibility = currentImgIndex === 0 ? 'hidden' : 'visible';
+                document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
+                
+                if (direction !== 0) {
+                    // Prep new image off-screen opposite to the swipe
+                    modalImg.style.transition = 'none';
+                    modalImg.style.transform = `translate(calc(-50% + ${direction * 50}px), -50%)`;
+                    modalImg.style.opacity = '0';
+                    
+                    // Animate new image sliding into center
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                            modalImg.style.transform = `translate(-50%, -50%)`;
+                            modalImg.style.opacity = '1';
+                        });
+                    });
+                } else {
+                    modalImg.style.transition = 'none';
+                    modalImg.style.transform = `translate(-50%, -50%)`;
+                    modalImg.style.opacity = '1';
+                }
+            };
+
+            if (direction !== 0) {
+                // Animate old image sliding out
+                modalImg.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease';
+                modalImg.style.transform = `translate(calc(-50% + ${direction * -100}px), -50%)`;
+                modalImg.style.opacity = '0';
+                setTimeout(finalizeUpdate, 200);
+            } else {
+                finalizeUpdate();
+            }
         };
 
         // Filter out any image that is a brand logo (by class or by folder path)
@@ -230,18 +262,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? a.getBoundingClientRect().top - b.getBoundingClientRect().top 
                         : a.getBoundingClientRect().left - b.getBoundingClientRect().left);
                 modal.style.display = "block";
+                modalImg.style.transition = 'none';
+                modalImg.style.transform = 'translate(-50%, -50%)';
+                modalImg.style.opacity = '1';
                 updateModal(currentSectionImages.indexOf(img));
                 document.body.style.overflow = 'hidden';
             });
         });
 
-        document.querySelector('.modal-prev').onclick = (e) => { e.stopPropagation(); updateModal(currentImgIndex - 1); };
-        document.querySelector('.modal-next').onclick = (e) => { e.stopPropagation(); updateModal(currentImgIndex + 1); };
+        document.querySelector('.modal-prev').onclick = (e) => { e.stopPropagation(); updateModal(currentImgIndex - 1, -1); };
+        document.querySelector('.modal-next').onclick = (e) => { e.stopPropagation(); updateModal(currentImgIndex + 1, 1); };
         modalImg.onclick = (e) => e.stopPropagation();
         
         const closeModal = () => {
             modal.style.display = "none";
             document.body.style.overflow = 'auto';
+            // Clear transforms for next open
+            setTimeout(() => {
+                modalImg.style.transition = 'none';
+                modalImg.style.transform = 'translate(-50%, -50%)';
+                modalImg.style.opacity = '1';
+            }, 300);
         };
         
         modal.onclick = closeModal;
@@ -250,32 +291,51 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('keydown', (e) => {
             if (modal.style.display === "block") {
                 if (e.key === 'Escape') closeModal();
-                if (e.key === 'ArrowLeft' && currentImgIndex > 0) updateModal(currentImgIndex - 1);
-                if (e.key === 'ArrowRight' && currentImgIndex < currentSectionImages.length - 1) updateModal(currentImgIndex + 1);
+                if (e.key === 'ArrowLeft' && currentImgIndex > 0) updateModal(currentImgIndex - 1, -1);
+                if (e.key === 'ArrowRight' && currentImgIndex < currentSectionImages.length - 1) updateModal(currentImgIndex + 1, 1);
             }
         });
         
         // Mobile Touch Swipe Navigation
         let touchStartX = 0;
-        let touchEndX = 0;
+        let touchCurrentX = 0;
+        let isSwiping = false;
 
         modal.addEventListener('touchstart', e => {
+            if (e.touches.length > 1) return; // Ignore multi-touch
             touchStartX = e.changedTouches[0].screenX;
+            isSwiping = true;
+            modalImg.style.transition = 'none'; // Lock to finger
         }, { passive: true });
 
         // Lock background scroll on mobile completely when touching the modal
         modal.addEventListener('touchmove', e => {
             e.preventDefault();
+            if (!isSwiping) return;
+            touchCurrentX = e.changedTouches[0].screenX;
+            const deltaX = touchCurrentX - touchStartX;
+            
+            // Elastic drag tracking
+            modalImg.style.transform = `translate(calc(-50% + ${deltaX * 0.6}px), -50%)`;
+            modalImg.style.opacity = Math.max(0.3, 1 - Math.abs(deltaX) / window.innerWidth);
         }, { passive: false });
 
         modal.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            const swipeThreshold = 40; // Minimum pixels required to register a swipe
-            if (touchEndX < touchStartX - swipeThreshold && currentImgIndex < currentSectionImages.length - 1) {
-                updateModal(currentImgIndex + 1); // Swiped left -> Next image
-            }
-            if (touchEndX > touchStartX + swipeThreshold && currentImgIndex > 0) {
-                updateModal(currentImgIndex - 1); // Swiped right -> Previous image
+            if (!isSwiping) return;
+            isSwiping = false;
+            const touchEndX = e.changedTouches[0].screenX;
+            const deltaX = touchEndX - touchStartX;
+            const swipeThreshold = 50; // Required distance
+
+            if (deltaX < -swipeThreshold && currentImgIndex < currentSectionImages.length - 1) {
+                updateModal(currentImgIndex + 1, 1); // Swipe left -> Next
+            } else if (deltaX > swipeThreshold && currentImgIndex > 0) {
+                updateModal(currentImgIndex - 1, -1); // Swipe right -> Prev
+            } else {
+                // Snap back to center if they didn't drag far enough
+                modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                modalImg.style.transform = `translate(-50%, -50%)`;
+                modalImg.style.opacity = '1';
             }
         }, { passive: true });
 
