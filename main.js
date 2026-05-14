@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const splashScreen = document.getElementById('splash-screen');
-        const minSplashTime = new Promise(resolve => setTimeout(resolve, 1900)); // Minimum 1.9s immersive brand entrance
+        const minSplashTime = new Promise(resolve => setTimeout(resolve, 2000)); // Minimum 2s immersive brand entrance
         
         const heroImageLoad = new Promise(resolve => {
             if (heroImgLoader.complete) resolve();
@@ -218,6 +218,18 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('scroll', () => window.requestAnimationFrame(evaluateBackToTop), { passive: true });
     }
 
+    // --- SCROLL LOCK HELPER ---
+    // Prevents the background layout from shifting when the scrollbar disappears
+    const lockScroll = () => {
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+        document.body.style.overflow = 'hidden';
+    };
+    const unlockScroll = () => {
+        document.body.style.paddingRight = '';
+        document.body.style.overflow = '';
+    };
+
     // --- 4. IMAGE MODAL LOGIC (With Keyboard Support) ---
     const modal = document.getElementById("imageModal");
     if (modal) {
@@ -225,32 +237,53 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentSectionImages = [];
         let currentImgIndex = 0;
         
-        const updateModal = (index, direction = 0) => {
+        const updateModal = (index, direction = 0, isOpening = false) => {
             const finalizeUpdate = () => {
                 currentImgIndex = index;
-                modalImg.src = currentSectionImages[currentImgIndex].src;
-                modalImg.alt = currentSectionImages[currentImgIndex].alt || 'Expanded portfolio image';
-                document.querySelector('.modal-prev').style.visibility = currentImgIndex === 0 ? 'hidden' : 'visible';
-                document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
+                const newSrc = currentSectionImages[currentImgIndex].src;
                 
-                if (direction !== 0) {
-                    // Prep new image off-screen opposite to the swipe
-                    modalImg.style.transition = 'none';
-                    modalImg.style.transform = `translate(calc(-50% + ${direction * 50}px), -50%)`;
-                    modalImg.style.opacity = '0';
+                const playAnimation = () => {
+                    document.querySelector('.modal-prev').style.visibility = currentImgIndex === 0 ? 'hidden' : 'visible';
+                    document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
                     
-                    // Animate new image sliding into center
-                    requestAnimationFrame(() => {
+                    if (direction !== 0) {
+                        // Prep new image off-screen opposite to the swipe
+                        modalImg.style.transition = 'none';
+                        modalImg.style.transform = `translate(calc(-50% + ${direction * 50}px), -50%)`;
+                        modalImg.style.opacity = '0';
+                        
+                        // Animate new image sliding into center
                         requestAnimationFrame(() => {
-                            modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
-                            modalImg.style.transform = `translate(-50%, -50%)`;
-                            modalImg.style.opacity = '1';
+                            requestAnimationFrame(() => {
+                                modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                                modalImg.style.transform = `translate(-50%, -50%)`;
+                                modalImg.style.opacity = '1';
+                            });
                         });
-                    });
+                    } else if (isOpening) {
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                                modalImg.style.transform = `translate(-50%, -50%) scale(1)`;
+                                modalImg.style.opacity = '1';
+                            });
+                        });
+                    } else {
+                        modalImg.style.transition = 'none';
+                        modalImg.style.transform = `translate(-50%, -50%)`;
+                        modalImg.style.opacity = '1';
+                    }
+                };
+
+                // Wait for the new image to fully render its dimensions before animating
+                if (modalImg.src !== newSrc) {
+                    modalImg.src = newSrc;
+                    modalImg.alt = currentSectionImages[currentImgIndex].alt || 'Expanded portfolio image';
+                    
+                    // Use modern decode() to completely eliminate 1-frame layout thrashing
+                    modalImg.decode().then(playAnimation).catch(playAnimation);
                 } else {
-                    modalImg.style.transition = 'none';
-                    modalImg.style.transform = `translate(-50%, -50%)`;
-                    modalImg.style.opacity = '1';
+                    playAnimation();
                 }
             };
 
@@ -267,24 +300,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Filter out any image that is a brand logo (by class or by folder path)
         const galleryImages = Array.from(document.querySelectorAll('section img')).filter(img => {
-            return !img.classList.contains('brand-logo') && !img.src.includes('brand_icons');
+            return !img.classList.contains('brand-logo') && !img.src.includes('brand_icons') && !img.closest('.split-layout');
         });
 
         galleryImages.forEach((img) => {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
+                // Freeze the hover state so it doesn't drop while the modal opens
+                img.classList.add('freeze-hover');
+                setTimeout(() => img.classList.remove('freeze-hover'), 600);
+
                 const parentSection = img.closest('section');
                 currentSectionImages = Array.from(parentSection.querySelectorAll('img'))
                     .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons'))
                     .sort((a, b) => Math.abs(a.getBoundingClientRect().top - b.getBoundingClientRect().top) > 100 
                         ? a.getBoundingClientRect().top - b.getBoundingClientRect().top 
                         : a.getBoundingClientRect().left - b.getBoundingClientRect().left);
-                modal.style.display = "block";
+                
+                // Prep image state BEFORE making modal visible to prevent 1-frame flashes
                 modalImg.style.transition = 'none';
-                modalImg.style.transform = 'translate(-50%, -50%)';
-                modalImg.style.opacity = '1';
-                updateModal(currentSectionImages.indexOf(img));
-                document.body.style.overflow = 'hidden';
+                modalImg.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                modalImg.style.opacity = '0';
+                
+                modal.classList.add('show-modal');
+                updateModal(currentSectionImages.indexOf(img), 0, true);
+                lockScroll();
             });
         });
 
@@ -293,8 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalImg.onclick = (e) => e.stopPropagation();
         
         const closeModal = () => {
-            modal.style.display = "none";
-            document.body.style.overflow = 'auto';
+            modal.classList.remove('show-modal');
+            unlockScroll();
             // Clear transforms for next open
             setTimeout(() => {
                 modalImg.style.transition = 'none';
@@ -307,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Added Keyboard UX for premium navigation
         document.addEventListener('keydown', (e) => {
-            if (modal.style.display === "block") {
+            if (modal.classList.contains('show-modal')) {
                 if (e.key === 'Escape') closeModal();
                 if (e.key === 'ArrowLeft' && currentImgIndex > 0) updateModal(currentImgIndex - 1, -1);
                 if (e.key === 'ArrowRight' && currentImgIndex < currentSectionImages.length - 1) updateModal(currentImgIndex + 1, 1);
@@ -360,9 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Global Escape Key for Comp Card Modal
         document.addEventListener('keydown', (e) => {
             const compModal = document.getElementById('compCardModal');
-            if (e.key === 'Escape' && compModal && compModal.style.display === "block") {
-                compModal.style.display = "none";
-                document.body.style.overflow = 'auto';
+            if (e.key === 'Escape' && compModal && compModal.classList.contains('show-modal')) {
+                compModal.classList.remove('show-modal');
+                unlockScroll();
             }
         });
     }
@@ -381,15 +421,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         compCardBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            compCardModal.style.display = "block";
-            document.body.style.overflow = 'hidden'; // Stop background scrolling
+            
+            // Prep image state BEFORE making modal visible
+            compCardImg.style.transition = 'none';
+            compCardImg.style.transform = 'translate(-50%, -50%) scale(0.95)';
+            compCardImg.style.opacity = '0';
+            
+            compCardModal.classList.add('show-modal');
+            lockScroll();
+            
+            const playCompCardAnimation = () => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        compCardImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                        compCardImg.style.transform = 'translate(-50%, -50%) scale(1)';
+                        compCardImg.style.opacity = '1';
+                    });
+                });
+            };
+            
+            compCardImg.decode().then(playCompCardAnimation).catch(playCompCardAnimation);
         });
 
         compCardModal.onclick = (e) => {
             // Close if clicking the background, but don't close if clicking the image or download button
             if (e.target !== compCardImg && !compCardDownload.contains(e.target)) {
-                compCardModal.style.display = "none";
-                document.body.style.overflow = 'auto';
+                compCardModal.classList.remove('show-modal');
+                unlockScroll();
             }
         };
     }

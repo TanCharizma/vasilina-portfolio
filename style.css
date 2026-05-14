@@ -45,6 +45,28 @@ body {
     -webkit-tap-highlight-color: transparent; /* Removes the default mobile browser gray tap blink universally */
 }
 
+/* Premium Text Selection */
+::selection {
+    background-color: var(--gold);
+    color: var(--black);
+}
+::-moz-selection {
+    background-color: var(--gold);
+    color: var(--black);
+}
+
+/* Custom Native-App Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 10px;
+}
+
 body {
     background-color: var(--bg);
     color: var(--text);
@@ -128,11 +150,11 @@ a:hover { opacity: 0.7; transition-delay: 0.1s; }
     font-size: clamp(24px, 4vw, 40px);
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    animation: splashPulse 1.5s ease-in-out infinite alternate;
+    animation: splashEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes splashPulse {
-    0% { opacity: 0.4; filter: blur(4px); transform: scale(0.98); }
+@keyframes splashEntrance {
+    0% { opacity: 0; filter: blur(8px); transform: scale(0.95); }
     100% { opacity: 1; filter: blur(0); transform: scale(1); }
 }
 
@@ -759,6 +781,23 @@ section {
     transition-delay: 0.1s;
 }
 
+/* Prevent visual drop-glitch when opening modals */
+@media (hover: hover) {
+    img.freeze-hover {
+        transform: scale(1.02) !important;
+        opacity: 0.85 !important;
+        z-index: 2 !important;
+    }
+    .full-grid img.freeze-hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        opacity: 0.999 !important;
+    }
+    .digitals-grid img.freeze-hover {
+        transform: scale(1.03) !important;
+        opacity: 0.9 !important;
+    }
+}
+
 /* Section Labels for UX */
 .section-label {
     grid-column: span 12;
@@ -942,7 +981,6 @@ section {
 
 /* Modal Styles */
 .modal {
-    display: none;
     position: fixed;
     z-index: 2000;
     left: 0;
@@ -952,7 +990,14 @@ section {
     background-color: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(5px);
     cursor: pointer;
-    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+}
+
+.modal.show-modal {
+    opacity: 1;
+    visibility: visible;
 }
 
 .modal-content {
