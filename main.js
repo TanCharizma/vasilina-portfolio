@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const splashScreen = document.getElementById('splash-screen');
-        const minSplashTime = new Promise(resolve => setTimeout(resolve, 1700)); // Minimum 1.7s immersive brand entrance
+        const minSplashTime = new Promise(resolve => setTimeout(resolve, 1900)); // Minimum 1.9s immersive brand entrance
         
         const heroImageLoad = new Promise(resolve => {
             if (heroImgLoader.complete) resolve();
