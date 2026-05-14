@@ -259,11 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
         let touchStartX = 0;
         let touchEndX = 0;
 
-        modalImg.addEventListener('touchstart', e => {
+        modal.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
         }, { passive: true });
 
-        modalImg.addEventListener('touchend', e => {
+        // Lock background scroll on mobile completely when touching the modal
+        modal.addEventListener('touchmove', e => {
+            e.preventDefault();
+        }, { passive: false });
+
+        modal.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
             const swipeThreshold = 40; // Minimum pixels required to register a swipe
             if (touchEndX < touchStartX - swipeThreshold && currentImgIndex < currentSectionImages.length - 1) {
@@ -291,6 +296,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const compCardDownload = document.getElementById('compCardDownload');
 
     if (compCardBtn && compCardModal) {
+        // Lock background scroll for Comp Card Modal as well
+        compCardModal.addEventListener('touchmove', e => {
+            e.preventDefault();
+        }, { passive: false });
+
         compCardBtn.addEventListener('click', (e) => {
             e.preventDefault();
             compCardModal.style.display = "block";
