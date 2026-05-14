@@ -255,6 +255,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // Mobile Touch Swipe Navigation
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        modalImg.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        modalImg.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            const swipeThreshold = 40; // Minimum pixels required to register a swipe
+            if (touchEndX < touchStartX - swipeThreshold && currentImgIndex < currentSectionImages.length - 1) {
+                updateModal(currentImgIndex + 1); // Swiped left -> Next image
+            }
+            if (touchEndX > touchStartX + swipeThreshold && currentImgIndex > 0) {
+                updateModal(currentImgIndex - 1); // Swiped right -> Previous image
+            }
+        }, { passive: true });
+
         // Global Escape Key for Comp Card Modal
         document.addEventListener('keydown', (e) => {
             const compModal = document.getElementById('compCardModal');
