@@ -107,10 +107,28 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('active'));
         };
 
-        if (heroImgLoader.complete) { triggerHeroEntrance(); } 
-        else {
-            heroImgLoader.addEventListener('load', triggerHeroEntrance);
-            heroImgLoader.addEventListener('error', triggerHeroEntrance);
+        const splashScreen = document.getElementById('splash-screen');
+        const minSplashTime = new Promise(resolve => setTimeout(resolve, 1700)); // Minimum 1.7s immersive brand entrance
+        
+        const heroImageLoad = new Promise(resolve => {
+            if (heroImgLoader.complete) resolve();
+            else {
+                heroImgLoader.addEventListener('load', resolve);
+                heroImgLoader.addEventListener('error', resolve); // Proceed even if there is a loading error
+            }
+        });
+
+        if (splashScreen) {
+            document.body.style.overflow = 'hidden'; // Lock screen during splash
+            Promise.all([minSplashTime, heroImageLoad]).then(() => {
+                splashScreen.classList.add('hidden');
+                setTimeout(() => {
+                    document.body.style.overflow = ''; // Unlock scrolling
+                    triggerHeroEntrance();
+                }, 400); // Trigger hero text reveal exactly halfway through the splash screen fade-out
+            });
+        } else {
+            heroImageLoad.then(triggerHeroEntrance);
         }
 
         let ticking = false;
