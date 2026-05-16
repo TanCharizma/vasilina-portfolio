@@ -2,6 +2,15 @@
  * Shared Main JavaScript
  * Handles global reveal animations, modals, and homepage-specific interactions.
  */
+
+// --- SILENT SERVICE WORKER REGISTRATION ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .catch(error => console.error('Service Worker registration failed:', error));
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     
     // Cache viewport height globally for scroll calculations
