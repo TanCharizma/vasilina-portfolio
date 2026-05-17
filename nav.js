@@ -56,7 +56,7 @@
         <a href="${logoHref}" class="logo">Vasilina Panina</a>
         <div class="nav-links">
             <div class="dropdown">
-                <a href="${logoHref}" class="dropdown-trigger">
+                <a href="${logoHref}" class="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
                     <span lang="en">Home</span>
                     <span lang="th">หน้าหลัก</span>
                 </a>
@@ -91,16 +91,16 @@
                 <span lang="en">Booking</span>
                 <span lang="th">จองคิว</span> 
             </a>
-            <span class="lang-switch" id="langToggle">
+            <span class="lang-switch" id="langToggle" role="button" aria-label="Toggle language" tabindex="0">
                 <span class="en">EN</span> / 
                 <span class="th">TH</span>
             </span>
-            <span class="theme-toggle" id="themeToggle">
+            <span class="theme-toggle" id="themeToggle" role="button" aria-label="Toggle theme" tabindex="0">
                 <span lang="en">Dark</span>
                 <span lang="th">โหมดมืด</span>
             </span>
         </div>
-        <div class="mobile-toggle" id="mobileToggle">
+        <div class="mobile-toggle" id="mobileToggle" role="button" aria-label="Toggle navigation menu" aria-expanded="false" tabindex="0">
             <span></span>
             <span></span>
         </div>
@@ -207,7 +207,9 @@
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
             navElement.classList.toggle('nav-open');
-            document.body.style.overflow = navElement.classList.contains('nav-open') ? 'hidden' : '';
+            const isOpen = navElement.classList.contains('nav-open');
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+            mobileToggle.setAttribute('aria-expanded', isOpen);
         });
 
         // Close menu when a link is clicked
@@ -219,6 +221,7 @@
 
                 navElement.classList.remove('nav-open');
                 document.body.style.overflow = '';
+                mobileToggle.setAttribute('aria-expanded', 'false');
             });
         });
 
@@ -227,6 +230,7 @@
             if (window.innerWidth > 1024 && navElement.classList.contains('nav-open')) {
                 navElement.classList.remove('nav-open');
                 document.body.style.overflow = '';
+                mobileToggle.setAttribute('aria-expanded', 'false');
             }
         });
     }
