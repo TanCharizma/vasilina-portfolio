@@ -17,6 +17,7 @@
     --dropdown-bg: rgba(252, 251, 249, 0.85); /* Slightly higher opacity for warmth */
     --alt-bg: #F9F8F5; /* Warm off-white */
     --border-subtle: rgba(28, 27, 25, 0.08); /* Tinted subtle border */
+    --scrollbar-thumb: rgba(28, 27, 25, 0.3); /* More visible scrollbar */
 }
 
 [data-theme="dark"] {
@@ -27,6 +28,7 @@
     --dropdown-bg: rgba(28, 26, 23, 0.85);
     --alt-bg: #171512; /* Warm mid-dark gray */
     --border-subtle: rgba(255, 255, 255, 0.08); /* Slightly softer */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.3);
 }
 
 html {
@@ -57,14 +59,18 @@ body {
 
 /* Custom Native-App Scrollbar */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
 }
 ::-webkit-scrollbar-track {
     background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-    background: var(--border-subtle);
+    background: var(--scrollbar-thumb);
     border-radius: 10px;
+    border: 2px solid var(--bg); /* Creates an inset pill effect */
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text); /* Solid color when hovered for better UX */
 }
 
 body {
@@ -636,6 +642,20 @@ section {
 .reveal.active {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Transition Variations for Editorial Pacing */
+.reveal-fade {
+    transform: none !important; /* Just fade, no slide */
+    transition: opacity 1.2s ease-out !important; /* Slower, dreamier fade */
+}
+
+.reveal-scale {
+    transform: scale(1.05); /* Start slightly zoomed in */
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.reveal-scale.active {
+    transform: scale(1);
 }
 
 /* Staggered Reveal Delays */
