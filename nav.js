@@ -9,6 +9,15 @@
     let navClass = '';
     let logoHref = 'index.html'; // Default for non-homepage
 
+    // --- 0. INSTANT SCROLLBAR LOCK ---
+    // Instantly prevents the scrollbar from flashing before main.js loads
+    const splashNode = document.getElementById('splash-screen');
+    if (splashNode) {
+        document.documentElement.classList.add('scroll-locked');
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+    }
+
     if (isHomePage) { // Homepage specific setup
         navClass = 'on-hero'; // Apply on-hero class for transparent state
         logoHref = '#hero'; // Logo scrolls to hero section on homepage
@@ -122,6 +131,9 @@
             if (splash) {
                 splash.removeAttribute('id'); // Disconnect from main.js timer
                 splash.style.display = 'none'; // Hide visually
+                document.documentElement.classList.remove('scroll-locked');
+                document.documentElement.style.overflow = ''; // Unlock instantly
+                document.body.style.overflow = '';
             }
         }
 
@@ -161,6 +173,7 @@
             // Close mobile menu if it's open so it doesn't glitch during transition
             if (navElement && navElement.classList.contains('nav-open')) {
                 navElement.classList.remove('nav-open');
+                document.documentElement.classList.remove('scroll-locked');
                 document.body.style.overflow = '';
             }
 
@@ -208,7 +221,13 @@
         mobileToggle.addEventListener('click', () => {
             navElement.classList.toggle('nav-open');
             const isOpen = navElement.classList.contains('nav-open');
-            document.body.style.overflow = isOpen ? 'hidden' : '';
+            if (isOpen) {
+                document.documentElement.classList.add('scroll-locked');
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.documentElement.classList.remove('scroll-locked');
+                document.body.style.overflow = '';
+            }
             mobileToggle.setAttribute('aria-expanded', isOpen);
         });
 
@@ -220,6 +239,7 @@
                 if (isHomePage && href && href.startsWith('#')) return;
 
                 navElement.classList.remove('nav-open');
+                document.documentElement.classList.remove('scroll-locked');
                 document.body.style.overflow = '';
                 mobileToggle.setAttribute('aria-expanded', 'false');
             });
@@ -229,6 +249,7 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1024 && navElement.classList.contains('nav-open')) {
                 navElement.classList.remove('nav-open');
+                document.documentElement.classList.remove('scroll-locked');
                 document.body.style.overflow = '';
                 mobileToggle.setAttribute('aria-expanded', 'false');
             }
@@ -366,6 +387,7 @@
 
                         if (navElement.classList.contains('nav-open')) {
                             navElement.classList.remove('nav-open');
+                            document.documentElement.classList.remove('scroll-locked');
                             document.body.style.overflow = '';
                             // Delay scroll by 100ms to prevent iOS Safari compositor crash after body unlock reflow
                             setTimeout(executeScroll, 100);

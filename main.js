@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const triggerHeroEntrance = () => {
             heroSection.classList.add('loaded');
+            document.body.classList.add('hero-loaded'); // Signals the Nav to begin animating
             document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('active'));
         };
 
@@ -128,13 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (splashScreen) {
+            document.documentElement.classList.add('scroll-locked');
+            document.documentElement.style.overflow = 'hidden';
             document.body.style.overflow = 'hidden'; // Lock screen during splash
             Promise.all([minSplashTime, heroImageLoad]).then(() => {
                 splashScreen.classList.add('hidden');
+                triggerHeroEntrance(); // Syncs hero elements precisely with splash fade
                 setTimeout(() => {
+                    document.documentElement.classList.remove('scroll-locked');
+                    document.documentElement.style.overflow = '';
                     document.body.style.overflow = ''; // Unlock scrolling
-                    triggerHeroEntrance();
-                }, 400); // Trigger hero text reveal exactly halfway through the splash screen fade-out
+                }, 200); // Tightened further to 200ms (early-crossfade) for an aggressively snappy entrance
             });
         } else {
             heroImageLoad.then(triggerHeroEntrance);
@@ -230,12 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SCROLL LOCK HELPER ---
     // Prevents the background layout from shifting when the scrollbar disappears
     const lockScroll = () => {
-        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
+        // scrollbar-gutter: stable already handles the layout reservation natively
+        document.documentElement.classList.add('scroll-locked');
         document.body.style.overflow = 'hidden';
     };
     const unlockScroll = () => {
-        document.body.style.paddingRight = '';
+        document.documentElement.classList.remove('scroll-locked');
         document.body.style.overflow = '';
     };
 

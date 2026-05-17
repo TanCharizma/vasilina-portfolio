@@ -33,6 +33,8 @@
 
 html {
     width: 100%;
+    scrollbar-gutter: stable; /* Permanently prevents the page from abruptly shifting left/right when the scrollbar appears */
+    background-color: var(--bg); /* Forces the root document canvas to match the theme, preventing white gutter bleeds */
 }
 
 body {
@@ -59,19 +61,33 @@ body {
 
 /* Custom Native-App Scrollbar */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 6px;
+    background-color: transparent; /* Kills the default white tube background on Windows/Linux browsers */
 }
 ::-webkit-scrollbar-track {
-    background: var(--bg);
+    background-color: transparent; /* Makes the track invisible to blend seamlessly with any background */
 }
 ::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: 10px;
-    border: 2px solid var(--bg); /* Creates an inset pill effect */
+    border: 1px solid transparent; /* Creates padding around the thumb */
+    background-clip: padding-box; /* Premium floating pill effect */
 }
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text); /* Solid color when hovered for better UX */
-    border: 2px solid var(--bg);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+}
+
+/* Completely hides the scrollbar for all browsers while the screen is locked (e.g. during splash screens) */
+html.scroll-locked {
+    scrollbar-width: none !important; /* Completely removes Firefox scrollbars */
+    -ms-overflow-style: none !important; /* Completely removes IE/Edge scrollbars */
+}
+html.scroll-locked::-webkit-scrollbar {
+    display: none !important; /* Completely removes the WebKit scrollbar container */
+    width: 0 !important;
+    height: 0 !important;
 }
 
 body {
@@ -139,7 +155,10 @@ a:hover { opacity: 0.7; transition-delay: 0.1s; }
 /* --- 1.5. LUXURY SPLASH SCREEN --- */
 .splash-screen {
     position: fixed;
-    inset: 0;
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
     background-color: #050505; /* Immersive pure dark */
     color: var(--white);
     z-index: 100000;
@@ -196,20 +215,27 @@ nav {
 
 .logo {
     opacity: 0;
+}
+
+body.hero-loaded .logo, 
+body.page-entrance .logo {
     animation: navEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     animation-delay: 0.1s;
 }
 
-@media (min-width: 769px) {
+/* Restrict to 1025px to prevent conflicting with the tablet hamburger menu */
+@media (min-width: 1025px) {
     .nav-links > * {
         opacity: 0;
+    }
+    body.hero-loaded .nav-links > *, body.page-entrance .nav-links > * {
         animation: navEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .nav-links > *:nth-child(1) { animation-delay: 0.2s; }
-    .nav-links > *:nth-child(2) { animation-delay: 0.3s; }
-    .nav-links > *:nth-child(3) { animation-delay: 0.4s; }
-    .nav-links > *:nth-child(4) { animation-delay: 0.5s; }
-    .nav-links > *:nth-child(5) { animation-delay: 0.6s; }
+    body.hero-loaded .nav-links > *:nth-child(1), body.page-entrance .nav-links > *:nth-child(1) { animation-delay: 0.2s; }
+    body.hero-loaded .nav-links > *:nth-child(2), body.page-entrance .nav-links > *:nth-child(2) { animation-delay: 0.3s; }
+    body.hero-loaded .nav-links > *:nth-child(3), body.page-entrance .nav-links > *:nth-child(3) { animation-delay: 0.4s; }
+    body.hero-loaded .nav-links > *:nth-child(4), body.page-entrance .nav-links > *:nth-child(4) { animation-delay: 0.5s; }
+    body.hero-loaded .nav-links > *:nth-child(5), body.page-entrance .nav-links > *:nth-child(5) { animation-delay: 0.6s; }
 }
 
 @keyframes heroFadeIn {
@@ -427,6 +453,10 @@ nav.on-hero:not(.scrolled) .theme-toggle {
     z-index: 1001;
     /* Mobile entrance animation */
     opacity: 0;
+}
+
+body.hero-loaded .mobile-toggle, 
+body.page-entrance .mobile-toggle {
     animation: navEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     animation-delay: 0.2s;
 }
@@ -1375,7 +1405,10 @@ footer {
 /* --- 8. NATIVE APP TRANSITION ENGINE --- */
 .app-transition-curtain {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: var(--bg);
     z-index: 9999999;
     pointer-events: none;
