@@ -454,12 +454,13 @@ nav.on-hero:not(.scrolled) .theme-toggle {
     position: relative;
     color: var(--white);
     overflow: hidden; /* Necessary for the scale effect */
+    background-color: #050505; /* Seamlessly bridges the gap with the splash screen */
 }
 
 .hero-bg {
     position: absolute;
     inset: 0;
-    background: #ccc url('image/hero/hero.webp') no-repeat center 10%/cover;
+    background: #050505 url('image/hero/hero.webp') no-repeat center 10%/cover;
     z-index: 0;
     transform-origin: center 20%;
     opacity: 1; /* Base state is visible so parallax works after animation */
