@@ -325,10 +325,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const parentSection = img.closest('section');
                 currentSectionImages = Array.from(parentSection.querySelectorAll('img'))
-                    .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons'))
-                    .sort((a, b) => Math.abs(a.getBoundingClientRect().top - b.getBoundingClientRect().top) > 100 
-                        ? a.getBoundingClientRect().top - b.getBoundingClientRect().top 
-                        : a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+                    .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons') && !i.closest('.split-layout'))
+                    .sort((a, b) => {
+                        const topDiff = a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+                        // Transitive, robust sorting: strictly top-to-bottom. Fallback to left-to-right only if perfectly aligned.
+                        return Math.abs(topDiff) > 1 ? topDiff : a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+                    });
                 
                 // Prep image state BEFORE making modal visible to prevent 1-frame flashes
                 modalImg.style.transition = 'none';
