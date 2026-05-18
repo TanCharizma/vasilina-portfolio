@@ -7,7 +7,7 @@
     const currentPage = window.location.pathname.split('/').pop(); // e.g., "about.html"
 
     let navClass = '';
-    let logoHref = 'index.html'; // Default for non-homepage
+    let logoHref = '/'; // Default for non-homepage, points to the root domain
 
     // --- 0. INSTANT SCROLLBAR LOCK ---
     // Instantly prevents the scrollbar from flashing before main.js loads
@@ -70,33 +70,33 @@
                     <span lang="th">หน้าหลัก</span>
                 </a>
                 <div class="dropdown-content">
-                    <a href="${isHomePage ? '#highlights' : 'index.html#highlights'}">
+                    <a href="${isHomePage ? '#highlights' : '/#highlights'}">
                         <span lang="en">Highlights</span>
                         <span lang="th">ไฮไลต์</span>
                     </a>
-                    <a href="${isHomePage ? '#portfolio' : 'index.html#portfolio'}">
+                    <a href="${isHomePage ? '#portfolio' : '/#portfolio'}">
                         <span lang="en">Portfolio</span>
                         <span lang="th">ผลงาน</span>
                     </a>
-                    <a href="${isHomePage ? '#motion' : 'index.html#motion'}">
+                    <a href="${isHomePage ? '#motion' : '/#motion'}">
                         <span lang="en">Videos</span>
                         <span lang="th">วิดีโอ</span>
                     </a>
-                    <a href="${isHomePage ? '#measurements' : 'index.html#measurements'}">
+                    <a href="${isHomePage ? '#measurements' : '/#measurements'}">
                         <span lang="en">Measurements</span>
                         <span lang="th">สัดส่วน</span>
                     </a>
-                    <a href="${isHomePage ? '#digitals' : 'index.html#digitals'}">
+                    <a href="${isHomePage ? '#digitals' : '/#digitals'}">
                         <span lang="en">Digitals</span>
                         <span lang="th">สแนปช็อต</span>
                     </a>
                 </div>
             </div>
-            <a href="about.html">
+            <a href="/about">
                 <span lang="en">About</span>
                 <span lang="th">เกี่ยวกับฉัน</span>
             </a>
-            <a href="booking.html">
+            <a href="/booking">
                 <span lang="en">Booking</span>
                 <span lang="th">จองคิว</span> 
             </a>
