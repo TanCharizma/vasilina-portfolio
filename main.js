@@ -30,9 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
             toReveal.sort((a, b) => {
                 const rectA = a.boundingClientRect;
                 const rectB = b.boundingClientRect;
-                if (Math.abs(rectA.top - rectB.top) > 100) {
-                    return rectA.top - rectB.top;
-                }
+                // Safe quantization (50px buckets) to prevent transitivity cycles in the sorting engine
+                const aRow = Math.round(rectA.top / 50);
+                const bRow = Math.round(rectB.top / 50);
+                if (aRow !== bRow) return aRow - bRow;
                 return rectA.left - rectB.left;
             });
         }
@@ -327,9 +328,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentSectionImages = Array.from(parentSection.querySelectorAll('img'))
                     .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons') && !i.closest('.split-layout'))
                     .sort((a, b) => {
-                        const topDiff = a.getBoundingClientRect().top - b.getBoundingClientRect().top;
-                        // Transitive, robust sorting: strictly top-to-bottom. Fallback to left-to-right only if perfectly aligned.
-                        return Math.abs(topDiff) > 1 ? topDiff : a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+                        const aRect = a.getBoundingClientRect();
+                        const bRect = b.getBoundingClientRect();
+                        // 100% mathematically transitive visual sorting. 
+                        // Groups elements into 10px vertical buckets to safely sort rows left-to-right without causing array scrambling.
+                        const aRow = Math.round(aRect.top / 10);
+                        const bRow = Math.round(bRect.top / 10);
+                        return aRow !== bRow ? aRow - bRow : aRect.left - bRect.left;
                     });
                 
                 // Prep image state BEFORE making modal visible to prevent 1-frame flashes
