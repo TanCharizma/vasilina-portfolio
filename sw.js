@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vasilina-portfolio-v12';
+const CACHE_NAME = 'vasilina-portfolio-v19';
 
 // Core files to cache instantly when the site first loads
 const CORE_ASSETS = [

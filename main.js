@@ -135,11 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
             Promise.all([minSplashTime, heroImageLoad]).then(() => {
                 splashScreen.classList.add('hidden');
                 triggerHeroEntrance(); // Syncs hero elements precisely with splash fade
-                setTimeout(() => {
-                    document.documentElement.classList.remove('scroll-locked');
-                    document.documentElement.style.overflow = '';
-                    document.body.style.overflow = ''; // Unlock scrolling
-                }, 200); // Tightened further to 200ms (early-crossfade) for an aggressively snappy entrance
+                // Unlock scrolling at the exact same time the splash screen starts fading for a seamless transition
+                document.documentElement.classList.remove('scroll-locked');
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
             });
         } else {
             heroImageLoad.then(triggerHeroEntrance);
@@ -277,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (isOpening) {
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
-                                modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                                modalImg.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease';
                                 modalImg.style.transform = `translate(-50%, -50%) scale(1)`;
                                 modalImg.style.opacity = '1';
                             });
@@ -336,9 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalImg.style.transform = 'translate(-50%, -50%) scale(0.95)';
                 modalImg.style.opacity = '0';
                 
+                lockScroll();
                 modal.classList.add('show-modal');
                 updateModal(currentSectionImages.indexOf(img), 0, true);
-                lockScroll();
             });
         });
 
@@ -441,13 +440,13 @@ document.addEventListener('DOMContentLoaded', () => {
             compCardImg.style.transform = 'translate(-50%, -50%) scale(0.95)';
             compCardImg.style.opacity = '0';
             
-            compCardModal.classList.add('show-modal');
             lockScroll();
+            compCardModal.classList.add('show-modal');
             
             const playCompCardAnimation = () => {
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
-                        compCardImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                        compCardImg.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease';
                         compCardImg.style.transform = 'translate(-50%, -50%) scale(1)';
                         compCardImg.style.opacity = '1';
                     });

@@ -9,8 +9,8 @@
         <div class="container">
             <div class="footer-column">
                 <p class="footer-label">Vasilina Panina</p>
-                <p lang="en" style="opacity: 0.5; text-transform: none; letter-spacing: 0; line-height: 1.8; max-width: 280px;">Editorial model and creative director based in Bangkok. Experienced, intuitive, and passionate about the craft.</p>
-                <p lang="th" style="opacity: 0.5; text-transform: none; letter-spacing: 0; line-height: 1.8; max-width: 280px;">นางแบบและครีเอทีฟไดเรกเตอร์ผู้มากประสบการณ์ในวงการแฟชั่นระดับสากล ปัจจุบันประจำอยู่ที่กรุงเทพฯ</p>
+                <p lang="en" style="opacity: 0.7; text-transform: none; letter-spacing: 0; line-height: 1.8; max-width: 280px;">Editorial model and creative director based in Bangkok. Experienced, intuitive, and passionate about the craft.</p>
+                <p lang="th" style="opacity: 0.7; text-transform: none; letter-spacing: 0; line-height: 1.8; max-width: 280px;">นางแบบและครีเอทีฟไดเรกเตอร์ผู้มากประสบการณ์ในวงการแฟชั่นระดับสากล ปัจจุบันประจำอยู่ที่กรุงเทพฯ</p>
             </div>
             <div class="footer-column">
                 <p class="footer-label" lang="en">Inquiries</p>
