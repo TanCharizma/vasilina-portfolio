@@ -326,16 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const parentSection = img.closest('section');
                 currentSectionImages = Array.from(parentSection.querySelectorAll('img'))
-                    .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons') && !i.closest('.split-layout'))
-                    .sort((a, b) => {
-                        const aRect = a.getBoundingClientRect();
-                        const bRect = b.getBoundingClientRect();
-                        // 100% mathematically transitive visual sorting. 
-                        // Groups elements into 10px vertical buckets to safely sort rows left-to-right without causing array scrambling.
-                        const aRow = Math.round(aRect.top / 10);
-                        const bRow = Math.round(bRect.top / 10);
-                        return aRow !== bRow ? aRow - bRow : aRect.left - bRect.left;
-                    });
+                    .filter(i => !i.classList.contains('brand-logo') && !i.src.includes('brand_icons') && !i.closest('.split-layout'));
                 
                 // Prep image state BEFORE making modal visible to prevent 1-frame flashes
                 modalImg.style.transition = 'none';
