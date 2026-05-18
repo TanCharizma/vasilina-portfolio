@@ -177,6 +177,9 @@ a:hover { opacity: 0.7; transition-delay: 0.1s; }
     text-transform: uppercase;
     letter-spacing: 0.2em;
     animation: splashEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform, opacity, filter;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 @keyframes splashEntrance {
