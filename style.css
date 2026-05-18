@@ -794,7 +794,7 @@ section {
     overflow: hidden;
 }
 
-.video-grid video, .video-grid iframe {
+.video-grid video, .video-grid iframe, .video-grid wistia-player {
     width: 100%;
     aspect-ratio: 16 / 9;
     background-color: var(--surface);
@@ -805,7 +805,7 @@ section {
     transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.video-item:hover iframe, .video-item:hover video {
+.video-item:hover iframe, .video-item:hover video, .video-item:hover wistia-player {
     opacity: 0.9;
     -webkit-transform: scale(1.02);
     transform: scale(1.02);

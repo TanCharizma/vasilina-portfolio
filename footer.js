@@ -16,7 +16,7 @@
                 <p class="footer-label" lang="en">Inquiries</p>
                 <p class="footer-label" lang="th">ติดต่อสอบถาม</p>
                 <a href="mailto:vasilina@fashion.com">vasilina.panina2100@gmail.com</a>
-                <a href="/booking">Booking & Availability</a>
+                <a href="/booking.html">Booking & Availability</a>
             </div>
             <div class="footer-column">
                 <p class="footer-label" lang="en">Follow</p>

@@ -92,11 +92,11 @@
                     </a>
                 </div>
             </div>
-            <a href="/about">
+            <a href="/about.html">
                 <span lang="en">About</span>
                 <span lang="th">เกี่ยวกับฉัน</span>
             </a>
-            <a href="/booking">
+            <a href="/booking.html">
                 <span lang="en">Booking</span>
                 <span lang="th">จองคิว</span> 
             </a>
