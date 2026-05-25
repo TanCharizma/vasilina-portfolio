@@ -373,16 +373,47 @@
                         e.preventDefault();
                         
                         const executeScroll = () => {
-                            // Calculate target destination ONCE to prevent layout thrashing and freezing
-                            let targetY = Math.max(0, targetElement.getBoundingClientRect().top + window.scrollY - 64);
-        
-                            // Use native CSS smooth scrolling for hardware-accelerated, buttery smooth performance
-                            window.scrollTo({
-                                top: targetY,
-                                behavior: 'smooth'
-                            });
-                            
                             history.replaceState(null, null, targetId);
+
+                            // Actively track and seamlessly correct the scroll destination if lazy images push the layout down
+                            let isUserScrolling = false;
+                            const stopCorrection = () => isUserScrolling = true;
+                            ['wheel', 'touchstart', 'mousedown', 'keydown'].forEach(evt => {
+                                window.addEventListener(evt, stopCorrection, { once: true, passive: true });
+                            });
+
+                            let currentY = window.scrollY;
+                            let lastTime = performance.now();
+
+                            const scrollLoop = (time) => {
+                                if (isUserScrolling) return;
+
+                                const dt = time - lastTime;
+                                lastTime = time;
+
+                                // Continuously calculate the target destination in case lazy images expand above it
+                                const targetY = targetElement.getBoundingClientRect().top + window.scrollY - 64;
+                                const diff = targetY - currentY;
+
+                                if (Math.abs(diff) < 1) {
+                                    window.scrollTo(0, targetY);
+                                    return;
+                                }
+
+                                // Framerate-independent lerp (Linear Interpolation) for buttery smooth gliding
+                                // This natively absorbs layout shifts without glitching the native scrolling engine
+                                const lerpFactor = 1 - Math.exp(-0.002 * dt); // Lower number = slower, softer glide
+                                currentY += diff * lerpFactor;
+                                
+                                window.scrollTo(0, currentY);
+
+                                requestAnimationFrame(scrollLoop);
+                            };
+
+                            requestAnimationFrame((time) => {
+                                lastTime = time;
+                                scrollLoop(time);
+                            });
                         };
 
                         if (navElement.classList.contains('nav-open')) {
