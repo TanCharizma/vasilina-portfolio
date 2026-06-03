@@ -26,7 +26,7 @@
             </div>
             <div class="footer-bottom">
                 <div>&copy; ${currentYear} Vasilina Panina Portfolio. All rights reserved.</div>
-                <div class="attribution">Design & Development by <a href="mailto:tanpkh97@gmail.com" class="designer-link">Tan Patipan</a></div>
+                <div class="attribution">Crafted by <a href="https://thefoliolab.vercel.app/" class="designer-link">The Folio Lab</a></div>
             </div>
         </div>
     </footer>`;
