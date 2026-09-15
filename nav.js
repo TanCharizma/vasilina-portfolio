@@ -3,6 +3,7 @@
  * Injects the global navigation into the page and handles dynamic states.
  */
 (function() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isHomePage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
     const currentPage = window.location.pathname.split('/').pop(); // e.g., "about.html"
 
@@ -71,24 +72,24 @@
                 </a>
                 <div class="dropdown-content">
                     <a href="${isHomePage ? '#highlights' : '/#highlights'}">
-                        <span lang="en">Highlights</span>
-                        <span lang="th">ไฮไลต์</span>
+                        <span lang="en">Selected Stories</span>
+                        <span lang="th">ผลงานคัดสรร</span>
+                    </a>
+                    <a href="${isHomePage ? '#measurements' : '/#measurements'}">
+                        <span lang="en">Professional Record</span>
+                        <span lang="th">ข้อมูลการทำงาน</span>
                     </a>
                     <a href="${isHomePage ? '#portfolio' : '/#portfolio'}">
-                        <span lang="en">Portfolio</span>
+                        <span lang="en">The Work</span>
                         <span lang="th">ผลงาน</span>
                     </a>
                     <a href="${isHomePage ? '#motion' : '/#motion'}">
-                        <span lang="en">Videos</span>
-                        <span lang="th">วิดีโอ</span>
-                    </a>
-                    <a href="${isHomePage ? '#measurements' : '/#measurements'}">
-                        <span lang="en">Measurements</span>
-                        <span lang="th">สัดส่วน</span>
+                        <span lang="en">In Motion</span>
+                        <span lang="th">ภาพเคลื่อนไหว</span>
                     </a>
                     <a href="${isHomePage ? '#digitals' : '/#digitals'}">
                         <span lang="en">Digitals</span>
-                        <span lang="th">สแนปช็อต</span>
+                        <span lang="th">ดิจิทัลส์</span>
                     </a>
                 </div>
             </div>
@@ -120,6 +121,43 @@
 
     // After injection, get the nav element
     const navElement = document.querySelector('nav');
+    const dropdown = navElement.querySelector('.dropdown');
+    const dropdownTrigger = navElement.querySelector('.dropdown-trigger');
+    let dropdownExitedAfterDismissal = false;
+
+    const setDropdownExpanded = (expanded) => {
+        if (dropdownTrigger) dropdownTrigger.setAttribute('aria-expanded', String(expanded));
+    };
+
+    const closeDropdown = () => {
+        dropdown?.classList.add('dropdown-dismissed');
+        dropdownExitedAfterDismissal = false;
+        setDropdownExpanded(false);
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    };
+
+    dropdown?.addEventListener('mouseenter', () => {
+        if (dropdown.classList.contains('dropdown-dismissed')) {
+            if (!dropdownExitedAfterDismissal) return;
+            dropdown.classList.remove('dropdown-dismissed');
+            dropdownExitedAfterDismissal = false;
+        }
+        setDropdownExpanded(true);
+    });
+    dropdown?.addEventListener('mouseleave', () => {
+        if (dropdown.classList.contains('dropdown-dismissed')) {
+            dropdownExitedAfterDismissal = true;
+        }
+        setDropdownExpanded(false);
+    });
+    dropdown?.addEventListener('focusin', () => setDropdownExpanded(true));
+    dropdown?.addEventListener('focusout', (event) => {
+        if (!dropdown.contains(event.relatedTarget)) setDropdownExpanded(false);
+    });
+
+    dropdown?.querySelectorAll('.dropdown-content a').forEach(link => {
+        link.addEventListener('click', closeDropdown);
+    });
 
     // --- NATIVE APP TRANSITION LOGIC ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -141,9 +179,11 @@
         if ((!isHomePage || isInternalNav) && curtain) {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    curtain.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s';
+                    curtain.style.transition = prefersReducedMotion
+                        ? 'none'
+                        : 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s';
                     curtain.classList.remove('start-covered', 'curtain-cover');
-                    document.body.classList.add('page-entrance');
+                    if (!prefersReducedMotion) document.body.classList.add('page-entrance');
                 });
             });
         }
@@ -166,6 +206,11 @@
             if (currentPath === targetPath) return;
 
             e.preventDefault();
+
+            if (prefersReducedMotion) {
+                window.location.href = href;
+                return;
+            }
 
             // Store navigation intent for the next page load
             sessionStorage.setItem('internalNav', 'true');
@@ -202,7 +247,9 @@
 
     // Handle active class for non-homepage links
     if (!isHomePage) {
-        const currentLink = navElement.querySelector(`a[href="${currentPage}"]`);
+        const currentLink = Array.from(navElement.querySelectorAll('.nav-links > a')).find(link => {
+            return new URL(link.href, window.location.origin).pathname === window.location.pathname;
+        });
         if (currentLink) {
             currentLink.classList.add('active');
         }
@@ -217,6 +264,13 @@
 
     // Mobile Menu Logic
     const mobileToggle = navElement.querySelector('#mobileToggle');
+    const closeMobileMenu = () => {
+        navElement.classList.remove('nav-open');
+        document.documentElement.classList.remove('scroll-locked');
+        document.body.style.overflow = '';
+        if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
+    };
+
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
             navElement.classList.toggle('nav-open');
@@ -231,27 +285,46 @@
             mobileToggle.setAttribute('aria-expanded', isOpen);
         });
 
+        mobileToggle.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                mobileToggle.click();
+            }
+        });
+
         // Close menu when a link is clicked
         navElement.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', () => {
-                const href = link.getAttribute('href');
-                // If it's a home page hash link, let the interceptor handle the closing to prevent iOS GPU panic
-                if (isHomePage && href && href.startsWith('#')) return;
-
-                navElement.classList.remove('nav-open');
-                document.documentElement.classList.remove('scroll-locked');
-                document.body.style.overflow = '';
-                mobileToggle.setAttribute('aria-expanded', 'false');
+                closeDropdown();
+                closeMobileMenu();
             });
+        });
+
+        let menuTouchStartX = 0;
+        let menuTouchStartY = 0;
+        const menuPanel = navElement.querySelector('.nav-links');
+
+        menuPanel.addEventListener('touchstart', (event) => {
+            if (event.touches.length !== 1) return;
+            menuTouchStartX = event.touches[0].clientX;
+            menuTouchStartY = event.touches[0].clientY;
+        }, { passive: true });
+
+        menuPanel.addEventListener('touchend', (event) => {
+            if (!navElement.classList.contains('nav-open')) return;
+            const deltaX = event.changedTouches[0].clientX - menuTouchStartX;
+            const deltaY = event.changedTouches[0].clientY - menuTouchStartY;
+            if (deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) closeMobileMenu();
+        }, { passive: true });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && navElement.classList.contains('nav-open')) closeMobileMenu();
         });
 
         // Cleanup: Ensure body scroll is restored if window is resized while menu is open
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1024 && navElement.classList.contains('nav-open')) {
-                navElement.classList.remove('nav-open');
-                document.documentElement.classList.remove('scroll-locked');
-                document.body.style.overflow = '';
-                mobileToggle.setAttribute('aria-expanded', 'false');
+                closeMobileMenu();
             }
         });
     }
@@ -282,6 +355,7 @@
 
     // Language Switching Logic
     const setLanguage = (lang) => {
+        document.documentElement.lang = lang;
         if (lang === 'th') {
             document.body.classList.add('lang-th');
         } else {
@@ -293,11 +367,22 @@
     navElement.querySelector('.lang-switch .en').addEventListener('click', () => setLanguage('en'));
     navElement.querySelector('.lang-switch .th').addEventListener('click', () => setLanguage('th'));
 
+    navElement.querySelector('#langToggle').addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        setLanguage(document.documentElement.lang === 'th' ? 'en' : 'th');
+    });
+    themeToggle.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        themeToggle.click();
+    });
+
     // Initialize language on load
     setLanguage(localStorage.getItem('preferredLang') || 'en');
 
     // Custom Editorial Cursor
-    if (window.matchMedia("(hover: hover)").matches) {
+    if (window.matchMedia("(hover: hover)").matches && !prefersReducedMotion) {
         const cursor = document.createElement('div');
         cursor.className = 'cursor-dot';
         document.body.appendChild(cursor);
@@ -309,14 +394,25 @@
         let cursorY = mouseY;
         let isCursorClicked = false;
         let currentScale = 1;
+        const interactiveSelector = 'a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img:not(#img01):not(.brand-logo):not([src*="brand_icons"]):not(.about-image img), .mobile-toggle';
+        let hoverFrame = 0;
+        const refreshCursorHover = () => {
+            if (hoverFrame) return;
+            hoverFrame = requestAnimationFrame(() => {
+                hoverFrame = 0;
+                const target = document.elementFromPoint(mouseX, mouseY);
+                cursor.classList.toggle('hover', cursorVisible && Boolean(target?.closest(interactiveSelector)));
+            });
+        };
 
         window.addEventListener('mousemove', (e) => {
             if (!cursorVisible) {
-                cursor.style.opacity = '1';
+                cursor.style.opacity = 'var(--cursor-opacity, 1)';
                 cursorVisible = true;
             }
             mouseX = e.clientX;
             mouseY = e.clientY;
+            refreshCursorHover();
         });
 
         document.addEventListener('mousedown', () => isCursorClicked = true);
@@ -333,28 +429,24 @@
         };
         requestAnimationFrame(renderCursor);
 
-        // Event delegation for hover states
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.closest('a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img:not(.brand-logo):not([src*="brand_icons"]), .mobile-toggle')) {
-                cursor.classList.add('hover');
-            }
-        });
-        
-        document.addEventListener('mouseout', (e) => {
-            // Only remove hover if we are actually leaving the interactive element entirely
-            if (!e.relatedTarget || !e.relatedTarget.closest('a, button, .dropdown-trigger, .lang-switch span, .theme-toggle, .back-to-top, .modal-nav, img:not(.brand-logo):not([src*="brand_icons"]), .mobile-toggle')) {
-                cursor.classList.remove('hover');
-            }
-        });
+        // Overlays and scrolling can change the target without moving the pointer.
+        document.addEventListener('mouseover', refreshCursorHover);
+        document.addEventListener('mouseout', refreshCursorHover);
+        document.addEventListener('click', refreshCursorHover);
+        document.addEventListener('portfolio:overlaychange', refreshCursorHover);
+        document.addEventListener('scroll', refreshCursorHover, { passive: true, capture: true });
+        window.addEventListener('resize', refreshCursorHover);
 
         document.addEventListener('mouseleave', () => {
             cursor.style.opacity = '0';
             cursorVisible = false;
+            cursor.classList.remove('hover');
         });
         
         document.addEventListener('mouseenter', () => {
-            cursor.style.opacity = '1';
+            cursor.style.opacity = 'var(--cursor-opacity, 1)';
             cursorVisible = true;
+            refreshCursorHover();
         });
     }
 
@@ -367,13 +459,21 @@
                 
                 anchor.addEventListener('click', function(e) {
                     const targetId = this.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
+                    if (!targetId || targetId === '#') return;
+
+                    const targetElement = document.getElementById(decodeURIComponent(targetId.slice(1)));
                     
                     if (targetElement) {
                         e.preventDefault();
                         
                         const executeScroll = () => {
                             history.replaceState(null, null, targetId);
+
+                            if (prefersReducedMotion) {
+                                const targetY = targetElement.getBoundingClientRect().top + window.scrollY - 64;
+                                window.scrollTo(0, targetY);
+                                return;
+                            }
 
                             // Actively track and seamlessly correct the scroll destination if lazy images push the layout down
                             let isUserScrolling = false;
@@ -417,9 +517,7 @@
                         };
 
                         if (navElement.classList.contains('nav-open')) {
-                            navElement.classList.remove('nav-open');
-                            document.documentElement.classList.remove('scroll-locked');
-                            document.body.style.overflow = '';
+                            closeMobileMenu();
                             // Delay scroll by 100ms to prevent iOS Safari compositor crash after body unlock reflow
                             setTimeout(executeScroll, 100);
                         } else {

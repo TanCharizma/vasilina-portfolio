@@ -1,0 +1,35 @@
+// Optional captions keyed by image path. Omit an entry to show the image without a caption.
+window.IMAGE_MODAL_CONFIG = {
+    showCaptions: true,
+    captions: {
+        'image/highlights/01.webp': { en: 'Ornament', th: 'เครื่องประดับ' },
+        'image/highlights/IMG_1733.webp': { en: 'Form', th: 'รูปทรง' },
+        'image/highlights/IMG_0470.WEBP': { en: 'Gesture', th: 'จังหวะ' },
+        'image/highlights/04.webp': { en: 'After dark', th: 'หลังค่ำคืน' },
+        'image/portfolio/01.webp': { en: 'Close-up portrait', th: 'พอร์ตเทรตระยะใกล้' },
+        'image/portfolio/02.webp': { en: 'A reclining portrait in blue', th: 'พอร์ตเทรตในชุดสีฟ้า' },
+        'image/portfolio/03.webp': { en: 'A western-inspired fashion story', th: 'แฟชั่นในบรรยากาศเวสเทิร์น' },
+        'image/portfolio/04.webp': { en: 'Beauty in red', th: 'บิวตี้ในโทนสีแดง' },
+        'image/portfolio/05.webp': { en: 'Red against pink', th: 'สีแดงบนฉากสีชมพู' },
+        'image/portfolio/06.webp': { en: 'A natural portrait', th: 'พอร์ตเทรตในลุคธรรมชาติ' },
+        'image/portfolio/07.webp': { en: 'A study in white', th: 'รายละเอียดในชุดสีขาว' },
+        'image/portfolio/08.webp': { en: 'The white dress', th: 'เดรสสีขาว' },
+        'image/portfolio/09.webp': { en: 'Beauty portrait', th: 'ภาพบิวตี้' },
+        'image/portfolio/10.webp': { en: 'Roses and reflection', th: 'กุหลาบและเงาสะท้อน' },
+        'image/portfolio/11.webp': { en: 'A fashion story in red', th: 'แฟชั่นในโทนสีแดง' },
+        'image/portfolio/12.webp': { en: 'A closer look', th: 'มองใกล้อีกนิด' },
+        'image/portfolio/13.webp': { en: 'At the cafe', th: 'ที่คาเฟ่' },
+        'image/portfolio/14.webp': { en: 'Sunglasses, close-up', th: 'แว่นกันแดดในระยะใกล้' },
+        'image/portfolio/15.webp': { en: 'A monochrome look', th: 'ลุคโมโนโครม' },
+        'image/portfolio/16.webp': { en: 'An afternoon outdoors', th: 'ยามบ่ายกลางแจ้ง' },
+        'image/portfolio/17.webp': { en: 'An outdoor portrait', th: 'พอร์ตเทรตกลางแจ้ง' },
+        'image/portfolio/18.webp': { en: 'Backstage', th: 'หลังเวที' },
+        'image/portfolio/19.webp': { en: 'On the runway', th: 'บนรันเวย์' },
+        'image/portfolio/20.webp': { en: 'Butterflies and colour', th: 'ผีเสื้อและสีสัน' },
+        'image/portfolio/21.webp': { en: 'Yellow and blue', th: 'สีเหลืองและสีฟ้า' },
+        'image/digitals/01.webp': { en: 'Digitals / Front portrait', th: 'ดิจิทัลส์ / ใบหน้าตรง' },
+        'image/digitals/02.webp': { en: 'Digitals / Angled portrait', th: 'ดิจิทัลส์ / ใบหน้ามุมเฉียง' },
+        'image/digitals/03.webp': { en: 'Digitals / Three-quarter length', th: 'ดิจิทัลส์ / ภาพสามส่วน' },
+        'image/digitals/04.webp': { en: 'Digitals / Full length', th: 'ดิจิทัลส์ / เต็มตัว' }
+    }
+};

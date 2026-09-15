@@ -12,6 +12,7 @@ if ('serviceWorker' in navigator) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     // Cache viewport height globally for scroll calculations
     let vh = window.innerHeight;
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rootMargin: "0px 0px -200px 0px"
     };
 
-    const revealObserver = new IntersectionObserver((entries) => {
+    const revealObserver = prefersReducedMotion ? null : new IntersectionObserver((entries) => {
         let toReveal = entries.filter(e => e.isIntersecting && !e.target.classList.contains('active'));
 
         if (toReveal.length > 1) {
@@ -76,7 +77,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ? document.querySelectorAll('.reveal:not(.hero .reveal)') 
         : document.querySelectorAll('.reveal');
         
-    revealTargets.forEach(el => revealObserver.observe(el));
+    revealTargets.forEach(el => {
+        if (prefersReducedMotion) {
+            el.style.transitionDelay = '0s';
+            el.classList.add('active');
+        } else {
+            revealObserver.observe(el);
+        }
+    });
 
 
     // --- 2. HOMEPAGE SPECIFIC LOGIC ---
@@ -107,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Determine correct hero image path based on version
         const heroImgUrl = heroBg.style.backgroundImage.includes('placeholder-hero') 
             ? 'image/placeholder-hero.webp' 
-            : 'image/hero/hero.webp';
+            : 'image/hero/hero.webp?v=110';
             
         const heroImgLoader = new Image();
         heroImgLoader.src = heroImgUrl;
@@ -146,27 +154,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    const scrollOffset = window.scrollY;
-                    if (scrollOffset <= vh) {
-                        if (scrollOffset > 0 && heroBg.style.animation !== 'none') { heroBg.style.animation = 'none'; }
-                        if (window.innerWidth > 768) {
-                            const scale = 1 + (scrollOffset / vh) * 0.4; 
-                            const parallax = scrollOffset * 0.15;
-                            heroBg.style.transform = `scale(${scale}) translate3d(0, ${parallax}px, 0)`;
-                        } else {
-                            const scale = 1 + (scrollOffset / vh) * 0.15;
-                            heroBg.style.transform = `scale(${scale}) translateZ(0)`;
+        if (!prefersReducedMotion) {
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        const scrollOffset = window.scrollY;
+                        if (scrollOffset <= vh) {
+                            if (scrollOffset > 0 && heroBg.style.animation !== 'none') { heroBg.style.animation = 'none'; }
+                            if (window.innerWidth > 768) {
+                                const scale = 1 + (scrollOffset / vh) * 0.4;
+                                const parallax = scrollOffset * 0.15;
+                                heroBg.style.transform = `scale(${scale}) translate3d(0, ${parallax}px, 0)`;
+                            } else {
+                                const scale = 1 + (scrollOffset / vh) * 0.15;
+                                heroBg.style.transform = `scale(${scale}) translateZ(0)`;
+                            }
                         }
-                        heroContent.style.opacity = Math.max(0, 1 - (scrollOffset / (vh * 0.6)));
-                    }
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        }, { passive: true });
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+        }
+    }
+
+    // Fade each opening and its cue together, including after restored scroll positions.
+    const openingContent = document.querySelector('.hero-content, .about-opening .opening-grid');
+    const scrollCue = document.querySelector('.scroll-cue');
+    if (openingContent && scrollCue && !prefersReducedMotion) {
+        let fadeFrame = 0;
+        const updateOpeningFade = () => {
+            fadeFrame = 0;
+            const opacity = Math.max(0, Math.min(1, 1 - window.scrollY / (vh * 0.6)));
+            openingContent.style.opacity = opacity;
+            scrollCue.style.opacity = opacity;
+            scrollCue.style.pointerEvents = opacity === 0 ? 'none' : '';
+            scrollCue.tabIndex = opacity === 0 ? -1 : 0;
+        };
+        const scheduleOpeningFade = () => {
+            if (!fadeFrame) fadeFrame = requestAnimationFrame(updateOpeningFade);
+        };
+        window.addEventListener('scroll', scheduleOpeningFade, { passive: true });
+        window.addEventListener('resize', scheduleOpeningFade, { passive: true });
+        window.addEventListener('pageshow', scheduleOpeningFade);
+        updateOpeningFade();
     }
 
     // --- 3. BACK TO TOP LOGIC ---
@@ -191,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backToTop.style.opacity = '0';
             backToTop.style.pointerEvents = 'none';
             backToTop.classList.remove('visible');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
             clearInterval(scrollCheckInterval);
             clearTimeout(scrollTimeout);
 
@@ -234,14 +265,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SCROLL LOCK HELPER ---
     // Prevents the background layout from shifting when the scrollbar disappears
+    let lockedScrollY = 0;
     const lockScroll = () => {
-        // scrollbar-gutter: stable already handles the layout reservation natively
+        if (document.documentElement.classList.contains('scroll-locked')) return;
+        lockedScrollY = window.scrollY;
         document.documentElement.classList.add('scroll-locked');
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${lockedScrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
         document.body.style.overflow = 'hidden';
+        document.dispatchEvent(new Event('portfolio:overlaychange'));
     };
     const unlockScroll = () => {
+        const restoreY = lockedScrollY;
         document.documentElement.classList.remove('scroll-locked');
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
         document.body.style.overflow = '';
+        window.scrollTo(0, restoreY);
+        document.dispatchEvent(new Event('portfolio:overlaychange'));
     };
 
     // --- 4. IMAGE MODAL LOGIC (With Keyboard Support) ---
@@ -250,13 +297,90 @@ document.addEventListener('DOMContentLoaded', () => {
         const modalImg = document.getElementById("img01");
         let currentSectionImages = [];
         let currentImgIndex = 0;
+        let modalRevision = 0;
+        let closeResetTimer;
+        const caption = document.getElementById('imageModalCaption');
+        const captionEn = document.getElementById('imageModalCaptionEn');
+        const captionTh = document.getElementById('imageModalCaptionTh');
+        const captionToggle = document.getElementById('imageModalCaptionToggle');
+        const fullscreenToggle = document.getElementById('imageModalFullscreenToggle');
+        const modalFooter = document.getElementById('imageModalFooter');
+        let visitorCaptionsEnabled = true;
+        let openingImage = null;
+        let fullscreenRevision = 0;
+        try { visitorCaptionsEnabled = localStorage.getItem('imageCaptionsVisible') !== 'false'; } catch {}
+
+        const syncFooterHeight = () => {
+            const height = modalFooter && !modal.classList.contains('is-immersive')
+                ? Math.ceil(modalFooter.getBoundingClientRect().height) + 40 : 0;
+            modal.style.setProperty('--image-modal-footer-height', `${height}px`);
+        };
+        const updateCaption = (src) => {
+            if (!caption || !captionToggle) return;
+            const config = window.IMAGE_MODAL_CONFIG;
+            const path = new URL(src, location.href).pathname.replace(/^\/+/, '');
+            const data = config?.captions?.[path];
+            const available = config?.showCaptions === true && Boolean(data?.en || data?.th);
+            captionToggle.hidden = !available;
+            captionToggle.setAttribute('aria-pressed', String(visitorCaptionsEnabled));
+            captionToggle.querySelector('[lang="en"]').textContent = visitorCaptionsEnabled ? 'Captions: On' : 'Captions: Off';
+            captionToggle.querySelector('[lang="th"]').textContent = visitorCaptionsEnabled ? 'คำบรรยาย: เปิด' : 'คำบรรยาย: ปิด';
+            captionEn.textContent = available ? data.en || data.th : '';
+            captionTh.textContent = available ? data.th || data.en : '';
+            caption.hidden = !available || !visitorCaptionsEnabled;
+            syncFooterHeight();
+        };
+        const syncImmersive = () => {
+            fullscreenToggle?.setAttribute('aria-pressed', String(modal.classList.contains('is-immersive')));
+            syncFooterHeight();
+            document.dispatchEvent(new Event('portfolio:overlaychange'));
+        };
+        const exitImmersive = () => {
+            fullscreenRevision++;
+            modal.classList.remove('is-immersive');
+            if (document.fullscreenElement === modal) document.exitFullscreen?.().catch(() => {});
+            syncImmersive();
+            if (modal.classList.contains('show-modal')) fullscreenToggle?.focus({ preventScroll: true });
+        };
+        const enterImmersive = async () => {
+            const revision = ++fullscreenRevision;
+            modal.classList.add('is-immersive');
+            modal.focus({ preventScroll: true });
+            syncImmersive();
+            try { await modal.requestFullscreen?.({ navigationUI: 'hide' }); } catch {}
+            if (revision !== fullscreenRevision || !modal.classList.contains('show-modal')) {
+                if (document.fullscreenElement === modal) document.exitFullscreen?.().catch(() => {});
+            }
+        };
+        modal.tabIndex = -1;
+        modalFooter?.addEventListener('click', e => e.stopPropagation());
+        captionToggle?.addEventListener('click', () => {
+            visitorCaptionsEnabled = !visitorCaptionsEnabled;
+            try { localStorage.setItem('imageCaptionsVisible', String(visitorCaptionsEnabled)); } catch {}
+            updateCaption(currentSectionImages[currentImgIndex].src);
+        });
+        fullscreenToggle?.addEventListener('click', enterImmersive);
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement !== modal && modal.classList.contains('is-immersive')) {
+                modal.classList.remove('is-immersive');
+                syncImmersive();
+                fullscreenToggle?.focus({ preventScroll: true });
+            }
+        });
+        if (window.ResizeObserver && modalFooter) new ResizeObserver(syncFooterHeight).observe(modalFooter);
+        window.addEventListener('resize', syncFooterHeight, { passive: true });
         
         const updateModal = (index, direction = 0, isOpening = false) => {
+            const revision = ++modalRevision;
+            const isCurrent = () => revision === modalRevision && modal.classList.contains('show-modal');
             const finalizeUpdate = () => {
+                if (!isCurrent()) return;
                 currentImgIndex = index;
                 const newSrc = currentSectionImages[currentImgIndex].src;
+                updateCaption(newSrc);
                 
                 const playAnimation = () => {
+                    if (!isCurrent()) return;
                     document.querySelector('.modal-prev').style.visibility = currentImgIndex === 0 ? 'hidden' : 'visible';
                     document.querySelector('.modal-next').style.visibility = currentImgIndex === currentSectionImages.length - 1 ? 'hidden' : 'visible';
                     
@@ -269,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Animate new image sliding into center
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
+                                if (!isCurrent()) return;
                                 modalImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
                                 modalImg.style.transform = `translate(-50%, -50%)`;
                                 modalImg.style.opacity = '1';
@@ -277,6 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (isOpening) {
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
+                                if (!isCurrent()) return;
                                 modalImg.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease';
                                 modalImg.style.transform = `translate(-50%, -50%) scale(1)`;
                                 modalImg.style.opacity = '1';
@@ -320,6 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
         galleryImages.forEach((img) => {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
+                clearTimeout(closeResetTimer);
+                openingImage = img;
                 // Freeze the hover state so it doesn't drop while the modal opens
                 img.classList.add('freeze-hover');
                 setTimeout(() => img.classList.remove('freeze-hover'), 600);
@@ -335,31 +463,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 lockScroll();
                 modal.classList.add('show-modal');
+                modal.setAttribute('aria-hidden', 'false');
                 updateModal(currentSectionImages.indexOf(img), 0, true);
+                modal.focus({ preventScroll: true });
             });
         });
 
-        document.querySelector('.modal-prev').onclick = (e) => { e.stopPropagation(); updateModal(currentImgIndex - 1, -1); };
-        document.querySelector('.modal-next').onclick = (e) => { e.stopPropagation(); updateModal(currentImgIndex + 1, 1); };
-        modalImg.onclick = (e) => e.stopPropagation();
+        document.querySelector('.modal-prev').onclick = (e) => { e.stopPropagation(); if (currentImgIndex > 0) updateModal(currentImgIndex - 1, -1); };
+        document.querySelector('.modal-next').onclick = (e) => { e.stopPropagation(); if (currentImgIndex < currentSectionImages.length - 1) updateModal(currentImgIndex + 1, 1); };
+        modalImg.onclick = (e) => { e.stopPropagation(); if (modal.classList.contains('is-immersive')) exitImmersive(); };
         
         const closeModal = () => {
+            if (!modal.classList.contains('show-modal')) return;
+            modalRevision++;
             modal.classList.remove('show-modal');
+            modal.setAttribute('aria-hidden', 'true');
+            exitImmersive();
             unlockScroll();
+            if (openingImage) {
+                const previousTabIndex = openingImage.getAttribute('tabindex');
+                openingImage.setAttribute('tabindex', '-1');
+                openingImage.focus({ preventScroll: true });
+                if (previousTabIndex === null) openingImage.removeAttribute('tabindex');
+                else openingImage.setAttribute('tabindex', previousTabIndex);
+            }
             // Clear transforms for next open
-            setTimeout(() => {
+            closeResetTimer = setTimeout(() => {
                 modalImg.style.transition = 'none';
                 modalImg.style.transform = 'translate(-50%, -50%)';
                 modalImg.style.opacity = '1';
             }, 300);
         };
         
-        modal.onclick = closeModal;
+        modal.onclick = () => modal.classList.contains('is-immersive') ? exitImmersive() : closeModal();
+        document.getElementById('imageModalClose')?.addEventListener('click', closeModal);
 
         // Added Keyboard UX for premium navigation
         document.addEventListener('keydown', (e) => {
             if (modal.classList.contains('show-modal')) {
-                if (e.key === 'Escape') closeModal();
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    modal.classList.contains('is-immersive') ? exitImmersive() : closeModal();
+                }
+                if (e.key === 'Tab') {
+                    const controls = Array.from(modal.querySelectorAll('button')).filter(button => !button.hidden && getComputedStyle(button).visibility !== 'hidden' && button.getClientRects().length);
+                    const index = controls.indexOf(document.activeElement);
+                    if (!controls.length) { e.preventDefault(); modal.focus(); }
+                    else if (e.shiftKey && index <= 0) { e.preventDefault(); controls.at(-1).focus(); }
+                    else if (!e.shiftKey && (index === -1 || index === controls.length - 1)) { e.preventDefault(); controls[0].focus(); }
+                }
                 if (e.key === 'ArrowLeft' && currentImgIndex > 0) updateModal(currentImgIndex - 1, -1);
                 if (e.key === 'ArrowRight' && currentImgIndex < currentSectionImages.length - 1) updateModal(currentImgIndex + 1, 1);
             }
@@ -367,36 +519,50 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Mobile Touch Swipe Navigation
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchCurrentX = 0;
+        let touchCurrentY = 0;
         let isSwiping = false;
 
         modal.addEventListener('touchstart', e => {
+            if (e.target.closest('.image-modal-footer, .modal-nav')) { isSwiping = false; return; }
             if (e.touches.length > 1) return; // Ignore multi-touch
             touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
             isSwiping = true;
             modalImg.style.transition = 'none'; // Lock to finger
         }, { passive: true });
 
         // Lock background scroll on mobile completely when touching the modal
         modal.addEventListener('touchmove', e => {
-            e.preventDefault();
             if (!isSwiping) return;
+            e.preventDefault();
             touchCurrentX = e.changedTouches[0].screenX;
+            touchCurrentY = e.changedTouches[0].screenY;
             const deltaX = touchCurrentX - touchStartX;
+            const deltaY = touchCurrentY - touchStartY;
             
-            // Elastic drag tracking
-            modalImg.style.transform = `translate(calc(-50% + ${deltaX * 0.6}px), -50%)`;
-            modalImg.style.opacity = Math.max(0.3, 1 - Math.abs(deltaX) / window.innerWidth);
+            if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
+                modalImg.style.transform = `translate(-50%, calc(-50% + ${deltaY * 0.45}px)) scale(${Math.max(0.94, 1 - deltaY / 1400)})`;
+                modalImg.style.opacity = Math.max(0.3, 1 - deltaY / window.innerHeight);
+            } else {
+                modalImg.style.transform = `translate(calc(-50% + ${deltaX * 0.6}px), -50%)`;
+                modalImg.style.opacity = Math.max(0.3, 1 - Math.abs(deltaX) / window.innerWidth);
+            }
         }, { passive: false });
 
         modal.addEventListener('touchend', e => {
             if (!isSwiping) return;
             isSwiping = false;
             const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
             const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
             const swipeThreshold = 50; // Required distance
 
-            if (deltaX < -swipeThreshold && currentImgIndex < currentSectionImages.length - 1) {
+            if (deltaY > 80 && Math.abs(deltaY) > Math.abs(deltaX)) {
+                closeModal();
+            } else if (deltaX < -swipeThreshold && currentImgIndex < currentSectionImages.length - 1) {
                 updateModal(currentImgIndex + 1, 1); // Swipe left -> Next
             } else if (deltaX > swipeThreshold && currentImgIndex > 0) {
                 updateModal(currentImgIndex - 1, -1); // Swipe right -> Prev
@@ -408,14 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { passive: true });
 
-        // Global Escape Key for Comp Card Modal
-        document.addEventListener('keydown', (e) => {
-            const compModal = document.getElementById('compCardModal');
-            if (e.key === 'Escape' && compModal && compModal.classList.contains('show-modal')) {
-                compModal.classList.remove('show-modal');
-                unlockScroll();
-            }
-        });
     }
 
     // --- 5. COMP CARD LOGIC ---
@@ -425,13 +583,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const compCardDownload = document.getElementById('compCardDownload');
 
     if (compCardBtn && compCardModal) {
-        // Lock background scroll for Comp Card Modal as well
+        let compTouchStartY = 0;
+        let compTouchCurrentY = 0;
+        let compRevision = 0;
+        let compCloseResetTimer;
+
+        const closeCompCard = () => {
+            if (!compCardModal.classList.contains('show-modal')) return;
+            compRevision++;
+            compCardModal.classList.remove('show-modal');
+            compCardModal.setAttribute('aria-hidden', 'true');
+            unlockScroll();
+            compCloseResetTimer = setTimeout(() => {
+                compCardImg.style.transition = 'none';
+                compCardImg.style.transform = 'translate(-50%, -50%)';
+                compCardImg.style.opacity = '1';
+            }, 300);
+        };
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && compCardModal.classList.contains('show-modal')) closeCompCard();
+        });
+
+        compCardModal.addEventListener('touchstart', e => {
+            if (e.touches.length !== 1) return;
+            compTouchStartY = e.changedTouches[0].screenY;
+            compCardImg.style.transition = 'none';
+        }, { passive: true });
+
         compCardModal.addEventListener('touchmove', e => {
             e.preventDefault();
+            compTouchCurrentY = e.changedTouches[0].screenY;
+            const deltaY = Math.max(0, compTouchCurrentY - compTouchStartY);
+            compCardImg.style.transform = `translate(-50%, calc(-50% + ${deltaY * 0.45}px)) scale(${Math.max(0.94, 1 - deltaY / 1400)})`;
+            compCardImg.style.opacity = Math.max(0.3, 1 - deltaY / window.innerHeight);
         }, { passive: false });
+
+        compCardModal.addEventListener('touchend', e => {
+            const deltaY = e.changedTouches[0].screenY - compTouchStartY;
+            if (deltaY > 80) {
+                closeCompCard();
+            } else {
+                compCardImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+                compCardImg.style.transform = 'translate(-50%, -50%) scale(1)';
+                compCardImg.style.opacity = '1';
+            }
+        }, { passive: true });
 
         compCardBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            clearTimeout(compCloseResetTimer);
+            const revision = ++compRevision;
             
             // Prep image state BEFORE making modal visible
             compCardImg.style.transition = 'none';
@@ -440,10 +642,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             lockScroll();
             compCardModal.classList.add('show-modal');
+            compCardModal.setAttribute('aria-hidden', 'false');
             
             const playCompCardAnimation = () => {
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
+                        if (revision !== compRevision || !compCardModal.classList.contains('show-modal')) return;
                         compCardImg.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease';
                         compCardImg.style.transform = 'translate(-50%, -50%) scale(1)';
                         compCardImg.style.opacity = '1';
@@ -455,11 +659,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         compCardModal.onclick = (e) => {
-            // Close if clicking the background, but don't close if clicking the image or download button
-            if (e.target !== compCardImg && !compCardDownload.contains(e.target)) {
-                compCardModal.classList.remove('show-modal');
-                unlockScroll();
-            }
+            if (e.target === compCardImg || compCardDownload?.contains(e.target)) return;
+            closeCompCard();
         };
     }
 });

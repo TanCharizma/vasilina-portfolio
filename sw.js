@@ -1,13 +1,18 @@
-const CACHE_NAME = 'vasilina-portfolio-v32';
+const CACHE_NAME = 'vasilina-portfolio-v114';
 
 // Core files to cache instantly when the site first loads
 const CORE_ASSETS = [
     '/',
     '/index.html',
-    '/style.css',
-    '/main.js',
-    '/nav.js',
-    '/footer.js'
+    '/about.html',
+    '/booking.html',
+    '/manifest.json',
+    '/style.css?v=114',
+    '/main.js?v=112',
+    '/image-captions.js?v=92',
+    '/nav.js?v=109',
+    '/footer.js?v=91',
+    '/image/hero/hero.webp?v=110'
 ];
 
 // 1. Install Event: Save core files

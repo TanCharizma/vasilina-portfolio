@@ -22,13 +22,13 @@
     <meta name="google-site-verification" content="kgK5_mxUsSC8v3XNiGDuVbtFHXO5dtaumYDYhYdDpqU" />
     <link rel="manifest" href="manifest.json">
     <title>Portfolio | Vasilina Panina</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=114">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,300;0,400;0,700;1,300;1,400&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Thai:wght@300;400;500&family=Playfair+Display:ital,wght@0,300;0,400;0,500;1,300;1,400&display=block" rel="stylesheet">
     <link rel="preconnect" href="https://player.vimeo.com">
     <link rel="preconnect" href="https://i.vimeocdn.com">
-    <link rel="preload" as="image" href="image/hero/hero.webp" fetchpriority="high">
+    <link rel="preload" as="image" href="image/hero/hero.webp?v=110" fetchpriority="high">
 
     <!-- JSON-LD Structured Data for Google -->
     <script type="application/ld+json">
@@ -46,191 +46,206 @@
     }
     </script>
 </head>
-<body>
+<body class="home-page">
 
     <!-- Luxury Splash Screen -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-logo">Vasilina Panina</div>
     </div>
 
-    <script src="nav.js"></script>
-    <header class="hero" id="hero">
+    <script src="nav.js?v=109"></script>
+    <header class="hero home-hero" id="hero">
         <div class="hero-bg"></div>
         <div class="hero-content">
-            <h1 class="reveal">VASILINA PANINA</h1>
-            <p class="hero-tagline reveal delay-1">
-                <span lang="en">Model · Creative Director</span>
-                <span lang="th">นางแบบ · ครีเอทีฟไดเรกเตอร์</span>
-            </p>
-            <div class="hero-btns reveal delay-2">
-                <a href="/booking.html" class="btn-primary" lang="en">Book Me</a>
-                <a href="/booking.html" class="btn-primary" lang="th">จองคิว</a>
-                <a href="#highlights" class="btn-secondary" lang="en">View Portfolio</a>
-                <a href="#highlights" class="btn-secondary" lang="th">ดูผลงาน</a>
+            <p class="hero-role reveal"><span lang="en">Model / Creative Director</span><span lang="th">นางแบบ / ครีเอทีฟไดเรกเตอร์</span></p>
+            <h1 class="reveal delay-1"><span>Vasilina</span><span>Panina</span></h1>
+            <p class="hero-tagline reveal delay-2"><span lang="en">Refined by experience. Defined by instinct.</span><span lang="th">ขัดเกลาด้วยประสบการณ์ นิยามด้วยสัญชาตญาณ</span></p>
+            <div class="hero-btns reveal delay-3">
+                <a href="#highlights" class="home-text-link"><span lang="en">View portfolio</span><span lang="th">ชมผลงาน</span></a>
+                <a href="/booking.html" class="home-text-link hero-booking-link"><span lang="en">Check availability</span><span lang="th">ตรวจสอบคิวงาน</span></a>
             </div>
         </div>
+        <a class="home-scroll-cue scroll-cue" href="#point-of-view"><span lang="en">Scroll</span><span lang="th">เลื่อน</span><i aria-hidden="true"></i></a>
     </header>
 
-    <!-- SECTION 2: Highlights (4 Images) -->
-    <section id="highlights">
-        <div class="container">
-            <p class="section-label reveal reveal-fade">
-                <span lang="en">Highlights</span>
-                <span lang="th">ไฮไลต์</span>
-            </p>
-            <div style="grid-column: span 12;">
-                <div class="featured-grid">
-                    <div class="featured-item reveal reveal-scale"><img src="image/highlights/01.webp" alt="Vasilina Panina luxury fashion editorial model Bangkok" loading="lazy" decoding="async"></div>
-                    <div class="featured-item reveal reveal-scale"><img src="image/highlights/IMG_1733.webp" alt="Editorial modeling photography featuring Vasilina Panina in Thailand" loading="lazy" decoding="async"></div>
-                    <div class="featured-item reveal reveal-scale"><img src="image/highlights/IMG_0470.WEBP" alt="Creative direction and avant-garde fashion modeling by Vasilina Panina" loading="lazy" decoding="async"></div>
-                    <div class="featured-item reveal reveal-scale"><img src="image/highlights/04.webp" alt="High-end fashion editorial shoot with model Vasilina Panina" loading="lazy" decoding="async"></div>
+    <section id="point-of-view" class="home-manifesto">
+        <div class="home-shell manifesto-grid">
+            <p class="home-index reveal"><span lang="en">Vasilina</span><span lang="th">วาซิลินา</span></p>
+            <div class="manifesto-copy">
+                <p class="manifesto-lead reveal"><span lang="en">Presence is not a pose.<br>It is a point of view.</span><span lang="th">ตัวตนไม่ใช่เพียงท่วงท่า<br>แต่คือมุมมองที่อยู่เบื้องหลัง</span></p>
+                <div class="manifesto-detail reveal delay-1">
+                    <p lang="en">I’m a Bangkok-based model and creative director working across fashion, editorial, and image-led collaborations.</p>
+                    <p lang="th">ฉันเป็นนางแบบและครีเอทีฟไดเรกเตอร์ที่ประจำอยู่ในกรุงเทพฯ ทำงานด้านแฟชั่น งานบรรณาธิการ และการร่วมสร้างสรรค์ผ่านภาพ</p>
+                    <a href="/about.html" class="home-text-link"><span lang="en">Read my story</span><span lang="th">อ่านเรื่องราวของฉัน</span></a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECTION 2.5: Selected Clients -->
-    <section id="selected-clients" style="padding: 0 0 96px 0;">
-        <div class="container">
-            <div style="grid-column: span 12; text-align: center;">
-                <h2 class="reveal" style="font-size: 12px; letter-spacing: 0.3em; margin-bottom: 48px; opacity: 0.7; font-weight: 400;">
-                    <span lang="en">Selected Clients</span>
-                    <span lang="th">ลูกค้าที่ร่วมงาน</span>
-                </h2>
-                <div class="reveal delay-1" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: clamp(32px, 6vw, 64px); opacity: 0.7;">
-                    <img src="image/brand_icons/vogue.webp" alt="VOGUE" class="brand-logo" style="height: clamp(16px, 3vw, 20px); width: auto; object-fit: contain; pointer-events: none;" loading="lazy" decoding="async">
-                    <img src="image/brand_icons/elle.webp" alt="ELLE" class="brand-logo" style="height: clamp(16px, 3vw, 20px); width: auto; object-fit: contain; pointer-events: none;" loading="lazy" decoding="async">
-                    <img src="image/brand_icons/cartier.webp" alt="CARTIER" class="brand-logo" style="height: clamp(16px, 3vw, 20px); width: auto; object-fit: contain; pointer-events: none;" loading="lazy" decoding="async">
-                    <img src="image/brand_icons/armani.webp" alt="ARMANI" class="brand-logo" style="height: clamp(16px, 3vw, 20px); width: auto; object-fit: contain; pointer-events: none;" loading="lazy" decoding="async">
-                    <img src="image/brand_icons/levi.webp" alt="LEVI'S" class="brand-logo" style="height: clamp(16px, 3vw, 20px); width: auto; object-fit: contain; pointer-events: none;" loading="lazy" decoding="async">
-                </div>
+    <section id="highlights" class="home-stories">
+        <div class="home-shell">
+            <div class="home-section-heading section-heading-quiet">
+                <p class="home-index reveal"><span lang="en">Selected work</span><span lang="th">ผลงานคัดสรร</span></p>
+            </div>
+            <div class="story-grid">
+                <figure class="story-frame story-frame-a reveal reveal-scale"><img src="image/highlights/01.webp" alt="Vasilina Panina in a rich red fashion editorial" loading="lazy" decoding="async"><figcaption><span lang="en">Ornament</span><span lang="th">เครื่องประดับ</span></figcaption></figure>
+                <figure class="story-frame story-frame-b reveal reveal-scale"><img src="image/highlights/IMG_1733.webp" alt="Vasilina Panina in a sculptural monochrome fashion editorial" loading="lazy" decoding="async"><figcaption><span lang="en">Form</span><span lang="th">รูปทรง</span></figcaption></figure>
+                <figure class="story-frame story-frame-c reveal reveal-scale"><img src="image/highlights/IMG_0470.WEBP" alt="Vasilina Panina in an expressive orange fashion story" loading="lazy" decoding="async"><figcaption><span lang="en">Gesture</span><span lang="th">จังหวะ</span></figcaption></figure>
+                <figure class="story-frame story-frame-d reveal reveal-scale"><img src="image/highlights/04.webp" alt="Vasilina Panina backstage in a black evening silhouette" loading="lazy" decoding="async"><figcaption><span lang="en">After dark</span><span lang="th">หลังค่ำคืน</span></figcaption></figure>
+            </div>
+        </div>
+    </section>
 
-                <!-- Subtle Comp Card Button -->
-                <div class="reveal delay-2" id="compCardContainer" style="text-align: center; margin-top: 64px;">
-                    <a href="#" id="compCardBtn" class="btn-bold">
-                        <span lang="en">View Comp Card</span>
-                        <span lang="th">ดูคอมพ์การ์ด</span>
-                    </a>
+    <section id="selected-clients" class="home-clients">
+        <div class="home-shell client-grid">
+            <p class="home-index reveal"><span lang="en">Selected clients</span><span lang="th">ลูกค้าที่ร่วมงาน</span></p>
+            <div class="client-logos reveal delay-1">
+                <img src="image/brand_icons/vogue.webp" alt="VOGUE" class="brand-logo" loading="lazy" decoding="async">
+                <img src="image/brand_icons/elle.webp" alt="ELLE" class="brand-logo" loading="lazy" decoding="async">
+                <img src="image/brand_icons/cartier.webp" alt="CARTIER" class="brand-logo" loading="lazy" decoding="async">
+                <img src="image/brand_icons/armani.webp" alt="ARMANI" class="brand-logo" loading="lazy" decoding="async">
+                <img src="image/brand_icons/levi.webp" alt="LEVI'S" class="brand-logo" loading="lazy" decoding="async">
+            </div>
+        </div>
+    </section>
+
+    <section id="measurements" class="home-profile">
+        <div class="home-shell">
+            <div class="profile-heading section-heading-quiet">
+                <p class="home-index reveal"><span lang="en">Measurements &amp; comp card</span><span lang="th">สัดส่วนและคอมพ์การ์ด</span></p>
+            </div>
+            <div class="profile-body">
+                <div class="info-strip reveal">
+                    <div><span lang="en">Height</span><span lang="th">ส่วนสูง</span><b>179</b></div>
+                    <div><span lang="en">Bust</span><span lang="th">อก</span><b>84</b></div>
+                    <div><span lang="en">Waist</span><span lang="th">เอว</span><b>61</b></div>
+                    <div><span lang="en">Hips</span><span lang="th">สะโพก</span><b>90</b></div>
+                    <div><span lang="en">Shoes</span><span lang="th">รองเท้า</span><b>40</b></div>
+                    <div><span lang="en">Hair</span><span lang="th">สีผม</span><b><span lang="en">Blonde</span><span lang="th">บลอนด์</span></b></div>
+                    <div><span lang="en">Eyes</span><span lang="th">นัยน์ตา</span><b><span lang="en">Blue</span><span lang="th">สีฟ้า</span></b></div>
+                </div>
+                <div class="profile-card reveal delay-1" id="compCardContainer">
+                    <a href="#" id="compCardBtn" class="home-text-link"><span lang="en">View comp card</span><span lang="th">ดูคอมพ์การ์ด</span></a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECTION 3: Full Portfolio (20 Images) -->
-    <section id="portfolio" class="bg-alt">
-        <div class="container">
-            <p class="section-label reveal reveal-fade">
-                <span lang="en">Portfolio</span>
-                <span lang="th">ผลงาน</span>
-            </p>
-            <div style="grid-column: span 12;">
-                <div class="full-grid">
-                    <div class="portfolio-column">
-                        <div class="masonry-col">
-                            <img src="image/portfolio/01.webp" alt="Vasilina Panina international fashion model based in Bangkok" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/02.webp" alt="Editorial fashion photography featuring Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/03.webp" alt="Vasilina Panina beauty and cosmetics modeling Thailand" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/04.webp" alt="Creative portrait of fashion model Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/05.webp" alt="Vasilina Panina modeling luxury fashion apparel" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/06.webp" alt="Studio editorial shoot with Vasilina Panina Bangkok" class="reveal" loading="lazy" decoding="async">
-                        </div>
-                        <div class="masonry-col">
-                            <img src="image/portfolio/21.webp" alt="Vasilina Panina professional editorial model portfolio" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/07.webp" alt="Fashion campaign modeling by Vasilina Panina in Thailand" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/08.webp" alt="Vasilina Panina creative director and high-fashion model" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/09.webp" alt="Vasilina Panina outdoor editorial fashion photography" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/10.webp" alt="Close-up beauty portrait of model Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                        </div>
-                    </div>
-                    <div class="portfolio-column">
-                        <div class="masonry-col">
-                            <img src="image/portfolio/11.webp" alt="Vasilina Panina editorial lookbook modeling Bangkok" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/12.webp" alt="Avant-garde fashion modeling featuring Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/13.webp" alt="Vasilina Panina professional model comp card portfolio" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/14.webp" alt="Street style and high fashion modeling Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/15.webp" alt="Vasilina Panina elegant fashion editorial photography" class="reveal" loading="lazy" decoding="async">
-                        </div>
-                        <div class="masonry-col">
-                            <img src="image/portfolio/16.webp" alt="Black and white editorial portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/17.webp" alt="Vasilina Panina fashion and commercial modeling Thailand" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/18.webp" alt="Creative fashion styling and modeling by Vasilina Panina" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/19.webp" alt="Vasilina Panina international runway and editorial model" class="reveal" loading="lazy" decoding="async">
-                            <img src="image/portfolio/20.webp" alt="Vasilina Panina luxury brand campaign photography" class="reveal" loading="lazy" decoding="async">
-                        </div>
+    <section id="portfolio" class="home-work">
+        <div class="home-shell">
+            <div class="home-section-heading work-heading section-heading-quiet">
+                <p class="home-index reveal"><span lang="en">Portfolio</span><span lang="th">พอร์ตโฟลิโอ</span></p>
+            </div>
+
+            <article class="work-chapter">
+                <header class="chapter-heading chapter-heading-quiet reveal">
+                    <h3><span lang="en">Portraits</span><span lang="th">ภาพพอร์ตเทรต</span></h3>
+                </header>
+                <div class="chapter-images">
+                    <div class="portfolio-spread portfolio-spread-three">
+                    <img src="image/portfolio/01.webp" width="1210" height="1462" alt="Close beauty portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/09.webp" width="1900" height="2850" alt="Soft beauty portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/12.webp" width="1900" height="2533" alt="Soft close beauty portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
                     </div>
                 </div>
-            </div>
+            </article>
+
+            <article class="work-chapter">
+                <header class="chapter-heading chapter-heading-quiet reveal">
+                    <h3><span lang="en">Fashion</span><span lang="th">แฟชั่น</span></h3>
+                </header>
+                <div class="chapter-images">
+                    <div class="portfolio-spread portfolio-spread-three">
+                    <img src="image/portfolio/03.webp" width="1080" height="1350" alt="Vasilina Panina in a monochrome western fashion story" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/14.webp" width="1080" height="1350" alt="Vasilina Panina in a graphic sunglasses editorial" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/15.webp" width="1080" height="1350" alt="Vasilina Panina seated in a monochrome fashion look" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                    <div class="portfolio-spread portfolio-spread-left">
+                    <img src="image/portfolio/07.webp" width="1900" height="2850" alt="Vasilina Panina in a structured white fashion look" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/08.webp" width="1900" height="2850" alt="Full-length structured fashion portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                    <div class="portfolio-spread portfolio-spread-right">
+                    <img src="image/portfolio/04.webp" width="1206" height="1470" alt="Expressive red beauty campaign with Vasilina Panina" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/05.webp" width="1206" height="1458" alt="Vasilina Panina in a vivid pink commercial fashion image" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                    <div class="portfolio-spread portfolio-spread-offset">
+                    <img src="image/portfolio/20.webp" width="1080" height="1440" alt="Vasilina Panina in a vivid butterfly studio editorial" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/21.webp" width="1800" height="2250" alt="Vasilina Panina in a yellow dress with a blue handbag" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                    <div class="portfolio-spread portfolio-spread-left">
+                    <img src="image/portfolio/10.webp" width="1080" height="1346" alt="Vasilina Panina in a cinematic rose beauty scene" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/11.webp" width="993" height="1238" alt="Vasilina Panina in a red fashion story" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                </div>
+            </article>
+
+            <article class="work-chapter">
+                <header class="chapter-heading chapter-heading-quiet reveal">
+                    <h3><span lang="en">Soft light</span><span lang="th">อีกมุมหนึ่ง</span></h3>
+                </header>
+                <div class="chapter-images">
+                    <div class="portfolio-spread portfolio-spread-left">
+                    <img src="image/portfolio/06.webp" width="1900" height="2850" alt="Natural beauty portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/13.webp" width="1900" height="2533" alt="Vasilina Panina in a layered cafe editorial" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                    <div class="portfolio-spread portfolio-spread-right">
+                    <img src="image/portfolio/16.webp" width="1400" height="1750" alt="Vasilina Panina in a sunlit outdoor fashion story" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/portfolio/17.webp" width="1600" height="2000" alt="Outdoor close portrait of Vasilina Panina" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                    <div class="portfolio-spread portfolio-spread-wide">
+                    <img src="image/portfolio/02.webp" width="2448" height="1632" alt="Vasilina Panina in a blue-toned reclining portrait" class="reveal" loading="lazy" decoding="async">
+                    </div>
+                </div>
+            </article>
         </div>
     </section>
 
-    <!-- SECTION 4: Video Portfolio (2 Videos) -->
-    <section id="motion">
-        <div class="container">
-            <p class="section-label reveal reveal-fade">
-                <span lang="en">Videos</span>
-                <span lang="th">วิดีโอ</span>
-            </p>
-            <div style="grid-column: span 12;">
-                <div class="video-grid">
+    <section id="motion" class="home-motion">
+        <div class="home-shell">
+            <div class="motion-heading section-heading-quiet">
+                <p class="home-index reveal"><span lang="en">Motion</span><span lang="th">ภาพเคลื่อนไหว</span></p>
+            </div>
+            <div class="video-grid motion-video-grid">
                     <div class="video-item reveal">
-                        <script src="https://fast.wistia.com/player.js" async></script><script src="https://fast.wistia.com/embed/72zcf1ea44.js" async type="module"></script><style>wistia-player[media-id='72zcf1ea44']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/72zcf1ea44/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }</style> <wistia-player media-id="72zcf1ea44" aspect="1.7777777777777777"></wistia-player>
+                        <script src="https://fast.wistia.com/player.js" async></script>
+                        <script src="https://fast.wistia.com/embed/72zcf1ea44.js" async type="module"></script>
+                        <style>wistia-player[media-id='72zcf1ea44']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/72zcf1ea44/swatch'); display: block; padding-top:56.25%; }</style>
+                        <wistia-player media-id="72zcf1ea44" aspect="1.7777777777777777" player-color="#303030" autoplay="false" big-play-button="true" controls-visible-on-load="false"></wistia-player>
                     </div>
                     <div class="video-item reveal">
-                        <script src="https://fast.wistia.com/player.js" async></script><script src="https://fast.wistia.com/embed/dzx8dcdotx.js" async type="module"></script><style>wistia-player[media-id='dzx8dcdotx']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/dzx8dcdotx/swatch'); display: block; filter: blur(5px); padding-top:46.04%; }</style> <wistia-player media-id="dzx8dcdotx" aspect="2.171945701357466"></wistia-player>
+                        <script src="https://fast.wistia.com/embed/dzx8dcdotx.js" async type="module"></script>
+                        <style>wistia-player[media-id='dzx8dcdotx']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/dzx8dcdotx/swatch'); display: block; padding-top:46.04%; }</style>
+                        <wistia-player media-id="dzx8dcdotx" aspect="2.171945701357466" player-color="#303030" autoplay="false" big-play-button="true" controls-visible-on-load="false"></wistia-player>
                     </div>
-                </div>
+            </div>
+            <div class="motion-stills">
+                <img src="image/portfolio/18.webp" width="750" height="938" alt="Vasilina Panina backstage at a fashion show" class="reveal" loading="lazy" decoding="async">
+                <img src="image/portfolio/19.webp" width="1080" height="1347" alt="Vasilina Panina in a backstage runway moment" class="reveal" loading="lazy" decoding="async">
             </div>
         </div>
     </section>
 
-    <!-- SECTION 5: Measurements -->
-    <section id="measurements" class="bg-alt">
-        <div class="container">
-            <p class="section-label reveal reveal-fade">
-                <span lang="en">Measurements</span>
-                <span lang="th">สัดส่วน</span>
-            </p>
-            <div style="grid-column: span 12;">
-                <div class="info-strip">
-                    <div><span lang="en">Height</span><span lang="th">ส่วนสูง</span> / 179</div>
-                    <div><span lang="en">Bust</span><span lang="th">อก</span> / 84</div>
-                    <div><span lang="en">Waist</span><span lang="th">เอว</span> / 61</div>
-                    <div><span lang="en">Hips</span><span lang="th">สะโพก</span> / 90</div>
-                    <div><span lang="en">Shoes</span><span lang="th">รองเท้า</span> / 40</div>
-                    <div><span lang="en">Hair</span><span lang="th">สีผม</span> / <span lang="en">Blonde</span><span lang="th">บลอนด์</span></div>
-                    <div><span lang="en">Eyes</span><span lang="th">นัยน์ตา</span> / <span lang="en">Blue</span><span lang="th">สีฟ้า</span></div>   
-                </div>
+    <section id="digitals" class="home-digitals">
+        <div class="home-shell">
+            <div class="digitals-heading section-heading-quiet">
+                <p class="home-index reveal"><span lang="en">Digitals</span><span lang="th">ดิจิทัลส์</span></p>
+            </div>
+            <div class="digitals-grid">
+                    <img src="image/digitals/01.webp" width="1357" height="1725" alt="Vasilina Panina model digitals and polaroids full body" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/digitals/02.webp" width="1111" height="1482" alt="Vasilina Panina natural unretouched modeling polaroids Bangkok" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/digitals/03.webp" width="1836" height="2448" alt="Vasilina Panina beauty digitals natural lighting" class="reveal" loading="lazy" decoding="async">
+                    <img src="image/digitals/04.webp" width="1502" height="2003" alt="Vasilina Panina professional model agency polaroids Thailand" class="reveal" loading="lazy" decoding="async">
             </div>
         </div>
     </section>
 
-    <!-- SECTION 6: Digitals (4 Images) -->
-    <section id="digitals">
-        <div class="container">
-            <p class="section-label reveal reveal-fade">
-                <span lang="en">Digitals</span>
-                <span lang="th">สแนปช็อต</span>
-            </p>
-            <div style="grid-column: span 12;">
-                <div class="digitals-grid">
-                    <img src="image/digitals/01.webp" alt="Vasilina Panina model digitals and polaroids full body" class="reveal" loading="lazy" decoding="async">
-                    <img src="image/digitals/02.webp" alt="Vasilina Panina natural unretouched modeling polaroids Bangkok" class="reveal" loading="lazy" decoding="async">
-                    <img src="image/digitals/03.webp" alt="Vasilina Panina beauty digitals natural lighting" class="reveal" loading="lazy" decoding="async">
-                    <img src="image/digitals/04.webp" alt="Vasilina Panina professional model agency polaroids Thailand" class="reveal" loading="lazy" decoding="async">
-                </div>
-            </div>
+    <section id="availability" class="cta-section home-availability">
+        <p class="home-index reveal"><span lang="en">Availability</span><span lang="th">ตารางงาน</span></p>
+        <div class="availability-copy">
+            <h2 class="reveal"><span lang="en">Booking &amp;<br>availability.</span><span lang="th">การจองคิว<br>และตารางงาน</span></h2>
+            <p class="reveal delay-1"><span lang="en">For bookings and collaborations, I’d love to hear what you have in mind.</span><span lang="th">หากสนใจจองงานหรือร่วมงานกัน เล่าไอเดียของคุณให้ฉันฟังได้เลย</span></p>
+            <a href="/booking.html" class="home-text-link"><span lang="en">Check availability</span><span lang="th">ตรวจสอบคิวงาน</span></a>
         </div>
-    </section>
-
-    <section class="cta-section">
-        <h2 class="reveal">
-            <span lang="en">Available for bookings</span>
-            <span lang="th">ติดต่องานและจองคิว</span>
-        </h2>
-        <a href="/booking.html" class="btn-bold reveal delay-1">
-            <span lang="en">Booking Page</span>
-            <span lang="th">ไปที่หน้าการจอง</span>
-        </a>
     </section>
 
     <a href="#hero" class="back-to-top">
@@ -238,25 +253,47 @@
         <span lang="th">กลับขึ้นบน</span>
     </a>
 
-    <div id="imageModal" class="modal" role="dialog" aria-modal="true" aria-label="Image Gallery">
-        <span class="modal-nav modal-prev" aria-label="Previous Image" role="button">&#10094;</span>
+    <div id="imageModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image Gallery">
+        <button type="button" class="modal-nav modal-prev" aria-label="Previous Image"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
         <img class="modal-content" id="img01" alt="Expanded image">
-        <span class="modal-nav modal-next" aria-label="Next Image" role="button">&#10095;</span>
+        <button type="button" class="modal-nav modal-next" aria-label="Next Image"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+        <div class="image-modal-footer" id="imageModalFooter">
+            <div class="modal-caption" id="imageModalCaption" aria-live="polite" aria-atomic="true" hidden>
+                <p lang="en" id="imageModalCaptionEn"></p>
+                <p lang="th" id="imageModalCaptionTh"></p>
+            </div>
+            <div class="image-modal-controls">
+                <!-- Lucide icons; license in licenses/lucide.txt. -->
+                <button type="button" id="imageModalFullscreenToggle" aria-pressed="false">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                    <span class="image-control-label"><span lang="en">Fullscreen</span><span lang="th">เต็มจอ</span></span>
+                </button>
+                <button type="button" id="imageModalCaptionToggle" aria-pressed="true" aria-controls="imageModalCaption">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2" ry="2"/><path d="M7 15h4M15 15h2M7 11h2M13 11h4"/></svg>
+                    <span class="image-control-label"><span lang="en">Captions: On</span><span lang="th">คำบรรยาย: เปิด</span></span>
+                </button>
+                <button type="button" id="imageModalClose">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 6 6 18m0-12 12 12"/></svg>
+                    <span class="image-control-label"><span lang="en">Close image</span><span lang="th">ปิดภาพ</span></span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Dedicated Comp Card Modal -->
-    <div id="compCardModal" class="modal" role="dialog" aria-modal="true" aria-label="Comp Card">
-        <img class="modal-content" id="compCardImg" src="image/compcard.webp" alt="Vasilina Panina Model Comp Card and Portfolio Summary" style="max-height: 80vh;">
-        <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2001; text-align: center; width: 100%;">
-            <a href="image/compcard.pdf" id="compCardDownload" download="Lina_Comp_Card.pdf" class="btn-primary" style="box-shadow: 0 4px 24px rgba(0,0,0,0.4);">
+    <div id="compCardModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Comp Card">
+        <img class="modal-content" id="compCardImg" src="image/compcard.webp" width="1080" height="1349" alt="Vasilina Panina Model Comp Card and Portfolio Summary">
+        <div class="comp-card-actions">
+            <a href="image/compcard.pdf" id="compCardDownload" download="Lina_Comp_Card.pdf" class="btn-primary">
                 <span lang="en">Download PDF</span>
                 <span lang="th">ดาวน์โหลด PDF</span>
             </a>
         </div>
     </div>
 
-    <script src="footer.js"></script>
-    <script src="main.js"></script>
+    <script src="footer.js?v=91"></script>
+    <script src="image-captions.js?v=92"></script>
+    <script src="main.js?v=112"></script>
 
 
 </body>

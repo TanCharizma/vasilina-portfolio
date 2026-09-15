@@ -17,13 +17,14 @@
     <meta name="twitter:image" content="https://vasilina-portfolio.vercel.app/image/about/01.webp">
     <meta name="theme-color" content="#FCFBF9" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#11100E" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>About | Vasilina Panina</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=114">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,300;0,400;0,700;1,300;1,400&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Thai:wght@300;400;500&family=Playfair+Display:ital,wght@0,300;0,400;0,500;1,300;1,400&display=block" rel="stylesheet">
 
-    <!-- JSON-LD Structured Data for Google -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -40,73 +41,88 @@
     }
     </script>
 </head>
-<body>
+<body class="subpage about-page">
+    <script src="nav.js?v=109"></script>
 
-    <script src="nav.js"></script>
-    <section style="padding-top: 96px; border-top: none;">
-        <div class="container">
-            <div style="grid-column: span 12;">
-                <h2 class="page-header reveal">
-                    <span lang="en">About</span>
-                    <span lang="th">เกี่ยวกับฉัน</span>
-                </h2>
-                <div class="split-layout" style="text-align: left;">
-                    <img src="image/about/01.webp" alt="Vasilina Panina - Editorial Model and Creative Director Portrait" class="reveal" loading="lazy">
-                    <div class="bio reveal delay-1">
-                        <p lang="en">I’m Vasilina, or Lina, a Russian model and creative director with nearly a decade of international experience. I’ve worked across Italy, France, Hong Kong, China, South Korea, and Turkey and I’m currently based in Bangkok, continuing to grow within the global fashion landscape.</p>
-                        <p lang="th">ฉันชื่อวาซิลินา หรือ ลีนา นางแบบและครีเอทีฟไดเรกเตอร์จากรัสเซีย มีประสบการณ์ในวงการแฟชั่นระดับนานาชาติเกือบ 10 ปี เคยทำงานในอิตาลี ฝรั่งเศส ฮ่องกง จีน เกาหลีใต้ และตุรกี ปัจจุบันอาศัยอยู่ที่กรุงเทพฯ และยังคงพัฒนาศักยภาพอย่างต่อเนื่องในวงการแฟชั่นระดับโลก</p>
+    <main>
+        <header class="subpage-opening about-opening">
+            <div class="subpage-shell opening-grid">
+                <p class="subpage-index reveal"><span lang="en">About</span><span lang="th">เกี่ยวกับฉัน</span></p>
+                <div class="opening-copy">
+                    <p class="subpage-kicker reveal"><span lang="en">Model &amp; Creative Director</span><span lang="th">นางแบบและครีเอทีฟไดเรกเตอร์</span></p>
+                    <h1 class="reveal delay-1"><span lang="en">Vasilina<br><em>Panina.</em></span><span lang="th">วาซิลินา<br><em>พานินา</em></span></h1>
+                </div>
+            </div>
+            <a class="about-scroll-cue scroll-cue" href="#about-portrait"><span lang="en">Scroll</span><span lang="th">เลื่อน</span><i aria-hidden="true"></i></a>
+        </header>
 
-                        <p lang="en">I’m also the co-founder and co-director of Charizma Management, a mother agency focused on developing distinctive, long-term talent through a refined and intuitive approach.</p>
-                        <p lang="th">นอกจากนี้ ฉันยังเป็นผู้ร่วมก่อตั้งและผู้อำนวยการร่วมของ Charizma Management ซึ่งเป็นโมเดลลิ่งเอเจนซี่ที่มุ่งเน้นการพัฒนาและสร้างสรรค์บุคลากรที่มีเอกลักษณ์โดดเด่น เพื่อการเติบโตในระยะยาว ด้วยแนวทางที่ชัดเจน ละเอียดอ่อน และสัญชาตญาณในการทำงาน</p>
-                            
-                        <p lang="en">With a background in competitive dance, I bring a strong sense of movement, control, and expression to my work. I’m known for balancing warmth with precision—driven, direct, and deeply passionate about what I do.</p>
-                        <p lang="th">ด้วยพื้นฐานด้านการแข่งขันเต้นรำ ฉันนำความเข้าใจเรื่องการเคลื่อนไหวของร่างกาย จังหวะ การสื่ออารมณ์ และการแสดงออกที่แข็งแรงมาปรับใช้กับงานของตัวเองอย่างเป็นธรรมชาติ งานของฉันจึงอยู่บนความสมดุลของความอบอุ่นและความเฉียบคม ฉันชัดเจน มุ่งมั่น และจริงจังกับสิ่งที่ทำ</p>
+        <section class="about-portrait" id="about-portrait">
+            <div class="subpage-shell portrait-grid">
+                <figure class="about-image reveal reveal-scale">
+                    <img src="image/about/01.webp" width="1080" height="1349" alt="Vasilina Panina, editorial model and creative director" loading="eager" fetchpriority="high">
+                    <figcaption><span>Vasilina Panina</span><span>Bangkok / 2026</span></figcaption>
+                </figure>
+                <p class="portrait-intro reveal delay-2"><span lang="en">I’m Lina, a Russian model and creative director based in Bangkok.</span><span lang="th">ฉันชื่อลีนา เป็นนางแบบและครีเอทีฟไดเรกเตอร์จากรัสเซีย ปัจจุบันอยู่ที่กรุงเทพฯ</span></p>
+            </div>
+        </section>
+
+        <section class="about-story">
+            <div class="subpage-shell story-layout">
+                <p class="subpage-index reveal"><span lang="en">Biography</span><span lang="th">ประวัติ</span></p>
+                <div class="about-bio">
+                    <p class="about-lead reveal" lang="en">For nearly a decade, modeling has taken me across Italy, France, Hong Kong, China, South Korea, and Turkey.</p>
+                    <p class="about-lead reveal" lang="th">ตลอดเกือบสิบปีที่ผ่านมา งานนางแบบพาฉันไปทำงานในอิตาลี ฝรั่งเศส ฮ่องกง จีน เกาหลีใต้ และตุรกี</p>
+                    <div class="about-body reveal delay-1">
+                        <div>
+                            <p lang="en">My background in competitive dance shapes how I work in front of the camera—with an instinct for movement, control, and expression.</p>
+                            <p lang="th">พื้นฐานด้านการแข่งขันเต้นรำหล่อหลอมวิธีการทำงานของฉันหน้ากล้อง ทั้งสัญชาตญาณในการเคลื่อนไหว การควบคุมร่างกาย และการถ่ายทอดอารมณ์</p>
+                        </div>
+                        <div>
+                            <p lang="en">I bring warmth and precision to my work. I’m direct, driven, and passionate about what I do.</p>
+                            <p lang="th">ฉันทำงานด้วยความอบอุ่นและความพิถีพิถัน เป็นคนตรงไปตรงมา มุ่งมั่น และรักในสิ่งที่ทำ</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="container" style="background: var(--surface);">
-        <div style="grid-column: span 12; padding: 96px 0;">
-            <h2 class="reveal" style="font-size: 20px; letter-spacing: 0.4em; text-align: center;">
-                <span lang="en">Clients</span>
-                <span lang="th">ลูกค้าที่ร่วมงาน</span>
-            </h2>
-            <div class="reveal delay-1" style="display: flex; justify-content: center; align-items: center; font-family: var(--serif); font-size: 24px; opacity: 0.6; flex-wrap: wrap; gap: 128px;">
-                <img src="image/brand_icons/vogue.webp" alt="VOGUE" class="brand-logo" style="height: 30px; width: auto; object-fit: contain;" loading="lazy" decoding="async">
-                <img src="image/brand_icons/elle.webp" alt="ELLE" class="brand-logo" style="height: 30px; width: auto; object-fit: contain;" loading="lazy" decoding="async">
-                <img src="image/brand_icons/cartier.webp" alt="CARTIER" class="brand-logo" style="height: 30px; width: auto; object-fit: contain;" loading="lazy" decoding="async">
-                <img src="image/brand_icons/armani.webp" alt="ARMANI" class="brand-logo" style="height: 30px; width: auto; object-fit: contain;" loading="lazy" decoding="async">
-                <img src="image/brand_icons/levi.webp" alt="LEVI'S" class="brand-logo" style="height: 30px; width: auto; object-fit: contain;" loading="lazy" decoding="async">
+        <section class="about-practice">
+            <div class="subpage-shell practice-grid">
+                <p class="subpage-index reveal"><span lang="en">Creative direction</span><span lang="th">ครีเอทีฟไดเรกชัน</span></p>
+                <div class="practice-copy reveal">
+                    <h2>Charizma<br>Management.</h2>
+                    <p lang="en">I’m also the co-founder and co-director of Charizma Management, a mother agency focused on developing models and supporting their long-term careers.</p>
+                    <p lang="th">ฉันยังเป็นผู้ร่วมก่อตั้งและผู้อำนวยการร่วมของ Charizma Management ซึ่งเป็นมาเธอร์เอเจนซี่ที่มุ่งพัฒนานางแบบและนายแบบ พร้อมสนับสนุนเส้นทางอาชีพในระยะยาว</p>
+                    <a href="https://www.instagram.com/charizma.management/" target="_blank" rel="noopener noreferrer" class="subpage-link"><span lang="en">Charizma on Instagram</span><span lang="th">Charizma บน Instagram</span></a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="container" style="padding-bottom: 160px;">
-        <div style="grid-column: span 12;">
-            <div class="reveal" style="padding: 96px; border: 1px solid #eee;">
-                <p class="editorial-quote">
-                    <span lang="en">Defined by instinct, refined through experience.</span>
-                    <span lang="th">ขับเคลื่อนด้วยสัญชาตญาณ หล่อหลอมด้วยประสบการณ์</span>
-                </p>
+        <section class="about-clients">
+            <div class="subpage-shell clients-layout">
+                <p class="subpage-index reveal"><span lang="en">Selected clients</span><span lang="th">ลูกค้าที่ร่วมงาน</span></p>
+                <div class="about-client-logos reveal delay-1">
+                    <img src="image/brand_icons/vogue.webp" alt="VOGUE" class="brand-logo" loading="lazy" decoding="async">
+                    <img src="image/brand_icons/elle.webp" alt="ELLE" class="brand-logo" loading="lazy" decoding="async">
+                    <img src="image/brand_icons/cartier.webp" alt="CARTIER" class="brand-logo" loading="lazy" decoding="async">
+                    <img src="image/brand_icons/armani.webp" alt="ARMANI" class="brand-logo" loading="lazy" decoding="async">
+                    <img src="image/brand_icons/levi.webp" alt="LEVI'S" class="brand-logo" loading="lazy" decoding="async">
+                </div>
             </div>
-            
-            <div style="margin-top: 96px; text-align: center;">
-                <h3 class="reveal">
-                    <span lang="en">For bookings and inquiries</span>
-                    <span lang="th">สำหรับการจองและติดต่อสอบถาม</span>
-                </h3>
-                <a href="/booking.html" class="btn-bold reveal delay-1">
-                    <span lang="en">Booking Page</span>
-                    <span lang="th">ไปที่หน้าการจอง</span>
-                </a>
+        </section>
+
+        <section class="subpage-closing about-closing">
+            <div class="subpage-shell closing-grid">
+                <p class="subpage-index reveal"><span lang="en">Booking</span><span lang="th">จองคิวงาน</span></p>
+                <div class="closing-copy reveal">
+                    <p class="closing-statement"><span lang="en">Let’s work<br><em>together.</em></span><span lang="th">มาร่วมงาน<br><em>กันนะคะ</em></span></p>
+                    <a href="/booking.html" class="subpage-link"><span lang="en">Request availability</span><span lang="th">สอบถามคิวงาน</span></a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
-    <script src="footer.js"></script>
-    <script src="main.js"></script>
-
+    <script src="footer.js?v=91"></script>
+    <script src="main.js?v=112"></script>
 </body>
 </html>
