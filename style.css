@@ -4376,3 +4376,26 @@ html:has(.home-page) {
         gap: 28px;
     }
 }
+
+/* Collection IV-style mobile overbleed; content stays in the visible safe area. */
+@media (max-width: 600px) {
+    .home-page .home-hero {
+        --hero-bleed: 15svh;
+        --hero-toolbar-room: calc(max(640px, 100lvh) - max(640px, 100svh));
+        top: calc(-1 * var(--hero-bleed));
+        height: calc(max(640px, 100lvh) + var(--hero-bleed) + var(--hero-bleed));
+        margin-bottom: calc(-1 * var(--hero-bleed));
+    }
+    .home-page .home-hero .hero-content {
+        bottom: calc(var(--hero-bleed) + var(--hero-toolbar-room) + 104px + env(safe-area-inset-bottom));
+        left: max(20px, env(safe-area-inset-left));
+        right: max(20px, env(safe-area-inset-right));
+    }
+    .home-page .home-scroll-cue {
+        bottom: calc(var(--hero-bleed) + var(--hero-toolbar-room) + 28px + env(safe-area-inset-bottom));
+    }
+    .home-page nav {
+        height: calc(68px + env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top);
+    }
+}
