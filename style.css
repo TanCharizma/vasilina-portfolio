@@ -4399,3 +4399,10 @@ html:has(.home-page) {
         padding-top: env(safe-area-inset-top);
     }
 }
+
+@media (max-width: 600px) {
+    .home-page .home-hero .hero-bg {
+        top: var(--hero-bleed);
+        background-position: 51% top;
+    }
+}
