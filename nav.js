@@ -5,7 +5,7 @@
 (function() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isHomePage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
-    const currentPage = window.location.pathname.split('/').pop(); // e.g., "about.html"
+    const normalizePath = (path) => path.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/\/$/, '') || '/';
 
     let navClass = '';
     let logoHref = '/'; // Default for non-homepage, points to the root domain
@@ -202,9 +202,8 @@
             }
 
             // Ignore if linking to the exact same page
-            const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-            let targetPath = href.split('/').pop().split('#')[0] || 'index.html';
-            if (currentPath === targetPath) return;
+            const targetUrl = new URL(href, window.location.href);
+            if (normalizePath(window.location.pathname) === normalizePath(targetUrl.pathname)) return;
 
             e.preventDefault();
 
@@ -249,7 +248,7 @@
     // Handle active class for non-homepage links
     if (!isHomePage) {
         const currentLink = Array.from(navElement.querySelectorAll('.nav-links > a')).find(link => {
-            return new URL(link.href, window.location.origin).pathname === window.location.pathname;
+            return normalizePath(new URL(link.href, window.location.origin).pathname) === normalizePath(window.location.pathname);
         });
         if (currentLink) {
             currentLink.classList.add('active');

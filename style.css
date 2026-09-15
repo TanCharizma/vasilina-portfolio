@@ -4347,3 +4347,32 @@ html:has(.home-page) {
         animation: none;
     }
 }
+
+/* Keep the About cue aligned with Home on desktop, and omit it on mobile. */
+.about-page .about-opening { position: relative; z-index: 2; }
+.about-page .about-scroll-cue {
+    color: var(--text);
+    top: calc(max(760px, 100vh) - 42px);
+    bottom: auto;
+    transform: translateY(-100%);
+}
+.about-page .about-scroll-cue i {
+    background: color-mix(in srgb, currentColor 34%, transparent);
+}
+@media (max-width: 900px) {
+    .about-page .about-scroll-cue { top: calc(max(720px, 100vh) - 42px); }
+}
+@media (max-width: 600px) {
+    .about-page .about-scroll-cue { display: none; }
+    .home-page .home-hero .hero-btns {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+        width: fit-content;
+    }
+    .home-page .home-hero .hero-btns .home-text-link {
+        width: 100%;
+        justify-content: space-between;
+        gap: 28px;
+    }
+}

@@ -1,16 +1,12 @@
-const CACHE_NAME = 'vasilina-portfolio-v115';
+const CACHE_NAME = 'vasilina-portfolio-v116';
 
 // Core files to cache instantly when the site first loads
 const CORE_ASSETS = [
-    '/',
-    '/index.html',
-    '/about.html',
-    '/booking.html',
     '/manifest.json',
-    '/style.css?v=115',
+    '/style.css?v=116',
     '/main.js?v=115',
     '/image-captions.js?v=92',
-    '/nav.js?v=115',
+    '/nav.js?v=116',
     '/footer.js?v=91',
     '/image/hero/hero.webp?v=110'
 ];
@@ -40,7 +36,9 @@ self.addEventListener('activate', (event) => {
 // 3. Fetch Event: Stale-While-Revalidate Strategy
 self.addEventListener('fetch', (event) => {
     // Only cache simple HTTP GET requests (ignore extensions, POSTs, etc)
-    if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
+    // Let the browser handle page redirects and fetch fresh HTML directly.
+    if (event.request.mode === 'navigate') return;
+    if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
