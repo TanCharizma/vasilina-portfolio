@@ -130,7 +130,8 @@
     };
 
     const closeDropdown = () => {
-        dropdown?.classList.add('dropdown-dismissed');
+        // The mobile submenu is always visible; dismissal is desktop-only.
+        dropdown?.classList.toggle('dropdown-dismissed', window.innerWidth > 1024);
         dropdownExitedAfterDismissal = false;
         setDropdownExpanded(false);
         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -276,6 +277,8 @@
             navElement.classList.toggle('nav-open');
             const isOpen = navElement.classList.contains('nav-open');
             if (isOpen) {
+                dropdown?.classList.remove('dropdown-dismissed');
+                setDropdownExpanded(true);
                 document.documentElement.classList.add('scroll-locked');
                 document.body.style.overflow = 'hidden';
             } else {

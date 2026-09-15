@@ -4334,23 +4334,6 @@ html:has(.home-page) {
     line-height: 1.8;
 }
 
-/* About uses the same scroll cue with colors suited to its paper background. */
-.about-page .about-opening {
-    position: relative;
-    z-index: 2;
-}
-
-.about-page .about-scroll-cue {
-    color: var(--text);
-    top: calc(max(760px, 100vh) - 42px);
-    bottom: auto;
-    transform: translateY(-100%);
-}
-
-.about-page .about-scroll-cue i {
-    background: color-mix(in srgb, currentColor 34%, transparent);
-}
-
 .scroll-cue {
     transition: none;
 }
@@ -4362,18 +4345,5 @@ html:has(.home-page) {
 @media (prefers-reduced-motion: reduce) {
     .scroll-cue i::after {
         animation: none;
-    }
-}
-
-/* Match the Home hero’s scroll-cue depth without enlarging the About opening. */
-@media (max-width: 900px) {
-    .about-page .about-scroll-cue {
-        top: calc(max(720px, 100vh) - 42px);
-    }
-}
-
-@media (max-width: 600px) {
-    .about-page .about-scroll-cue {
-        top: calc(max(640px, 100svh) - 28px);
     }
 }

@@ -181,15 +181,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fade each opening and its cue together, including after restored scroll positions.
     const openingContent = document.querySelector('.hero-content, .about-opening .opening-grid');
     const scrollCue = document.querySelector('.scroll-cue');
-    if (openingContent && scrollCue && !prefersReducedMotion) {
+    if (openingContent && !prefersReducedMotion) {
         let fadeFrame = 0;
         const updateOpeningFade = () => {
             fadeFrame = 0;
             const opacity = Math.max(0, Math.min(1, 1 - window.scrollY / (vh * 0.6)));
             openingContent.style.opacity = opacity;
-            scrollCue.style.opacity = opacity;
-            scrollCue.style.pointerEvents = opacity === 0 ? 'none' : '';
-            scrollCue.tabIndex = opacity === 0 ? -1 : 0;
+            if (scrollCue) {
+                scrollCue.style.opacity = opacity;
+                scrollCue.style.pointerEvents = opacity === 0 ? 'none' : '';
+                scrollCue.tabIndex = opacity === 0 ? -1 : 0;
+            }
         };
         const scheduleOpeningFade = () => {
             if (!fadeFrame) fadeFrame = requestAnimationFrame(updateOpeningFade);
