@@ -4469,3 +4469,18 @@ html:has(.home-page) {
         padding-bottom: calc(var(--overlay-bleed) + max(28px, env(safe-area-inset-bottom)));
     }
 }
+
+/* Refresh protection: cover Safari's largest viewport, including collapsed bars. */
+#splash-screen {
+    inset: 0;
+    height: 100vh;
+}
+@media (max-width: 1024px) {
+    #splash-screen {
+        top: calc(-1 * var(--overlay-bleed));
+        bottom: auto;
+        height: calc(100lvh + var(--overlay-bleed) + var(--overlay-bleed));
+        padding-top: var(--overlay-bleed);
+        padding-bottom: calc(var(--overlay-bleed) + 100lvh - 100dvh);
+    }
+}

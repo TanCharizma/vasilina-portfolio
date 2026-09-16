@@ -22,7 +22,23 @@
     <meta name="google-site-verification" content="kgK5_mxUsSC8v3XNiGDuVbtFHXO5dtaumYDYhYdDpqU" />
     <link rel="manifest" href="manifest.json">
     <title>Portfolio | Vasilina Panina</title>
-    <link rel="stylesheet" href="style.css?v=119">
+    <!-- Paint a dark canvas before the external styles and hero assets load. -->
+    <style>
+        html:has(#splash-screen:not(.hidden)),
+        body.home-page:has(> #splash-screen:not(.hidden)) { background: #050505; }
+        body.home-page:has(> #splash-screen:not(.hidden)) > :not(#splash-screen):not(.app-transition-curtain) {
+            visibility: hidden !important;
+        }
+        #splash-screen {
+            position: fixed;
+            inset: -50vh 0;
+            height: 200vh;
+            background: #050505;
+            z-index: 100000;
+        }
+    </style>
+
+    <link rel="stylesheet" href="style.css?v=120">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Thai:wght@300;400;500&family=Playfair+Display:ital,wght@0,300;0,400;0,500;1,300;1,400&display=block" rel="stylesheet">
