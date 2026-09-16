@@ -4406,3 +4406,66 @@ html:has(.home-page) {
         background-position: 51% top;
     }
 }
+
+/* Full-screen mobile surfaces extend beyond both browser edges. */
+@media (max-width: 1024px) {
+    :root { --overlay-bleed: max(15svh, env(safe-area-inset-top), env(safe-area-inset-bottom)); }
+
+    .modal,
+    .nav-links,
+    .app-transition-curtain,
+    .splash-screen {
+        top: calc(-1 * var(--overlay-bleed));
+        bottom: auto;
+        height: calc(100dvh + var(--overlay-bleed) + var(--overlay-bleed));
+    }
+
+    .nav-links {
+        padding-top: calc(var(--overlay-bleed) + max(96px, env(safe-area-inset-top)));
+        padding-bottom: calc(var(--overlay-bleed) + max(96px, env(safe-area-inset-bottom)));
+        background: var(--bg);
+    }
+
+    .splash-screen {
+        padding-block: var(--overlay-bleed);
+    }
+
+    .modal {
+        background: #050505;
+        backdrop-filter: none;
+    }
+    .modal-content {
+        max-height: calc(100dvh - 112px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+    #imageModal .modal-content,
+    #imageModal .modal-nav {
+        top: calc(var(--overlay-bleed) + (100dvh - var(--image-modal-footer-height)) / 2);
+    }
+    #imageModal .modal-content {
+        max-height: calc(100dvh - var(--image-modal-footer-height) - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+    .image-modal-footer {
+        bottom: calc(var(--overlay-bleed) + max(24px, env(safe-area-inset-bottom)));
+    }
+    #compCardImg {
+        max-height: calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    }
+    .comp-card-actions {
+        bottom: calc(var(--overlay-bleed) + max(18px, env(safe-area-inset-bottom))) !important;
+    }
+    #imageModal.is-immersive .modal-content {
+        top: calc(var(--overlay-bleed) + 50dvh);
+        height: 100dvh;
+        max-height: 100dvh;
+    }
+}
+@media (max-width: 600px) {
+    nav {
+        height: calc(68px + env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top);
+    }
+    .nav-links {
+        padding-top: calc(var(--overlay-bleed) + max(84px, calc(env(safe-area-inset-top) + 64px)));
+        padding-bottom: calc(var(--overlay-bleed) + max(28px, env(safe-area-inset-bottom)));
+    }
+}
