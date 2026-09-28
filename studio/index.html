@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Vasilina Studio · Folio Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css?v=studio-9">
+</head>
+<body>
+  <div class="studio-shell">
+    <aside class="studio-sidebar">
+      <a class="studio-brand" href="../index.html" aria-label="Vasilina public portfolio">Folio Lab<span> / Studio</span></a>
+      <p class="studio-owner">Vasilina Panina</p>
+      <p class="studio-kicker">Your portfolio, your way</p>
+      <nav class="studio-nav" aria-label="Editing sections">
+        <button type="button" data-section="home" class="active">Home photos</button>
+        <button type="button" data-section="portfolio">Portfolio</button>
+        <button type="button" data-section="digitals">Digitals</button>
+        <button type="button" data-section="compCard">Comp card</button>
+        <details class="more-sections">
+          <summary>More to edit</summary>
+          <button type="button" data-section="identity">Profile &amp; measurements</button>
+          <button type="button" data-section="about">About</button>
+          <button type="button" data-section="motion">Motion</button>
+          <button type="button" data-section="booking">Booking</button>
+        </details>
+      </nav>
+      <p class="sidebar-note">Start with your photos. The rest is here whenever you need it.</p>
+    </aside>
+
+    <main class="studio-main">
+      <header class="studio-topbar">
+        <div>
+          <p class="eyebrow">Owner workspace</p>
+          <h1>Your portfolio, in your hands.</h1>
+        </div>
+        <span class="demo-pill">Local demonstration</span>
+      </header>
+
+      <div class="demo-notice" role="note">
+        This is a safe demonstration. Changes stay in this browser and do not update Vasilina’s public website.
+      </div>
+
+      <div class="studio-actions">
+        <p id="saveStatus" class="save-status" role="status">Loading Vasilina’s portfolio…</p>
+        <div class="action-buttons">
+          <button type="button" id="resetButton" class="quiet-button">Reset demo</button>
+          <button type="button" id="saveButton" class="outline-button">Save draft here</button>
+          <button type="button" id="publishButton" class="primary-button">Simulate publish</button>
+        </div>
+      </div>
+
+      <div class="studio-workspace">
+        <section class="editor-panel" aria-labelledby="sectionTitle">
+          <div class="editor-heading">
+            <p class="eyebrow" id="sectionEyebrow">Your content</p>
+            <h2 id="sectionTitle">Home photos</h2>
+            <p id="sectionDescription">Choose the images people see first.</p>
+            <div class="language-switch" role="group" aria-label="Editing language">
+              <span>Edit text in</span>
+              <button type="button" id="editEnglish" class="selected" aria-pressed="true">English</button>
+              <button type="button" id="editThai" aria-pressed="false">Thai</button>
+            </div>
+          </div>
+          <div id="editorContent" class="editor-content"></div>
+        </section>
+
+        <section class="preview-panel" aria-labelledby="previewTitle">
+          <div class="preview-heading">
+            <div>
+              <p class="eyebrow">Real design preview</p>
+              <h2 id="previewTitle">Your website</h2>
+            </div>
+            <select id="previewPage" aria-label="Preview page">
+              <option value="home">Home</option>
+              <option value="about">About</option>
+              <option value="booking">Booking</option>
+            </select>
+          </div>
+          <div class="preview-tools">
+            <button type="button" id="draftPreviewButton" class="selected">Working version</button>
+            <button type="button" id="publishedPreviewButton">Simulated published version</button>
+          </div>
+          <div class="preview-frame-wrap">
+            <iframe id="previewFrame" title="Vasilina portfolio preview" src="../index.html"></iframe>
+          </div>
+          <p class="preview-note">This preview uses the finished Vasilina design. The live Cal.com calendar remains connected to her current account during this demo.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="studio.js?v=studio-11"></script>
+</body>
+</html>
