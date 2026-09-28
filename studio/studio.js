@@ -381,20 +381,20 @@ function renderCompCard() {
   info.append(element('strong', '', uploaded?.name || 'Vasilina comp card'));
   info.append(element('p', 'group-note', uploaded ? 'Saved in this browser for this demonstration.' : 'The current card is ready to view and download.'));
   const download = element('a', 'outline-button', 'Download card');
-  download.href = uploaded ? '#' : `../${draft.compCard.currentDownload}`;
-  download.download = uploaded?.name || 'Lina_Comp_Card.png';
+  download.href = uploaded ? '#' : `../${draft.compCard.currentPdf}`;
+  download.download = uploaded?.name || 'Vasilina_Comp_Card.pdf';
   if (uploaded) imageFromSource(uploaded.src).then(src => { download.href = src; });
   info.append(download);
   preview.append(info);
   card.append(preview);
   filePicker(card, uploaded ? 'Replace comp card' : 'Upload your comp card', async (src, file) => {
     draft.compCard.uploadedFile = { src, name: file.name, type: file.type };
-  }, 'image/jpeg,image/png,image/webp');
+  }, 'application/pdf,image/jpeg,image/png,image/webp');
   const uploadNote = uploaded?.type === 'application/pdf'
-    ? 'This older PDF can still be downloaded here. Replace it with an image to update your comp card.'
+    ? 'Your PDF is ready to download. The website preview keeps showing the current card artwork.'
     : uploaded
       ? 'Your uploaded image is ready to preview and download in this browser.'
-      : 'Accepted files: JPG, PNG, or WebP · Up to 20 MB. Photo-based card creation can come later.';
+      : 'Accepted files: PDF, JPG, PNG, or WebP · Up to 20 MB. Photo-based card creation can come later.';
   card.append(element('p', 'group-note', uploadNote));
 }
 function renderSection() {
@@ -566,14 +566,9 @@ async function applyHomePreview(doc, content) {
     uploadedCard?.type?.startsWith('image/') ? uploadedCard.src : content.compCard.currentPreview,
     'Vasilina Panina comp card');
   const download = doc.querySelector('#compCardDownload');
-  if (download && (!uploadedCard || uploadedCard.type !== 'application/pdf')) {
-    if (uploadedCard) {
-      download.href = await imageFromSource(uploadedCard.src);
-      download.download = uploadedCard.name;
-    } else {
-      download.href = new URL(content.compCard.currentDownload, doc.location.href).href;
-      download.download = 'Lina_Comp_Card.png';
-    }
+  if (download && uploadedCard?.type?.startsWith('image/')) {
+    download.href = await imageFromSource(uploadedCard.src);
+    download.download = uploadedCard.name;
   }
   applyFooterPreview(doc, content);
 }
@@ -666,7 +661,7 @@ function loadPreviewPage() {
     about: '#about-portrait', booking: '#availability',
   };
   const hash = activeSection === 'home' ? '' : anchors[activeSection] || '';
-  frame.src = `../${page === 'home' ? 'index' : page}.html?studio-preview=11${hash}`;
+  frame.src = `../${page === 'home' ? 'index' : page}.html?studio-preview=12${hash}`;
 }
 function saveDraft() {
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -690,14 +685,14 @@ function resetDemo() {
   status.textContent = 'Demo reset to Vasilina’s current portfolio';
 }
 async function start() {
-  const response = await fetch('vasilina-content.json?v=studio-11', { cache: 'no-store' });
+  const response = await fetch('vasilina-content.json?v=studio-12', { cache: 'no-store' });
   if (!response.ok) throw new Error('Could not load Vasilina’s starting content');
   seed = await response.json();
   draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') || copy(seed);
   published = JSON.parse(localStorage.getItem(PUBLISHED_KEY) || 'null') || copy(seed);
   for (const content of [draft, published]) {
-    content.compCard.currentDownload = seed.compCard.currentDownload;
-    delete content.compCard.currentPdf;
+    content.compCard.currentPdf = seed.compCard.currentPdf;
+    delete content.compCard.currentDownload;
   }
   document.querySelectorAll('.studio-nav button').forEach(button => {
     button.addEventListener('click', () => {

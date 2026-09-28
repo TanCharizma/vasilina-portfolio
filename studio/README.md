@@ -18,7 +18,7 @@ portfolio chapters and photo order, digitals, About, contact and booking copy,
 video IDs, and comp-card upload. The preview reflects most text,
 image, order, and visibility changes in the existing design. New video IDs and
 the Cal.com link are stored but the preview continues to show the current embeds.
-The owner can upload a current image comp card; photo-based card generation
+The owner can upload a current PDF or image comp card; photo-based card generation
 is not built yet. Rearranging uses move buttons for now.
 
 `vasilina-content.json` is the seed content. Run `node studio/validate-content.mjs`

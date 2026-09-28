@@ -108,7 +108,7 @@
   },
   "compCard": {
     "currentPreview": "image/compcard.webp",
-    "currentDownload": "image/compcard.png"
+    "currentPdf": "image/compcard.pdf"
   },
   "footer": {
     "description": { "en": "Model & creative director, based in Bangkok.", "th": "นางแบบและครีเอทีฟไดเรกเตอร์ ประจำอยู่ในกรุงเทพฯ" }
