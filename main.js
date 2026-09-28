@@ -584,6 +584,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const compCardImg = document.getElementById('compCardImg');
     const compCardDownload = document.getElementById('compCardDownload');
 
+    compCardDownload?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        if (compCardDownload.dataset.downloading === 'true') return;
+
+        compCardDownload.dataset.downloading = 'true';
+        try {
+            const response = await fetch(compCardDownload.href);
+            if (!response.ok) throw new Error(`Comp card download failed: ${response.status}`);
+
+            const image = await response.blob();
+            const downloadUrl = URL.createObjectURL(image);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = downloadUrl;
+            downloadLink.download = compCardDownload.download || 'Lina_Comp_Card.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            downloadLink.remove();
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        } catch (error) {
+            console.error(error);
+            window.alert('The comp card could not be downloaded. Please try again.');
+        } finally {
+            delete compCardDownload.dataset.downloading;
+        }
+    });
+
     if (compCardBtn && compCardModal) {
         let compTouchStartY = 0;
         let compTouchCurrentY = 0;
