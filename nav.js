@@ -192,7 +192,7 @@
         // Intercept all clicks to trigger the slide-over effect
         document.addEventListener('click', (e) => {
             const link = e.target.closest('a');
-            if (!link || !curtain) return;
+            if (!link || !curtain || e.defaultPrevented || link.hasAttribute('download')) return;
             
             const href = link.getAttribute('href');
             
