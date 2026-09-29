@@ -1,3 +1,8 @@
+import {
+  portfolioBackendReady, hasOwnerSession, signIn, signOut, getOwnedPortfolio,
+  getDraft, saveOwnerDraft, publishOwnerDraft, getPublishedPortfolio, uploadOwnerImage,
+} from '../portfolio-backend.js';
+
 const DRAFT_KEY = 'folio-lab-vasilina-demo-draft-v1';
 const PUBLISHED_KEY = 'folio-lab-vasilina-demo-published-v1';
 const ASSET_PREFIX = 'demo-asset:';
@@ -15,6 +20,7 @@ const measurementNames = {
   height: 'Height', bust: 'Bust', waist: 'Waist', hips: 'Hips',
   shoes: 'Shoes', hair: 'Hair', eyes: 'Eyes',
 };
+const measurementOrder = ['height', 'bust', 'waist', 'hips', 'shoes', 'hair', 'eyes'];
 
 const editor = document.querySelector('#editorContent');
 const frame = document.querySelector('#previewFrame');
@@ -26,6 +32,8 @@ let activeSection = 'home';
 let editLanguage = 'en';
 let previewVersion = 'draft';
 let previewTimer;
+let remotePortfolio;
+let draftRevision = 0;
 const objectUrls = new Map();
 
 function copy(value) { return structuredClone(value); }
@@ -36,7 +44,7 @@ function element(tag, className, text) {
   return node;
 }
 function markChanged() {
-  status.textContent = 'Unsaved changes in this browser';
+  status.textContent = portfolioBackendReady ? 'Changes not saved yet' : 'Unsaved changes in this browser';
   clearTimeout(previewTimer);
   previewTimer = setTimeout(applyPreview, 150);
 }
@@ -110,7 +118,7 @@ function filePicker(parent, label, update, accept = 'image/jpeg,image/png,image/
       markChanged();
       renderSection();
     } catch (error) {
-      alert(`The image could not be saved in this browser: ${error.message}`);
+      alert(`The image could not be uploaded: ${error.message}`);
     }
   });
   wrap.append(input);
@@ -167,7 +175,9 @@ function renderIdentity() {
   bilingual(profile, 'Tagline', draft.identity.tagline);
   bilingual(profile, 'Location', draft.identity.location);
   const measurements = group('Measurements', 'You decide which values visitors can see.');
-  for (const [key, item] of Object.entries(draft.identity.measurements)) {
+  for (const key of measurementOrder) {
+    const item = draft.identity.measurements[key];
+    if (!item) continue;
     const block = element('div', 'field-group');
     const label = measurementNames[key] || key;
     if (typeof item.value === 'object') bilingual(block, label, item.value);
@@ -429,6 +439,10 @@ function openAssetDb() {
   });
 }
 async function storeAsset(file) {
+  if (portfolioBackendReady) {
+    status.textContent = 'Uploading photo…';
+    return uploadOwnerImage(file);
+  }
   const db = await openAssetDb();
   const id = crypto.randomUUID();
   await new Promise((resolve, reject) => {
@@ -441,6 +455,7 @@ async function storeAsset(file) {
   return `${ASSET_PREFIX}${id}`;
 }
 async function imageFromSource(source) {
+  if (/^https?:\/\//.test(source || '')) return source;
   if (!source?.startsWith(ASSET_PREFIX)) return new URL(`../${source || ''}`, location.href).href;
   const id = source.slice(ASSET_PREFIX.length);
   if (objectUrls.has(id)) return objectUrls.get(id);
@@ -497,7 +512,7 @@ async function applyHomePreview(doc, content) {
     logos[i].hidden = !client;
     if (client) await setImage(logos[i], client.logo, client.name);
   }
-  const measurementItems = Object.values(content.identity.measurements);
+  const measurementItems = measurementOrder.map(key => content.identity.measurements[key]);
   doc.querySelectorAll('.info-strip > div').forEach((row, index) => {
     const item = measurementItems[index];
     if (!item) return;
@@ -661,18 +676,49 @@ function loadPreviewPage() {
     about: '#about-portrait', booking: '#availability',
   };
   const hash = activeSection === 'home' ? '' : anchors[activeSection] || '';
-  frame.src = `../${page === 'home' ? 'index' : page}.html?studio-preview=12${hash}`;
+  frame.src = `../${page === 'home' ? 'index' : page}.html?studio-preview=13${hash}`;
 }
-function saveDraft() {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  status.textContent = 'Draft saved on this device';
+async function saveDraft() {
+  if (!portfolioBackendReady) {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    status.textContent = 'Draft saved on this device';
+    return true;
+  }
+  const button = document.querySelector('#saveButton');
+  button.disabled = true;
+  status.textContent = 'Saving draft…';
+  try {
+    draftRevision = await saveOwnerDraft(remotePortfolio.id, draft, draftRevision);
+    status.textContent = 'Draft saved privately';
+    return true;
+  } catch (error) {
+    status.textContent = error.message;
+    return false;
+  } finally {
+    button.disabled = false;
+  }
 }
-function simulatePublish() {
-  saveDraft();
-  published = copy(draft);
-  localStorage.setItem(PUBLISHED_KEY, JSON.stringify(published));
-  status.textContent = 'Simulated publication saved on this device · public site unchanged';
-  if (previewVersion === 'published') applyPreview();
+async function simulatePublish() {
+  const button = document.querySelector('#publishButton');
+  button.disabled = true;
+  try {
+    if (!await saveDraft()) return;
+    if (portfolioBackendReady) {
+      status.textContent = 'Publishing portfolio photos…';
+      await publishOwnerDraft(remotePortfolio.id);
+      published = copy(draft);
+      status.textContent = 'Published · your public portfolio now shows these photos';
+    } else {
+      published = copy(draft);
+      localStorage.setItem(PUBLISHED_KEY, JSON.stringify(published));
+      status.textContent = 'Simulated publication saved on this device · public site unchanged';
+    }
+    if (previewVersion === 'published') applyPreview();
+  } catch (error) {
+    status.textContent = `Could not publish: ${error.message}`;
+  } finally {
+    button.disabled = false;
+  }
 }
 function resetDemo() {
   if (!confirm('Reset this local demonstration to Vasilina’s current portfolio?')) return;
@@ -684,16 +730,52 @@ function resetDemo() {
   loadPreviewPage();
   status.textContent = 'Demo reset to Vasilina’s current portfolio';
 }
+function showLogin(message = '') {
+  document.querySelector('#studioLogin').hidden = false;
+  document.querySelector('#studioActions').hidden = true;
+  document.querySelector('#studioWorkspace').hidden = true;
+  document.querySelector('#studioNav').hidden = true;
+  document.querySelector('#signOutButton').hidden = true;
+  document.querySelector('#loginStatus').textContent = message;
+}
+async function loadRemotePortfolio() {
+  remotePortfolio = await getOwnedPortfolio();
+  const [savedDraft, publication] = await Promise.all([
+    getDraft(remotePortfolio.id, seed), getPublishedPortfolio(),
+  ]);
+  draft = copy(savedDraft.content);
+  draftRevision = savedDraft.revision;
+  published = copy(publication?.content || seed);
+  activeSection = 'portfolio';
+  previewVersion = 'draft';
+  document.querySelector('#studioLogin').hidden = true;
+  document.querySelector('#studioActions').hidden = false;
+  document.querySelector('#studioWorkspace').hidden = false;
+  document.querySelector('#studioNav').hidden = false;
+  document.querySelector('#signOutButton').hidden = false;
+  document.querySelector('#previewPage').value = 'home';
+  document.querySelector('#draftPreviewButton').classList.add('selected');
+  document.querySelector('#publishedPreviewButton').classList.remove('selected');
+  renderSection();
+  loadPreviewPage();
+  status.textContent = 'Ready to edit portfolio photos';
+}
+function configureRemoteInterface() {
+  document.querySelector('#studioMode').textContent = 'Connected portfolio';
+  document.querySelector('#studioNotice').textContent = 'Arrange approved photos here, preview the page, then publish when you are happy with it. Other sections will be connected later.';
+  document.querySelector('#resetButton').hidden = true;
+  document.querySelector('#saveButton').textContent = 'Save draft';
+  document.querySelector('#publishButton').textContent = 'Publish photos';
+  document.querySelector('#publishedPreviewButton').textContent = 'Published version';
+  document.querySelector('.preview-note').textContent = 'Your changes appear on the public portfolio after you press Publish photos.';
+  document.querySelectorAll('.studio-nav button').forEach(button => { button.hidden = button.dataset.section !== 'portfolio'; });
+  document.querySelector('.more-sections').hidden = true;
+  document.querySelector('.sidebar-note').textContent = 'Arrange first. Publish when the page feels right.';
+}
 async function start() {
   const response = await fetch('vasilina-content.json?v=studio-12', { cache: 'no-store' });
   if (!response.ok) throw new Error('Could not load Vasilina’s starting content');
   seed = await response.json();
-  draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') || copy(seed);
-  published = JSON.parse(localStorage.getItem(PUBLISHED_KEY) || 'null') || copy(seed);
-  for (const content of [draft, published]) {
-    content.compCard.currentPdf = seed.compCard.currentPdf;
-    delete content.compCard.currentDownload;
-  }
   document.querySelectorAll('.studio-nav button').forEach(button => {
     button.addEventListener('click', () => {
       activeSection = button.dataset.section;
@@ -708,6 +790,29 @@ async function start() {
   document.querySelector('#resetButton').addEventListener('click', resetDemo);
   document.querySelector('#draftPreviewButton').addEventListener('click', () => setPreviewVersion('draft'));
   document.querySelector('#publishedPreviewButton').addEventListener('click', () => setPreviewVersion('published'));
+  document.querySelector('#signOutButton').addEventListener('click', () => {
+    signOut();
+    draft = null;
+    published = null;
+    remotePortfolio = null;
+    showLogin('Signed out.');
+  });
+  document.querySelector('#loginForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button');
+    button.disabled = true;
+    document.querySelector('#loginStatus').textContent = 'Signing in…';
+    try {
+      await signIn(form.elements.namedItem('email').value.trim(), form.elements.namedItem('password').value);
+      form.elements.namedItem('password').value = '';
+      await loadRemotePortfolio();
+    } catch (error) {
+      document.querySelector('#loginStatus').textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
   editor.addEventListener('toggle', () => requestAnimationFrame(updateLanguageVisibility), true);
   for (const [lang, buttonId] of [['en', 'editEnglish'], ['th', 'editThai']]) {
     document.querySelector(`#${buttonId}`).addEventListener('click', () => {
@@ -721,6 +826,21 @@ async function start() {
     });
   }
   frame.addEventListener('load', applyPreview);
+  if (portfolioBackendReady) {
+    configureRemoteInterface();
+    showLogin();
+    if (hasOwnerSession()) {
+      try { await loadRemotePortfolio(); }
+      catch (error) { showLogin(error.message); }
+    }
+    return;
+  }
+  draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') || copy(seed);
+  published = JSON.parse(localStorage.getItem(PUBLISHED_KEY) || 'null') || copy(seed);
+  for (const content of [draft, published]) {
+    content.compCard.currentPdf = seed.compCard.currentPdf;
+    delete content.compCard.currentDownload;
+  }
   renderSection();
   status.textContent = 'Ready to edit · demo changes stay on this device';
   applyPreview();

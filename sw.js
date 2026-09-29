@@ -1,10 +1,10 @@
-const CACHE_NAME = 'vasilina-portfolio-v122';
+const CACHE_NAME = 'vasilina-portfolio-v124';
 
 // Core files to cache instantly when the site first loads
 const CORE_ASSETS = [
     '/manifest.json',
     '/style.css?v=120',
-    '/main.js?v=116',
+    '/main.js?v=117',
     '/image-captions.js?v=92',
     '/nav.js?v=117',
     '/footer.js?v=91',
@@ -39,6 +39,13 @@ self.addEventListener('fetch', (event) => {
     // Let the browser handle page redirects and fetch fresh HTML directly.
     if (event.request.mode === 'navigate') return;
     if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
+
+    // Studio and published content always use the current connection code.
+    if (['/portfolio-config.js', '/portfolio-backend.js', '/portfolio-published.js',
+        '/studio/studio.js', '/studio/vasilina-content.json'].includes(new URL(event.request.url).pathname)) {
+        event.respondWith(fetch(event.request, { cache: 'no-store' }));
+        return;
+    }
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {

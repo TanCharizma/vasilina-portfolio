@@ -16,7 +16,7 @@
       <a class="studio-brand" href="../index.html" aria-label="Vasilina public portfolio">Folio Lab<span> / Studio</span></a>
       <p class="studio-owner">Vasilina Panina</p>
       <p class="studio-kicker">Your portfolio, your way</p>
-      <nav class="studio-nav" aria-label="Editing sections">
+      <nav class="studio-nav" id="studioNav" aria-label="Editing sections">
         <button type="button" data-section="home" class="active">Home photos</button>
         <button type="button" data-section="portfolio">Portfolio</button>
         <button type="button" data-section="digitals">Digitals</button>
@@ -38,14 +38,28 @@
           <p class="eyebrow">Owner workspace</p>
           <h1>Your portfolio, in your hands.</h1>
         </div>
-        <span class="demo-pill">Local demonstration</span>
+        <div class="studio-account">
+          <span class="demo-pill" id="studioMode">Local demonstration</span>
+          <button type="button" id="signOutButton" class="quiet-button" hidden>Sign out</button>
+        </div>
       </header>
 
-      <div class="demo-notice" role="note">
+      <div class="demo-notice" id="studioNotice" role="note">
         This is a safe demonstration. Changes stay in this browser and do not update Vasilina’s public website.
       </div>
 
-      <div class="studio-actions">
+      <section id="studioLogin" class="studio-login" aria-labelledby="loginTitle" hidden>
+        <p class="eyebrow">Private workspace</p>
+        <h2 id="loginTitle">Sign in to edit your portfolio.</h2>
+        <form id="loginForm">
+          <label class="field"><span>Email</span><input type="email" name="email" autocomplete="username" required></label>
+          <label class="field"><span>Password</span><input type="password" name="password" autocomplete="current-password" required></label>
+          <button type="submit" class="primary-button">Sign in</button>
+        </form>
+        <p id="loginStatus" role="status"></p>
+      </section>
+
+      <div class="studio-actions" id="studioActions">
         <p id="saveStatus" class="save-status" role="status">Loading Vasilina’s portfolio…</p>
         <div class="action-buttons">
           <button type="button" id="resetButton" class="quiet-button">Reset demo</button>
@@ -54,7 +68,7 @@
         </div>
       </div>
 
-      <div class="studio-workspace">
+      <div class="studio-workspace" id="studioWorkspace">
         <section class="editor-panel" aria-labelledby="sectionTitle">
           <div class="editor-heading">
             <p class="eyebrow" id="sectionEyebrow">Your content</p>
@@ -93,6 +107,6 @@
       </div>
     </main>
   </div>
-  <script type="module" src="studio.js?v=studio-12"></script>
+  <script type="module" src="studio.js?v=studio-13"></script>
 </body>
 </html>
