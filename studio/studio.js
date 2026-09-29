@@ -773,7 +773,7 @@ function configureRemoteInterface() {
   document.querySelector('.sidebar-note').textContent = 'Arrange first. Publish when the page feels right.';
 }
 async function start() {
-  const response = await fetch('vasilina-content.json?v=studio-12', { cache: 'no-store' });
+  const response = await fetch('/studio/vasilina-content.json?v=studio-12', { cache: 'no-store' });
   if (!response.ok) throw new Error('Could not load Vasilina’s starting content');
   seed = await response.json();
   document.querySelectorAll('.studio-nav button').forEach(button => {
