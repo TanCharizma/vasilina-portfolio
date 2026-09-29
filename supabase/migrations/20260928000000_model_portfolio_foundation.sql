@@ -48,7 +48,7 @@ revoke all on public.model_portfolio_drafts from public, anon, authenticated;
 revoke all on public.model_portfolio_publications from public, anon, authenticated;
 
 grant select on public.model_portfolios to authenticated;
-grant select, update (content) on public.model_portfolio_drafts to authenticated;
+grant select, insert (portfolio_id, content), update (content) on public.model_portfolio_drafts to authenticated;
 grant select on public.model_portfolio_publications to anon, authenticated;
 
 create policy "Owner reads portfolio"
@@ -72,6 +72,15 @@ using (
     where p.id = portfolio_id and p.owner_id = (select auth.uid())
   )
 )
+with check (
+  exists (
+    select 1 from public.model_portfolios p
+    where p.id = portfolio_id and p.owner_id = (select auth.uid())
+  )
+);
+
+create policy "Owner starts draft"
+on public.model_portfolio_drafts for insert to authenticated
 with check (
   exists (
     select 1 from public.model_portfolios p

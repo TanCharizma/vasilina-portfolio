@@ -10,6 +10,15 @@
           "value": "attachment; filename=\"Lina_Comp_Card.png\""
         }
       ]
+    },
+    {
+      "source": "/portfolio-config.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ]
 }

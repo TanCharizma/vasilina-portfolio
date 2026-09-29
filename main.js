@@ -321,7 +321,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!caption || !captionToggle) return;
             const config = window.IMAGE_MODAL_CONFIG;
             const path = new URL(src, location.href).pathname.replace(/^\/+/, '');
-            const data = config?.captions?.[path];
+            const selectedImage = currentSectionImages[currentImgIndex];
+            const editedCaption = selectedImage?.dataset.captionEn || selectedImage?.dataset.captionTh
+                ? { en: selectedImage.dataset.captionEn, th: selectedImage.dataset.captionTh }
+                : null;
+            const data = editedCaption || config?.captions?.[path];
             const available = config?.showCaptions === true && Boolean(data?.en || data?.th);
             captionToggle.hidden = !available;
             captionToggle.setAttribute('aria-pressed', String(visitorCaptionsEnabled));
@@ -441,13 +445,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Filter out any image that is a brand logo (by class or by folder path)
-        const galleryImages = Array.from(document.querySelectorAll('section img')).filter(img => {
-            return !img.classList.contains('brand-logo') && !img.src.includes('brand_icons') && !img.closest('.split-layout');
-        });
+        const isGalleryImage = img => img && !img.classList.contains('brand-logo')
+            && !img.src.includes('brand_icons') && !img.closest('.split-layout');
+        Array.from(document.querySelectorAll('section img')).filter(isGalleryImage)
+            .forEach(img => { img.style.cursor = 'pointer'; });
 
-        galleryImages.forEach((img) => {
-            img.style.cursor = 'pointer';
-            img.addEventListener('click', () => {
+        document.addEventListener('click', event => {
+            const img = event.target.closest('section img');
+            if (!isGalleryImage(img)) return;
                 clearTimeout(closeResetTimer);
                 openingImage = img;
                 // Freeze the hover state so it doesn't drop while the modal opens
@@ -468,7 +473,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.setAttribute('aria-hidden', 'false');
                 updateModal(currentSectionImages.indexOf(img), 0, true);
                 modal.focus({ preventScroll: true });
-            });
         });
 
         document.querySelector('.modal-prev').onclick = (e) => { e.stopPropagation(); if (currentImgIndex > 0) updateModal(currentImgIndex - 1, -1); };
