@@ -8,35 +8,48 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/studio/studio.css?v=studio-9">
+  <link rel="stylesheet" href="/studio/studio.css?v=studio-30">
 </head>
 <body>
+  <div class="studio-opening" id="studioOpening" role="status" aria-live="polite">
+    <span>Folio Lab <small>/ Studio</small></span>
+    <p>Opening your Studio…</p>
+  </div>
   <div class="studio-shell">
     <aside class="studio-sidebar">
       <a class="studio-brand" href="../index.html" aria-label="Vasilina public portfolio">Folio Lab<span> / Studio</span></a>
       <p class="studio-owner">Vasilina Panina</p>
       <p class="studio-kicker">Your portfolio, your way</p>
       <nav class="studio-nav" id="studioNav" aria-label="Editing sections">
-        <button type="button" data-section="home" class="active">Home photos</button>
+        <button type="button" data-section="home" class="active">Homepage</button>
         <button type="button" data-section="portfolio">Portfolio</button>
         <button type="button" data-section="digitals">Digitals</button>
+        <button type="button" data-section="motion">Motion</button>
+        <button type="button" data-section="identity">Profile &amp; measurements</button>
+        <button type="button" data-section="about">About &amp; bio</button>
         <button type="button" data-section="compCard">Comp card</button>
-        <details class="more-sections">
-          <summary>More to edit</summary>
-          <button type="button" data-section="identity">Profile &amp; measurements</button>
-          <button type="button" data-section="about">About</button>
-          <button type="button" data-section="motion">Motion</button>
-          <button type="button" data-section="booking">Booking</button>
-        </details>
+        <button type="button" data-section="booking">Booking</button>
       </nav>
+      <div class="mobile-section-picker">
+        <label for="studioSectionPicker">Edit section</label>
+        <select id="studioSectionPicker">
+          <option value="home">Homepage</option>
+          <option value="portfolio">Portfolio</option>
+          <option value="digitals">Digitals</option>
+          <option value="motion">Motion</option>
+          <option value="identity">Profile &amp; measurements</option>
+          <option value="about">About &amp; bio</option>
+          <option value="compCard">Comp card</option>
+          <option value="booking">Booking</option>
+        </select>
+      </div>
       <p class="sidebar-note">Start with your photos. The rest is here whenever you need it.</p>
     </aside>
 
     <main class="studio-main">
       <header class="studio-topbar">
         <div>
-          <p class="eyebrow">Owner workspace</p>
-          <h1>Your portfolio, in your hands.</h1>
+          <h1>Vasilina’s portfolio</h1>
         </div>
         <div class="studio-account">
           <span class="demo-pill" id="studioMode">Local demonstration</span>
@@ -60,7 +73,10 @@
       </section>
 
       <div class="studio-actions" id="studioActions">
-        <p id="saveStatus" class="save-status" role="status">Loading Vasilina’s portfolio…</p>
+        <div class="studio-status-row">
+          <p id="saveStatus" class="save-status" data-state="busy" role="status">Loading Vasilina’s portfolio…</p>
+          <button type="button" id="undoButton" class="quiet-button" hidden>Undo</button>
+        </div>
         <div class="action-buttons">
           <button type="button" id="resetButton" class="quiet-button">Reset demo</button>
           <button type="button" id="saveButton" class="outline-button">Save draft here</button>
@@ -68,12 +84,16 @@
         </div>
       </div>
 
-      <div class="studio-workspace" id="studioWorkspace">
-        <section class="editor-panel" aria-labelledby="sectionTitle">
+      <div class="studio-workspace" id="studioWorkspace" data-mobile-view="edit">
+        <div class="workspace-view-switch" role="group" aria-label="Studio view">
+          <button type="button" id="editViewButton" class="selected" aria-pressed="true" aria-controls="editorPanel">Edit content</button>
+          <button type="button" id="previewViewButton" aria-pressed="false" aria-controls="previewPanel">Preview site</button>
+        </div>
+        <section class="editor-panel" id="editorPanel" aria-labelledby="sectionTitle">
           <div class="editor-heading">
             <p class="eyebrow" id="sectionEyebrow">Your content</p>
-            <h2 id="sectionTitle">Home photos</h2>
-            <p id="sectionDescription">Choose the images people see first.</p>
+            <h2 id="sectionTitle">Homepage</h2>
+            <p id="sectionDescription">Edit your cover, selected work, and homepage wording.</p>
             <div class="language-switch" role="group" aria-label="Editing language">
               <span>Edit text in</span>
               <button type="button" id="editEnglish" class="selected" aria-pressed="true">English</button>
@@ -83,7 +103,7 @@
           <div id="editorContent" class="editor-content"></div>
         </section>
 
-        <section class="preview-panel" aria-labelledby="previewTitle">
+        <section class="preview-panel" id="previewPanel" aria-labelledby="previewTitle">
           <div class="preview-heading">
             <div>
               <p class="eyebrow">Real design preview</p>
@@ -96,17 +116,41 @@
             </select>
           </div>
           <div class="preview-tools">
-            <button type="button" id="draftPreviewButton" class="selected">Working version</button>
-            <button type="button" id="publishedPreviewButton">Simulated published version</button>
+            <button type="button" id="draftPreviewButton" class="selected" aria-pressed="true">Working edits</button>
+            <button type="button" id="publishedPreviewButton" aria-pressed="false">Demo published</button>
+          </div>
+          <p id="previewVersionNote" class="preview-version-note" data-version="draft" role="status">Working preview · changes here are not public yet.</p>
+          <div class="preview-display-controls">
+            <div class="preview-device-switch" role="group" aria-label="Preview screen size">
+              <button type="button" id="desktopPreviewButton" class="selected" aria-pressed="true">Desktop</button>
+              <button type="button" id="mobilePreviewButton" aria-pressed="false">Mobile</button>
+            </div>
+            <div class="preview-zoom-controls">
+              <label for="previewZoom">Zoom</label>
+              <input id="previewZoom" type="range" min="20" max="150" step="5" value="100" aria-label="Preview zoom">
+              <output id="previewZoomValue" for="previewZoom">100%</output>
+              <button type="button" id="fitPreviewButton" aria-label="Fit preview to window">Fit</button>
+            </div>
           </div>
           <div class="preview-frame-wrap">
-            <iframe id="previewFrame" title="Vasilina portfolio preview" src="../index.html"></iframe>
+            <div class="preview-canvas" id="previewCanvas">
+              <iframe id="previewFrame" title="Vasilina portfolio preview" src="../index.html"></iframe>
+            </div>
           </div>
           <p class="preview-note">This preview uses the finished Vasilina design. The live Cal.com calendar remains connected to her current account during this demo.</p>
         </section>
       </div>
     </main>
   </div>
-  <script type="module" src="/studio/studio.js?v=studio-14"></script>
+  <dialog id="publishDialog" class="publish-dialog" aria-labelledby="publishDialogTitle" aria-describedby="publishDialogDescription">
+    <p class="eyebrow">Final step</p>
+    <h2 id="publishDialogTitle">Publish to website?</h2>
+    <p id="publishDialogDescription">Your current edits will be saved and shown on Vasilina’s public website. Anyone with the link can see them.</p>
+    <div class="publish-dialog-actions">
+      <button type="button" id="publishCancelButton" class="outline-button">Keep editing</button>
+      <button type="button" id="publishConfirmButton" class="primary-button">Publish now</button>
+    </div>
+  </dialog>
+  <script type="module" src="/studio/studio.js?v=studio-48"></script>
 </body>
 </html>
