@@ -139,3 +139,41 @@ export async function uploadOwnerImage(file) {
   await readResponse(response);
   return `${url}/storage/v1/object/public/model-media/${path}`;
 }
+
+export function ownerVideoFormat(file) {
+  const extension = file.name?.split('.').pop()?.toLowerCase();
+  const formats = { mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime' };
+  const type = formats[extension] || (file.type === 'video/x-quicktime' ? 'video/quicktime' : file.type);
+  if (!Object.values(formats).includes(type)) throw new Error('Choose an MP4, MOV, or WebM video.');
+  return { extension: formats[extension] ? extension : Object.keys(formats).find(key => formats[key] === type), type };
+}
+
+export async function uploadOwnerVideo(file, onProgress = () => {}) {
+  const { extension, type } = ownerVideoFormat(file);
+  if (file.size > 50 * 1024 * 1024) throw new Error('Choose a video smaller than 50 MB.');
+  await refreshSession();
+  const path = `${session.user.id}/${crypto.randomUUID()}.${extension}`;
+  await new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', `${url}/storage/v1/object/model-videos/${path}`);
+    request.setRequestHeader('apikey', key);
+    request.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+    request.setRequestHeader('Content-Type', type);
+    request.setRequestHeader('cache-control', '3600');
+    request.upload.onprogress = event => {
+      if (event.lengthComputable) onProgress(Math.round(event.loaded / event.total * 100));
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) { resolve(); return; }
+      let message;
+      try {
+        const body = JSON.parse(request.responseText);
+        message = body.message || body.error;
+      } catch {}
+      reject(new Error(message || `Video upload failed (${request.status})`));
+    };
+    request.onerror = () => reject(new Error('Video upload was interrupted. Please try again.'));
+    request.send(file);
+  });
+  return `${url}/storage/v1/object/public/model-videos/${path}`;
+}

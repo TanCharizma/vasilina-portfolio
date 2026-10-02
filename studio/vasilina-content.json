@@ -65,8 +65,8 @@
       { "id": "portfolio-21", "src": "image/portfolio/21.webp", "alt": "Vasilina Panina in a yellow dress with a blue handbag", "caption": { "en": "Yellow and blue", "th": "สีเหลืองและสีฟ้า" } }
     ],
     "motion": [
-      { "id": "motion-01", "provider": "wistia", "mediaId": "72zcf1ea44" },
-      { "id": "motion-02", "provider": "wistia", "mediaId": "dzx8dcdotx" }
+      { "id": "motion-01", "provider": "wistia", "mediaId": "72zcf1ea44", "title": "LEVI'S" },
+      { "id": "motion-02", "provider": "wistia", "mediaId": "dzx8dcdotx", "title": "Fashion show" }
     ],
     "motionStills": ["portfolio-18", "portfolio-19"],
     "digitals": [
@@ -108,7 +108,7 @@
   },
   "compCard": {
     "currentPreview": "image/compcard.webp",
-    "currentPdf": "image/compcard.pdf"
+    "currentDownload": "image/compcard.png"
   },
   "footer": {
     "description": { "en": "Model & creative director, based in Bangkok.", "th": "นางแบบและครีเอทีฟไดเรกเตอร์ ประจำอยู่ในกรุงเทพฯ" }
