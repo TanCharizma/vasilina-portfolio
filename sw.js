@@ -42,7 +42,8 @@ self.addEventListener('fetch', (event) => {
 
     // Studio and published content always use the current connection code.
     if (['/portfolio-config.js', '/portfolio-backend.js', '/portfolio-published.js',
-        '/studio/studio.js', '/studio/vasilina-content.json'].includes(new URL(event.request.url).pathname)) {
+        '/studio/studio.js', '/studio/vasilina-content.json', '/studio/reset-password.js',
+        '/studio/reset-password.css'].includes(new URL(event.request.url).pathname)) {
         event.respondWith(fetch(event.request, { cache: 'no-store' }));
         return;
     }

@@ -1,7 +1,7 @@
 import {
   portfolioBackendReady as configuredBackendReady, hasOwnerSession, signIn, signOut, getOwnedPortfolio,
   getDraft, saveOwnerDraft, publishOwnerDraft, getPublishedPortfolio, uploadOwnerImage, uploadOwnerVideo, ownerVideoFormat,
-} from '../portfolio-backend.js?v=3';
+} from '../portfolio-backend.js?v=4';
 import { renderPortfolioChapters } from '../portfolio-layout.js?v=1';
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
 import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=2';

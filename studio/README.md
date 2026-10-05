@@ -32,6 +32,32 @@ The release includes `visual.html`, `visual.js`, `visual.css`,
 `visual-status.js`, and the shared `portfolio-layout.js`, alongside the updated
 Studio and public rendering files. Include new files when committing the release.
 
+## Password recovery setup
+
+Studio sign-in includes **Forgot password?**, which opens `/studio/reset-password`.
+The page sends a Supabase recovery email, validates the recovery token, and lets
+the account owner choose a new password. No portfolio content is saved or published.
+Expired/invalid links offer a new email request. Recovery tokens are removed from
+the URL and kept only in memory, so refreshing the reset form requires a new link.
+
+Before using it live:
+
+1. Deploy the reset page, scripts, styles, and updated backend module.
+2. In Supabase **Authentication → URL Configuration**, set Site URL to
+   `https://vasilina-portfolio.vercel.app` and add this exact Redirect URL:
+   `https://vasilina-portfolio.vercel.app/studio/reset-password`.
+   For local testing, also allow `http://127.0.0.1:8053/studio/reset-password.html`.
+3. Configure **Authentication → Email → SMTP Settings** with an email provider.
+   The default sender is restricted to project team email addresses; Studio users
+   do not need to become project team members.
+4. Keep the Reset Password email template's standard `{{ .ConfirmationURL }}`
+   link so Supabase verifies the link and redirects to the reset page.
+5. Test with an account whose inbox you control: request a link, open it, set a
+   new password, and sign in. Check an expired link and mismatched passwords too.
+
+Documentation: https://supabase.com/docs/guides/auth/passwords and
+https://supabase.com/docs/guides/auth/auth-smtp.
+
 ## Original form editor
 
 Open `/studio/?legacy=1` from a local web server at the repository root.

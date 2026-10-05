@@ -75,6 +75,39 @@ export async function signIn(email, password) {
   saveSession(await readResponse(response));
 }
 
+export async function requestPasswordReset(email, redirectTo) {
+  if (!portfolioBackendReady) throw new Error('Studio connection unavailable. Please try again later.');
+  const response = await fetch(`${url}/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`, {
+    method: 'POST',
+    headers: headers({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: email.trim() }),
+  });
+  await readResponse(response);
+}
+
+// Recovery uses its own short-lived token, never the Studio's saved session.
+export async function verifyRecoverySession(accessToken) {
+  if (!portfolioBackendReady || !accessToken) throw new Error('Request a new reset link.');
+  const response = await fetch(`${url}/auth/v1/user`, {
+    headers: headers({ Authorization: `Bearer ${accessToken}` }),
+    cache: 'no-store',
+  });
+  const user = await readResponse(response);
+  if (!user?.id) throw new Error('Request a new reset link.');
+}
+
+export async function resetOwnerPassword(accessToken, password) {
+  if (!portfolioBackendReady || !accessToken) throw new Error('Request a new reset link.');
+  if (password.length < 8) throw new Error('Use at least 8 characters.');
+  const response = await fetch(`${url}/auth/v1/user`, {
+    method: 'PUT',
+    headers: headers({ 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` }),
+    body: JSON.stringify({ password }),
+  });
+  await readResponse(response);
+  signOut();
+}
+
 export function signOut() {
   session = null;
   localStorage.removeItem(sessionKey);
