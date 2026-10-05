@@ -542,5 +542,5 @@ window.addEventListener('resize',fit);
 window.visualViewport?.addEventListener('resize',fit);
 window.addEventListener('beforeunload',event=>{if(api?.dirty){event.preventDefault();event.returnValue='';}});
 document.body.classList.add('signed-out');
-controls.src=localTrial?'./?visual-local=1&v=controls-31':'./?visual-connected=1&v=controls-31';
+controls.src=localTrial?'./?visual-local=1&v=controls-32':'./?visual-connected=1&v=controls-32';
 updateSections();connect();fit();
