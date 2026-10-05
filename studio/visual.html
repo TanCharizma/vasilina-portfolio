@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Visual Studio · Folio Lab</title>
+  <link rel="stylesheet" href="visual.css?v=26">
+  <script src="visual.js?v=31" type="module"></script>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="identity"><strong><span class="brand-name">Folio Lab </span><em>Studio</em></strong><button id="sign-out" hidden>Sign out</button></div>
+    <div class="switches">
+      <div class="segment" aria-label="Editing mode"><button id="edit" aria-pressed="true">Edit</button><button id="view" aria-pressed="false">Preview</button></div>
+      <div class="segment" aria-label="Preview size"><button id="desktop" aria-pressed="true">Desktop</button><button id="mobile" aria-pressed="false">Mobile</button></div>
+    </div>
+    <div class="actions"><span id="status" role="status">Opening Studio…</span><button id="undo" aria-label="Undo" title="Undo" disabled><svg class="history-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h9a6 6 0 0 1 6 6"/></svg><span class="history-label">Undo</span></button><button id="redo" aria-label="Redo" title="Redo" disabled><svg class="history-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5h-9a6 6 0 0 0-6 6"/></svg><span class="history-label">Redo</span></button><button id="save" disabled>Save draft</button><button id="publish" class="trial-publish" disabled>Publish</button></div>
+  </header>
+  <div class="guide">
+    <span><span id="workspace-mode">Connecting…</span><span class="desktop-instruction"> · Click a photo or an Edit label</span> <span id="mobile-status" role="status"></span></span>
+    <div class="navigation">
+      <label>Page <select id="page"><option value="home">Home</option><option value="about">About</option><option value="booking">Booking</option></select></label>
+      <label>Edit section <select id="section"><option value="">Choose…</option><option value="home">Homepage</option><option value="portfolio">Portfolio</option><option value="digitals">Digitals</option><option value="motion">Motion</option><option value="identity">Profile & measurements</option><option value="about">About & bio</option><option value="compCard">Comp card</option><option value="booking">Booking</option></select></label>
+    </div>
+  </div>
+  <section id="account-gate" class="account-gate" aria-labelledby="account-title">
+    <div class="account-card">
+      <p class="account-brand">Folio Lab Studio</p>
+      <h1 id="account-title">Opening your Studio…</h1>
+      <form id="account-form" hidden>
+        <label>Email<input name="email" type="email" autocomplete="username" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="account-status" role="status"></p>
+      <a href="?local=1">Open the browser trial ↗</a>
+    </div>
+  </section>
+  <main id="workspace" hidden><div id="viewport"><iframe id="website" title="Your portfolio — visual editor"></iframe></div></main>
+  <dialog id="editor" aria-labelledby="editor-title">
+    <div class="editor-heading"><button id="editor-back" aria-label="Back to section" hidden>← Back</button><span id="editor-title">Edit your website</span><button id="close" aria-label="Close editor">×</button></div>
+    <div id="editor-menu" hidden></div>
+    <iframe id="controls" title="Website editing controls" src="about:blank"></iframe>
+    <div class="editor-footer"><span id="editor-status" role="status"></span><div class="editor-history" aria-label="Edit history"><button id="editor-undo" aria-label="Undo" title="Undo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h9a6 6 0 0 1 6 6"/></svg></button><button id="editor-redo" aria-label="Redo" title="Redo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5h-9a6 6 0 0 0-6 6"/></svg></button></div><button id="editor-save">Save draft</button><button id="editor-done">Done</button></div>
+    <button id="editor-resize" aria-label="Resize editor" title="Drag to resize. Double-click to restore the default size. Arrow keys also resize."><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 16 16 7M12 16l4-4"/></svg></button>
+  </dialog>
+  <input id="add-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple hidden>
+  <p id="notice" role="status" hidden></p>
+</body>
+</html>

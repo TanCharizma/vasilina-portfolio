@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Vasilina Studio · Folio Lab</title>
+  <script>if(new URLSearchParams(location.search).has('visual-local')||new URLSearchParams(location.search).has('visual-connected'))document.documentElement.classList.add('visual-local');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/studio/studio.css?v=studio-30">
+  <link rel="stylesheet" href="/studio/studio.css?v=studio-40">
 </head>
 <body>
   <div class="studio-opening" id="studioOpening" role="status" aria-live="polite">
@@ -76,6 +77,7 @@
         <div class="studio-status-row">
           <p id="saveStatus" class="save-status" data-state="busy" role="status">Loading Vasilina’s portfolio…</p>
           <button type="button" id="undoButton" class="quiet-button" hidden>Undo</button>
+          <button type="button" id="redoButton" class="quiet-button" hidden>Redo</button>
         </div>
         <div class="action-buttons">
           <button type="button" id="resetButton" class="quiet-button">Reset demo</button>
@@ -134,7 +136,7 @@
           </div>
           <div class="preview-frame-wrap">
             <div class="preview-canvas" id="previewCanvas">
-              <iframe id="previewFrame" title="Vasilina portfolio preview" src="../index.html"></iframe>
+              <iframe id="previewFrame" title="Vasilina portfolio preview" src="../index.html?studio-preview=15"></iframe>
             </div>
           </div>
           <p class="preview-note">This preview uses the finished Vasilina design. The live Cal.com calendar remains connected to her current account during this demo.</p>
@@ -151,6 +153,6 @@
       <button type="button" id="publishConfirmButton" class="primary-button">Publish now</button>
     </div>
   </dialog>
-  <script type="module" src="/studio/studio.js?v=studio-48"></script>
+  <script type="module" src="/studio/studio.js?v=studio-63"></script>
 </body>
 </html>

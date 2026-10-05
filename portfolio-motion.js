@@ -87,5 +87,7 @@ export async function renderMotionStills(doc, ids, photos, resolveSource = sourc
     if (!photo) continue;
     images[index].src = await resolveSource(photo.src);
     images[index].alt = photo.alt || '';
+    images[index].dataset.captionEn = photo.caption?.en || '';
+    images[index].dataset.captionTh = photo.caption?.th || '';
   }
 }
