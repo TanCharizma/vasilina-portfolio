@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Vasilina Studio · Folio Lab</title>
-  <script>if(new URLSearchParams(location.search).has('visual-local')||new URLSearchParams(location.search).has('visual-connected'))document.documentElement.classList.add('visual-local');</script>
+  <script>
+    const studioParams = new URLSearchParams(location.search);
+    const embeddedControls = studioParams.has('visual-local') || studioParams.has('visual-connected');
+    if (embeddedControls) {
+      document.documentElement.classList.add('visual-local');
+    } else if (!studioParams.has('legacy')) {
+      document.documentElement.style.visibility = 'hidden';
+      location.replace('/studio/visual.html' + location.search + location.hash);
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">

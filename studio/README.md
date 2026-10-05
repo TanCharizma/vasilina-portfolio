@@ -2,10 +2,10 @@
 
 ## Visual Studio
 
-Open `/studio/visual.html` to sign in to the visual editor. On Vercel, the clean
-URL is `/studio/visual`. It uses the connected owner account and private draft.
+Open `/studio` to sign in to the visual editor. It redirects to
+`/studio/visual.html` (the clean URL on Vercel is `/studio/visual`). It uses the connected owner account and private draft.
 The website preview opens Home, About, and Booking; each section has focused
-editing controls. The older form editor remains at `/studio/`.
+editing controls. The older form editor remains at `/studio/?legacy=1`.
 
 `/studio/visual.html?local=1` opens a separate browser trial. Its draft stays on
 that device and cannot publish to the live website. Use the connected Studio
