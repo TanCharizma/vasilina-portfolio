@@ -1,4 +1,33 @@
-# Vasilina Studio prototype
+# Vasilina Studio
+
+## Visual Studio
+
+Open `/studio/visual.html` to sign in to the visual editor. On Vercel, the clean
+URL is `/studio/visual`. It uses the connected owner account and private draft.
+The website preview opens Home, About, and Booking; each section has focused
+editing controls. The older form editor remains at `/studio/`.
+
+`/studio/visual.html?local=1` opens a separate browser trial. Its draft stays on
+that device and cannot publish to the live website. Use the connected Studio
+for the owner's real workflow.
+
+**Save draft** keeps changes private. **Publish changes** saves and publishes
+the current draft. The status distinguishes unsaved changes, a saved draft
+that is not published, and a website that is up to date. Undo and Redo cover
+the current editing session; refreshing starts a new history from the saved draft.
+
+Before handoff, verify the connected workflow:
+
+1. Sign in, make a small edit, and save the draft.
+2. Refresh Studio and confirm the edit remains while the public website is unchanged.
+3. Preview Home, About, and Booking in desktop and mobile sizes.
+4. Publish the approved draft and open the public website separately to confirm it.
+
+The release includes `visual.html`, `visual.js`, `visual.css`,
+`visual-status.js`, and the shared `portfolio-layout.js`, alongside the updated
+Studio and public rendering files. Include new files when committing the release.
+
+## Original form editor
 
 Open `/studio/` from a local web server at the repository root. For example, with
 the server running on port 8052, visit `http://127.0.0.1:8052/studio/`.

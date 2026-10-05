@@ -1,16 +1,21 @@
 import {
-  portfolioBackendReady, hasOwnerSession, signIn, signOut, getOwnedPortfolio,
+  portfolioBackendReady as configuredBackendReady, hasOwnerSession, signIn, signOut, getOwnedPortfolio,
   getDraft, saveOwnerDraft, publishOwnerDraft, getPublishedPortfolio, uploadOwnerImage, uploadOwnerVideo, ownerVideoFormat,
 } from '../portfolio-backend.js?v=3';
+import { renderPortfolioChapters } from '../portfolio-layout.js?v=1';
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
 import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=2';
 
-const DRAFT_KEY = 'folio-lab-vasilina-demo-draft-v1';
-const PUBLISHED_KEY = 'folio-lab-vasilina-demo-published-v1';
+// The visual workspace shares the editor; the local trial keeps separate storage.
+const visualLocal = new URLSearchParams(location.search).has('visual-local');
+const visualMode = visualLocal || new URLSearchParams(location.search).has('visual-connected');
+const portfolioBackendReady = configuredBackendReady && !visualLocal;
+const DRAFT_KEY = visualLocal ? 'folio-lab-visual-draft-v2' : 'folio-lab-vasilina-demo-draft-v1';
+const PUBLISHED_KEY = visualLocal ? 'folio-lab-visual-published-v2' : 'folio-lab-vasilina-demo-published-v1';
 const ASSET_PREFIX = 'demo-asset:';
 const sectionTitles = {
   identity: ['Profile & measurements', 'Edit your profile and measurements.'],
-  home: ['Homepage', 'Edit your cover, selected work, and homepage wording.'],
+  home: ['Homepage', 'Edit your cover and homepage wording.'],
   portfolio: ['Your photos', 'Choose where each photo appears.'],
   digitals: ['Digitals', 'Update your digitals.'],
   motion: ['Motion', 'Upload and arrange your videos.'],
@@ -30,10 +35,13 @@ const previewCanvas = document.querySelector('#previewCanvas');
 const previewWrap = document.querySelector('.preview-frame-wrap');
 const previewZoom = document.querySelector('#previewZoom');
 const status = document.querySelector('#saveStatus');
+let openingStudio=true;
 let seed;
 let draft;
 let published;
 let activeSection = 'home';
+let visualTarget = null;
+let visualGalleryId = null;
 let editLanguage = 'en';
 let previewVersion = 'draft';
 let previewAnchor = '';
@@ -47,6 +55,9 @@ let publishedSnapshot = null;
 let saveInProgress = false;
 let publishInProgress = false;
 let hiddenPhotosOpen = false;
+let editHistory = [];
+let historyPosition = 0;
+let historyGroup = null;
 const objectUrls = new Map();
 const previewSizes = {
   desktop: { width: 1440, height: 900 },
@@ -106,6 +117,7 @@ function hasUnsavedChanges() { return !!draft && savedSnapshot !== null && snaps
 function setSaveStatus(state, message) {
   status.dataset.state = state;
   status.textContent = message;
+  if (visualMode) parent.dispatchEvent(new Event('visual-studio-change'));
 }
 function updatePreviewVersionNote() {
   if (!draft || !published) return;
@@ -142,9 +154,38 @@ function element(tag, className, text) {
   if (text !== undefined) node.textContent = text;
   return node;
 }
-function markChanged() {
+function resetHistory() {
+  editHistory=[snapshot(draft)];historyPosition=0;historyGroup=null;updateHistoryButtons();
+}
+function updateHistoryButtons() {
+  const undo=document.querySelector('#undoButton'),redo=document.querySelector('#redoButton');
+  const show=editHistory.length>1;
+  undo.hidden=redo.hidden=!show;
+  undo.disabled=historyPosition===0;
+  redo.disabled=historyPosition>=editHistory.length-1;
+  undo.onclick=()=>travelHistory(-1);redo.onclick=()=>travelHistory(1);
+}
+function travelHistory(direction) {
+  const next=historyPosition+direction;
+  if(saveInProgress||publishInProgress||next<0||next>=editHistory.length)return;
+  historyPosition=next;historyGroup=null;draft=JSON.parse(editHistory[next]);
+  renderSection();updateHistoryButtons();updateSaveStatus();
+  clearTimeout(previewTimer);previewTimer=setTimeout(applyPreview,150);
+}
+document.addEventListener('focusout',()=>{historyGroup=null;});
+document.addEventListener('keydown',event=>{
+  if(!(event.metaKey||event.ctrlKey)||event.key.toLowerCase()!=='z'||event.target.closest('input,textarea,[contenteditable]'))return;
+  event.preventDefault();travelHistory(event.shiftKey?1:-1);
+});
+function markChanged(group=null) {
+  const next=snapshot(draft);
+  if(editHistory.length && next!==editHistory[historyPosition]) {
+    if(group && group===historyGroup && historyPosition===editHistory.length-1)editHistory[historyPosition]=next;
+    else {editHistory.splice(historyPosition+1);editHistory.push(next);historyPosition++;}
+    historyGroup=group;
+  }
+  updateHistoryButtons();
   updateSaveStatus();
-  document.querySelector('#undoButton').hidden = true;
   clearTimeout(previewTimer);
   previewTimer = setTimeout(applyPreview, 150);
 }
@@ -161,7 +202,7 @@ function textField(parent, label, value, update, multiline = false) {
   const input = document.createElement(multiline ? 'textarea' : 'input');
   if (!multiline) input.type = 'text';
   input.value = value ?? '';
-  input.addEventListener('input', () => { update(input.value); markChanged(); });
+  input.addEventListener('input', () => { update(input.value); markChanged(input); });
   wrap.append(input);
   parent.append(wrap);
   return input;
@@ -279,20 +320,10 @@ function removeFromArray(items, index) {
   renderSection();
 }
 function changePortfolioPlacement(change, message) {
-  const previous = draft.home.portfolioChapters.map(chapter => [chapter, [...chapter.photos]]);
-  const previousHiddenPhotosOpen = hiddenPhotosOpen;
   change();
   markChanged();
   renderSection();
   if (message && hasUnsavedChanges()) setSaveStatus('unsaved', `${message} · unsaved changes`);
-  const undo = document.querySelector('#undoButton');
-  undo.hidden = false;
-  undo.onclick = () => {
-    for (const [chapter, photos] of previous) chapter.photos.splice(0, chapter.photos.length, ...photos);
-    hiddenPhotosOpen = previousHiddenPhotosOpen;
-    markChanged();
-    renderSection();
-  };
 }
 function movePortfolioPhoto(chapter, index, direction) {
   const next = index + direction;
@@ -301,13 +332,17 @@ function movePortfolioPhoto(chapter, index, direction) {
     [chapter.photos[index], chapter.photos[next]] = [chapter.photos[next], chapter.photos[index]];
   }, 'Photo reordered');
 }
-function enablePhotoDrag(handle, card, grid, chapter, id) {
+function enablePhotoDrag(handle, card, grid, chapter, id, reorder) {
   let startX = 0;
   let startY = 0;
   let pointerId = null;
   let dragging = false;
   let targetCard = null;
   let placeAfter = false;
+  let lastX = 0;
+  let lastY = 0;
+  let startScrollY = 0;
+  let dragFrame = 0;
   const clearTarget = () => {
     targetCard?.classList.remove('drop-before', 'drop-after');
     targetCard = null;
@@ -317,10 +352,14 @@ function enablePhotoDrag(handle, card, grid, chapter, id) {
     const destination = targetCard?.dataset.photoId;
     const after = placeAfter;
     clearTarget();
+    cancelAnimationFrame(dragFrame);
+    dragFrame = 0;
     card.classList.remove('is-dragging');
     card.style.transform = '';
     document.body.classList.remove('is-reordering');
+    const capturedPointer = pointerId;
     pointerId = null;
+    if (handle.hasPointerCapture(capturedPointer)) handle.releasePointerCapture(capturedPointer);
     if (!commit || !dragging || !destination) return;
     const from = chapter.photos.indexOf(id);
     const to = chapter.photos.indexOf(destination);
@@ -328,17 +367,43 @@ function enablePhotoDrag(handle, card, grid, chapter, id) {
     const insertion = to + (after ? 1 : 0);
     const adjusted = insertion > from ? insertion - 1 : insertion;
     if (adjusted === from) return;
-    changePortfolioPlacement(() => {
+    const change = () => {
       chapter.photos.splice(from, 1);
       chapter.photos.splice(adjusted, 0, id);
-    }, 'Photo reordered');
+    };
+    if (reorder) reorder(change); else changePortfolioPlacement(change, 'Photo reordered');
     requestAnimationFrame(() => editor.querySelector(`[data-photo-id="${CSS.escape(id)}"] .drag-handle`)?.focus({ preventScroll: true }));
   };
+  const drawDrag = () => {
+    if (!dragging || pointerId === null) return;
+    const dockTop = document.querySelector('#studioActions').getBoundingClientRect().top;
+    const bottom = !visualMode && matchMedia('(max-width: 700px)').matches ? dockTop : innerHeight;
+    const edge = 64;
+    const scrollStep = lastY < edge + 48 ? -Math.min(12, (edge + 48 - lastY) / 5)
+      : lastY > bottom - edge ? Math.min(12, (lastY - bottom + edge) / 5) : 0;
+    if (scrollStep) window.scrollBy(0, scrollStep);
+    card.style.transform = `translate3d(${lastX - startX}px, ${lastY - startY + window.scrollY - startScrollY}px, 0)`;
+    const hovered = document.elementFromPoint(lastX, lastY)?.closest('.portfolio-tile');
+    if (hovered !== targetCard) {
+      clearTarget();
+      if (hovered && hovered !== card && hovered.parentElement === grid) {
+        targetCard = hovered;
+        placeAfter = chapter.photos.indexOf(id) < chapter.photos.indexOf(hovered.dataset.photoId);
+        hovered.classList.add(placeAfter ? 'drop-after' : 'drop-before');
+      }
+    }
+    dragFrame = requestAnimationFrame(drawDrag);
+  };
+  card.addEventListener('dragstart', event => event.preventDefault());
+  handle.addEventListener('contextmenu', event => event.preventDefault());
   handle.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0) return;
     event.preventDefault();
     startX = event.clientX;
     startY = event.clientY;
+    lastX = startX;
+    lastY = startY;
+    startScrollY = window.scrollY;
     pointerId = event.pointerId;
     dragging = false;
     handle.setPointerCapture(pointerId);
@@ -348,27 +413,25 @@ function enablePhotoDrag(handle, card, grid, chapter, id) {
     const dx = event.clientX - startX;
     const dy = event.clientY - startY;
     if (!dragging && Math.hypot(dx, dy) < 6) return;
-    dragging = true;
-    card.classList.add('is-dragging');
-    document.body.classList.add('is-reordering');
-    card.style.transform = `translate(${dx}px, ${dy}px)`;
-    const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest('.portfolio-tile');
-    clearTarget();
-    if (!hovered || hovered === card || hovered.parentElement !== grid) return;
-    targetCard = hovered;
-    // Dropping anywhere on a photo moves the dragged photo to that slot.
-    // A hidden half-card threshold made dropping onto the first photo appear broken.
-    placeAfter = chapter.photos.indexOf(id) < chapter.photos.indexOf(hovered.dataset.photoId);
-    hovered.classList.add(placeAfter ? 'drop-after' : 'drop-before');
+    lastX = event.clientX;
+    lastY = event.clientY;
+    if (!dragging) {
+      dragging = true;
+      card.classList.add('is-dragging');
+      document.body.classList.add('is-reordering');
+      dragFrame = requestAnimationFrame(drawDrag);
+    }
   });
   handle.addEventListener('pointerup', event => { if (event.pointerId === pointerId) finish(true); });
   handle.addEventListener('pointercancel', () => finish(false));
+  handle.addEventListener('lostpointercapture', () => finish(false));
   handle.addEventListener('keydown', event => {
     if (event.key === 'Escape') finish(false);
   });
 }
 function imageCard(parent, photo, items, index, options = {}) {
   const card = element('div', 'media-card');
+  if (photo.id) card.dataset.photoId = photo.id;
   const image = document.createElement('img');
   image.alt = photo.alt || 'Portfolio image';
   imageFromSource(photo.src).then(src => { image.src = src; });
@@ -426,9 +489,11 @@ function renderHome() {
   hero.classList.add('hero-edit');
   const heroCard = { src: draft.home.heroImage, alt: 'Vasilina portfolio hero' };
   imageCard(hero, heroCard, null, 0, { title: 'Hero image', onReplace: src => { draft.home.heroImage = src; } });
-  const selected = group('Selected work', 'Choose the order of your four featured photos.');
-  selected.classList.add('media-grid-group');
-  draft.home.selectedWork.forEach((photo, index) => imageCard(selected, photo, draft.home.selectedWork, index));
+  if (!visualMode) {
+    const selected = group('Selected work', 'Choose the order of your four featured photos.');
+    selected.classList.add('media-grid-group');
+    draft.home.selectedWork.forEach((photo, index) => imageCard(selected, photo, draft.home.selectedWork, index));
+  }
   const more = detailBlock('Homepage wording', 'Opening words and the invitation to book you.');
   const words = group('Opening words');
   bilingual(words, 'Statement', draft.home.manifesto.lead);
@@ -437,6 +502,12 @@ function renderHome() {
   bilingual(closing, 'Invitation', draft.home.availabilityIntro);
   more.append(words, closing);
   const clientOptions = detailBlock('Client logos', 'Edit names, logos, and order.');
+  const clients = renderClientLogos();
+  clientOptions.append(clients);
+  const footer = detailBlock('Footer wording', 'Your description at the bottom of the page.');
+  bilingual(footer, 'Short description', draft.footer.description);
+}
+function renderClientLogos() {
   const clients = group('Selected clients');
   draft.home.selectedClients.forEach((client, index) => {
     const card = element('div', 'media-card');
@@ -453,9 +524,7 @@ function renderHome() {
     card.append(image, details);
     clients.append(card);
   });
-  clientOptions.append(clients);
-  const footer = detailBlock('Footer wording', 'Your description at the bottom of the page.');
-  bilingual(footer, 'Short description', draft.footer.description);
+  return clients;
 }
 function renderPortfolio() {
   const upload = group('Add a photo', 'Choose a photo and a section.');
@@ -531,6 +600,7 @@ function renderPortfolio() {
       card.dataset.photoId = id;
       const image = document.createElement('img');
       image.alt = photo.alt;
+      image.draggable = false;
       imageFromSource(photo.src).then(src => { image.src = src; });
       const dragHandle = element('button', 'drag-handle', '⠿');
       dragHandle.type = 'button';
@@ -674,6 +744,9 @@ function renderMotion() {
     videos.append(block);
   });
   videoPicker(videos);
+  if (!visualMode) renderMotionStillsEditor();
+}
+function renderMotionStillsEditor() {
   const stills = group('Motion stills', 'Choose two photos to show below your videos.');
   const photoMap = new Map(draft.home.portfolioPhotos.map(photo => [photo.id, photo]));
   for (let index = 0; index < 2; index++) {
@@ -748,26 +821,32 @@ function renderAbout() {
   bilingual(closing, 'Invitation', draft.about.closing);
 }
 function renderBooking() {
-  const contact = group('Contact options', 'Choose how clients can reach you.');
-  for (const [name, item] of Object.entries(draft.booking.contact)) {
-    const block = element('div', 'field-group');
-    textField(block, name[0].toUpperCase() + name.slice(1), item.value, next => { item.value = next; });
-    checkbox(block, `Show ${name} publicly`, item.visible, next => { item.visible = next; });
-    contact.append(block);
+  if (!visualMode || visualTarget?.group === 'Contact options') {
+    const contact = group('Contact options', 'Choose how clients can reach you.');
+    for (const [name, item] of Object.entries(draft.booking.contact)) {
+      const block = element('div', 'field-group');
+      textField(block, name[0].toUpperCase() + name.slice(1), item.value, next => { item.value = next; });
+      checkbox(block, `Show ${name} publicly`, item.visible, next => { item.visible = next; });
+      contact.append(block);
   }
-  const calendarTools = group('Your calendar', 'Manage availability and event details in Cal.com.');
-  const openCalendar = element('a', 'calendar-account-link', 'Open Cal.com ↗');
-  openCalendar.href = 'https://app.cal.com/event-types';
-  openCalendar.target = '_blank';
-  openCalendar.rel = 'noopener noreferrer';
-  openCalendar.setAttribute('aria-label', 'Open Cal.com in a new tab');
-  calendarTools.append(openCalendar);
-  const calendar = detailBlock('Calendar connection', 'Change the event shown on your website.');
-  const link = textField(calendar, 'Cal.com event link', draft.booking.calLink, next => { draft.booking.calLink = next; });
-  link.placeholder = 'https://cal.com/your-name/your-event';
-  link.addEventListener('change', () => {
-    if (normalizeCalLink(link.value) && document.querySelector('#previewPage').value === 'booking') loadPreviewPage();
-  });
+  }
+  if (!visualMode || visualTarget?.group === 'Your calendar') {
+    const calendarTools = group('Your calendar', 'Manage availability and event details in Cal.com.');
+    const openCalendar = element('a', 'calendar-account-link', 'Open Cal.com ↗');
+    openCalendar.href = 'https://app.cal.com/event-types';
+    openCalendar.target = '_blank';
+    openCalendar.rel = 'noopener noreferrer';
+    openCalendar.setAttribute('aria-label', 'Open Cal.com in a new tab');
+    calendarTools.append(openCalendar);
+    const calendar = detailBlock('Calendar connection', 'Change the event shown on your website.');
+    const link = textField(calendar, 'Cal.com event link', draft.booking.calLink, next => { draft.booking.calLink = next; });
+    link.placeholder = 'https://cal.com/your-name/your-event';
+    link.addEventListener('change', () => {
+      if (normalizeCalLink(link.value) && document.querySelector('#previewPage').value === 'booking') loadPreviewPage();
+    });
+    if (visualMode) calendar.open = true;
+  }
+  if (visualMode) return;
   const words = detailBlock('Booking page wording', 'Headlines and instructions around the calendar. The calendar’s own text is edited in Cal.com.');
   bilingual(words, 'Page headline', draft.booking.headline);
   bilingual(words, 'Introduction above calendar', draft.booking.intro);
@@ -776,7 +855,11 @@ function renderBooking() {
   bilingual(words, 'Introduction above contact links', draft.booking.contactIntro);
 }
 function renderCompCard() {
-  const card = group('Your current comp card', 'Upload or replace your comp card.');
+  const card = visualMode ? element('section', 'visual-comp-card-editor') : group('Your current comp card', 'Upload or replace your comp card.');
+  if (visualMode) {
+    document.documentElement.classList.add('visual-comp-card-focus');
+    editor.append(card);
+  }
   const uploaded = draft.compCard.uploadedFile;
   const uploadedImage = uploaded?.type?.startsWith('image/') && uploaded?.src;
   const downloadSource = uploadedImage ? uploaded.src : draft.compCard.currentDownload || seed.compCard.currentDownload;
@@ -795,7 +878,7 @@ function renderCompCard() {
   }
   const info = element('div', 'comp-upload-info');
   info.append(element('strong', '', uploadedImage ? uploaded.name : 'Vasilina comp card'));
-  info.append(element('p', 'group-note', uploadedImage
+  if (!visualMode) info.append(element('p', 'group-note', uploadedImage
     ? portfolioBackendReady ? 'Uploaded image saved to your private draft when you press Save draft.' : 'This image stays in this browser until you save it.'
     : 'The current image is ready to view and download.'));
   const download = element('a', 'outline-button', 'Download comp card');
@@ -826,24 +909,280 @@ function renderCompCard() {
   });
   info.append(download);
   preview.append(info);
-  card.append(preview);
-  filePicker(card, uploadedImage ? 'Replace comp card' : 'Upload your comp card', (src, file) => {
+  const upload = element('div', 'comp-card-upload');
+  filePicker(upload, visualMode ? 'Replace comp card' : uploadedImage ? 'Replace comp card' : 'Upload your comp card', (src, file) => {
     draft.compCard.uploadedFile = { src, name: file.name, type: file.type };
   }, 'image/png,image/jpeg,image/webp');
-  card.append(element('p', 'group-note', 'PNG, JPG, or WebP · Up to 20 MB. Publish to update the public download.'));
+  upload.append(element('p', 'group-note', visualMode ? 'PNG, JPG, or WebP · Up to 20 MB' : 'PNG, JPG, or WebP · Up to 20 MB. Publish to update the public download.'));
+  if (visualMode) card.append(upload, preview);
+  else card.append(preview, upload);
 }
 function renderSection() {
   editor.replaceChildren();
+  document.documentElement.classList.remove('visual-photo-focus', 'visual-gallery-focus', 'visual-text-focus', 'visual-comp-card-focus');
   document.querySelectorAll('.studio-nav button').forEach(button => {
     button.classList.toggle('active', button.dataset.section === activeSection);
   });
   document.querySelector('#studioSectionPicker').value = activeSection;
   document.querySelector('#sectionTitle').textContent = sectionTitles[activeSection][0];
   document.querySelector('#sectionDescription').textContent = sectionTitles[activeSection][1];
+  if (visualMode && renderVisualPhoto()) { updateLanguageVisibility(); return; }
+  if (visualMode && renderVisualText()) { updateLanguageVisibility(); return; }
+  if (visualMode && renderVisualFocusedSection()) { updateLanguageVisibility(); return; }
+  if (visualMode && visualTarget?.gallery==='motion') { renderVisualMotionArrangement();updateLanguageVisibility();return; }
+  if (visualMode && (['portfolio','digitals'].includes(activeSection)||visualTarget?.gallery==='selectedWork')) { renderVisualGallery(); updateLanguageVisibility(); return; }
   ({ identity: renderIdentity, home: renderHome, portfolio: renderPortfolio,
     digitals: renderDigitals, motion: renderMotion, about: renderAbout,
     booking: renderBooking, compCard: renderCompCard })[activeSection]();
   updateLanguageVisibility();
+}
+function renderVisualFocusedSection() {
+  const key = visualTarget?.group;
+  if (activeSection === 'home' && key === 'Client logos') renderClientLogos();
+  else if (activeSection === 'motion' && key === 'Videos') renderMotion();
+  else if (activeSection === 'motion' && key === 'Motion stills') renderMotionStillsEditor();
+  else if (activeSection === 'booking' && ['Contact options', 'Your calendar'].includes(key)) renderBooking();
+  else return false;
+  document.documentElement.classList.add('visual-text-focus');
+  requestAnimationFrame(() => window.scrollTo(0, 0));
+  return true;
+}
+function renderVisualText() {
+  if(!visualTarget)return false;
+  const content=element('section','visual-text-editor');
+  const key=visualTarget.label||visualTarget.group;
+  const words=(label,value,multiline=true)=>bilingual(content,label,value,multiline);
+  if(activeSection==='identity' && key==='Name') words('Name',draft.identity.name,false);
+  else if(activeSection==='identity' && key==='Profile') {
+    words('Name',draft.identity.name,false);words('Location',draft.identity.location,false);
+  } else if(activeSection==='identity' && key==='Role & tagline') {
+    words('Name',draft.identity.name,false);words('Role',draft.identity.role,false);words('Tagline',draft.identity.tagline,false);
+  } else if(activeSection==='identity' && key==='Measurements') {
+    for(const name of measurementOrder) {
+      const item=draft.identity.measurements[name];if(!item)continue;
+      const label=measurementNames[name]||name;
+      if(typeof item.value==='object')words(label,item.value,false);
+      else textField(content,label,item.value,next=>{item.value=next;});
+      checkbox(content,`Show ${label.toLowerCase()}`,item.visible,next=>{item.visible=next;});
+    }
+  } else if(activeSection==='home' && key==='Introduction') {
+    words('Statement',draft.home.manifesto.lead);words('Introduction',draft.home.manifesto.body);
+  } else if(activeSection==='home' && key==='Invitation') words('Invitation',draft.home.availabilityIntro);
+  else if(activeSection==='home' && key==='Footer wording') words('Short description',draft.footer.description);
+  else if(activeSection==='about' && key==='Introduction') words('Introduction',draft.about.intro);
+  else if(activeSection==='about' && key==='Your story') {
+    draft.about.biography.forEach((paragraph,index)=>{
+      const block=element('div','visual-biography-paragraph');bilingual(block,`Paragraph ${index+1}`,paragraph);
+      if(index>0)block.append(smallButton('Remove paragraph',()=>removeFromArray(draft.about.biography,index)));
+      content.append(block);
+    });
+    content.append(smallButton('Add paragraph',()=>{draft.about.biography.push({en:'',th:''});markChanged();renderSection();}));
+  } else if(activeSection==='about' && key==='Agency details') {
+    textField(content,'Agency name',draft.about.agency.name,next=>{draft.about.agency.name=next;});
+    words('Agency description',draft.about.agency.description);
+    textField(content,'Agency link',draft.about.agency.url,next=>{draft.about.agency.url=next;});
+    checkbox(content,'Show agency',draft.about.agency.visible,next=>{draft.about.agency.visible=next;});
+  } else if(activeSection==='about' && key==='Closing invitation') words('Invitation',draft.about.closing);
+  else if(activeSection==='booking' && key==='Booking page wording') {
+    words('Headline',draft.booking.headline);
+    content.lastElementChild.classList.add('compact-text-field');
+    content.lastElementChild.querySelectorAll('textarea').forEach(field=>{field.rows=2;});
+    words('Introduction',draft.booking.intro);words('Rates note',draft.booking.note);
+    content.lastElementChild.classList.add('compact-text-field');
+    content.lastElementChild.querySelectorAll('textarea').forEach(field=>{field.rows=2;});
+    words('Calendar instruction',draft.booking.calendarIntro);words('Contact introduction',draft.booking.contactIntro);
+  } else return false;
+  document.documentElement.classList.add('visual-text-focus');
+  editor.append(content);requestAnimationFrame(()=>window.scrollTo(0,0));return true;
+}
+function renderVisualPhoto() {
+  if (!visualTarget) return false;
+  const isCover = activeSection === 'home' && visualTarget.group === 'Cover image';
+  const isPortrait = activeSection === 'about' && visualTarget.group === 'Portrait';
+  const isStill = activeSection === 'motion' && Number.isInteger(visualTarget.stillIndex);
+  const photos = activeSection === 'portfolio' ? draft.home.portfolioPhotos
+    : activeSection === 'digitals' ? draft.home.digitals : isStill ? draft.home.portfolioPhotos : draft.home.selectedWork;
+  let photo = isCover ? {src:draft.home.heroImage,alt:'Cover photo'}
+    : isPortrait ? draft.about.portrait : photos.find(item=>item.id===visualTarget.photoId);
+  if (!photo) return false;
+  const ownStill=()=>{
+    if(isStill && (!photo.id.startsWith('still-') || draft.home.portfolioChapters.some(chapter=>chapter.photos.includes(photo.id)) || draft.home.motionStills.some((id,index)=>index!==visualTarget.stillIndex&&id===photo.id))) {
+      photo={...photo,id:`still-${crypto.randomUUID()}`,caption:{...photo.caption}};
+      draft.home.portfolioPhotos.push(photo);draft.home.motionStills[visualTarget.stillIndex]=photo.id;visualTarget.photoId=photo.id;
+    }
+    return photo;
+  };
+  document.documentElement.classList.add('visual-photo-focus');
+  const content = element('section','visual-photo-editor');
+  if (photo.id) content.dataset.photoId = photo.id;
+  const preview = element('img','visual-photo-preview');
+  preview.alt = photo.alt || 'Selected photo';
+  imageFromSource(photo.src).then(src=>{preview.src=src;});
+  content.append(preview);
+  filePicker(content,'Replace photo',src=>{
+    ownStill().src=src;if(isCover) draft.home.heroImage=src;
+  });
+  content.querySelector('.file-action').classList.add('visual-replace');
+  if (photo.caption && typeof photo.caption === 'object') {
+    const caption=isStill ? {get en(){return photo.caption.en;},set en(value){ownStill().caption.en=value;},get th(){return photo.caption.th;},set th(value){ownStill().caption.th=value;}} : photo.caption;
+    bilingual(content,'Caption',caption,false);
+  }
+  else if (isPortrait) textField(content,'Caption',photo.caption,next=>{photo.caption=next;});
+  const more = element('details','visual-photo-more');
+  more.append(element('summary','','More options'));
+  textField(more,'Image description',photo.alt,next=>{ownStill().alt=next;},true);
+  if (activeSection === 'portfolio') {
+    const chapter = draft.home.portfolioChapters.find(item=>item.photos.includes(photo.id));
+    const field = element('label','field');field.append(element('span','','Show in section'));
+    const select = document.createElement('select');
+    draft.home.portfolioChapters.forEach(item=>select.append(new Option(item.title.en,item.id)));
+    select.value=chapter?.id || '';
+    select.addEventListener('change',()=>{
+      const next=draft.home.portfolioChapters.find(item=>item.id===select.value);
+      if(!chapter||!next||chapter===next)return;
+      changePortfolioPlacement(()=>{chapter.photos.splice(chapter.photos.indexOf(photo.id),1);next.photos.push(photo.id);},'Photo moved');
+    });
+    field.append(select);more.append(field);
+    more.append(smallButton('Hide photo',()=>{
+      visualTarget=null;
+      changePortfolioPlacement(()=>{
+        draft.home.portfolioChapters.forEach(item=>{item.photos=item.photos.filter(id=>id!==photo.id);});
+        hiddenPhotosOpen=true;
+      },'Photo hidden');
+      parent.dispatchEvent(new Event('visual-studio-close'));
+    }));
+  }
+  if (activeSection === 'digitals') more.append(smallButton('Remove photo',()=>{
+    visualTarget=null;removeFromArray(draft.home.digitals,draft.home.digitals.indexOf(photo));
+    parent.dispatchEvent(new Event('visual-studio-close'));
+  }));
+  if (!isCover) content.append(more);
+  if (!visualTarget.fromGallery && (['portfolio','digitals'].includes(activeSection)||(activeSection==='home'&&photo.id))) {
+    const all=smallButton('Arrange photos',()=>{
+      visualGalleryId = draft.home.portfolioChapters.find(item=>item.photos.includes(photo.id))?.id || visualGalleryId;
+      visualTarget=activeSection==='home'?{gallery:'selectedWork'}:null;renderSection();window.scrollTo(0,0);
+      parent.dispatchEvent(new Event('visual-studio-arrange'));
+    });
+    all.classList.add('visual-arrange');content.append(all);
+  }
+  editor.append(content);
+  requestAnimationFrame(()=>window.scrollTo(0,0));
+  return true;
+}
+function renderVisualGallery() {
+  document.documentElement.classList.add('visual-gallery-focus');
+  const isDigitals = activeSection === 'digitals';
+  const isSelected = activeSection === 'home';
+  const chapters = draft.home.portfolioChapters;
+  const requested = chapters.find(item=>item.id===visualTarget?.chapterId || item.title.en===visualTarget?.group);
+  if (requested) visualGalleryId=requested.id;
+  const chapter = chapters.find(item=>item.id===visualGalleryId) || chapters[0];
+  visualGalleryId=chapter?.id;
+  const content=element('section','visual-gallery');
+  const toolbar=element('div','visual-gallery-toolbar');
+  if (!isDigitals && !isSelected) {
+    const label=element('label','field');label.append(element('span','','Section'));
+    const select=document.createElement('select');
+    select.setAttribute('aria-label','Section');
+    chapters.forEach(item=>select.append(new Option(item.title.en,item.id)));
+    select.value=chapter.id;
+    select.onchange=()=>{visualGalleryId=select.value;visualTarget=null;renderSection();window.scrollTo(0,0);};
+    label.append(select);toolbar.append(label);
+  }
+  const upload=element('label','file-action visual-gallery-add','+ Add photos');
+  const input=document.createElement('input');input.type='file';input.multiple=true;input.accept='image/jpeg,image/png,image/webp,image/avif';
+  const progress=element('p','group-note');progress.setAttribute('role','status');
+  input.onchange=async()=>{
+    const files=[...input.files];if(!files.length)return;
+    input.disabled=true;progress.textContent='Adding photos…';
+    try {await window.visualStudio.addPhotos(files,isDigitals?'digitals':chapter.id);}
+    catch(error){progress.textContent=error.message;input.disabled=false;input.value='';}
+  };
+  upload.append(input);if(!isSelected)toolbar.append(upload);content.append(toolbar);
+  const photos=isSelected?draft.home.selectedWork:isDigitals ? draft.home.digitals : chapter.photos.map(id=>draft.home.portfolioPhotos.find(photo=>photo.id===id)).filter(Boolean);
+  content.append(element('p','group-note',`${photos.length} photos · Drag the handle or use the arrows.`),progress);
+  const grid=element('div','visual-gallery-grid');
+  const order=isDigitals||isSelected ? {photos:photos.map(photo=>photo.id)} : chapter;
+  const reorder=change=>{
+    if(!isDigitals&&!isSelected){changePortfolioPlacement(change,'Photo reordered');return;}
+    const key=isSelected?'selectedWork':'digitals';
+    const previous=[...draft.home[key]];change();
+    const map=new Map(previous.map(photo=>[photo.id,photo]));
+    draft.home[key]=order.photos.map(id=>map.get(id));markChanged();renderSection();
+  };
+  photos.forEach((photo,index)=>{
+    const card=element('div','portfolio-tile visual-gallery-tile');card.dataset.photoId=photo.id;
+    const edit=element('button','visual-gallery-photo');edit.type='button';edit.setAttribute('aria-label',`Edit photo ${index+1}`);
+    const image=element('img');image.alt=photo.alt||`Photo ${index+1}`;image.draggable=false;
+    imageFromSource(photo.src).then(src=>{image.src=src;});edit.append(image);
+    edit.onclick=()=>parent.dispatchEvent(new CustomEvent('visual-studio-photo',{detail:{section:activeSection,photoId:photo.id,galleryTarget:isSelected?{gallery:'selectedWork'}:isDigitals?{}:{chapterId:chapter.id},scrollY:window.scrollY}}));
+    const handle=element('button','drag-handle','⠿');handle.type='button';handle.setAttribute('aria-label',`Drag photo ${index+1} to reorder`);
+    enablePhotoDrag(handle,card,grid,order,photo.id,reorder);
+    const actions=element('div','visual-gallery-order');actions.append(element('span','',String(index+1)));
+    for(const [direction,symbol,label] of [[-1,'←','earlier'],[1,'→','later']]) {
+      const button=smallButton(symbol,()=>{reorder(()=>{const next=index+direction;[order.photos[index],order.photos[next]]=[order.photos[next],order.photos[index]];});requestAnimationFrame(()=>editor.querySelector(`[data-photo-id="${CSS.escape(photo.id)}"] .visual-gallery-order button`)?.focus({preventScroll:true}));},index+direction<0||index+direction>=photos.length);
+      button.setAttribute('aria-label',`Move photo ${index+1} ${label}`);actions.append(button);
+    }
+    card.append(edit,handle,actions);grid.append(card);
+  });
+  if(!photos.length)grid.append(element('p','empty-state','Add photos to this section.'));
+  content.append(grid);
+  if(!isDigitals&&!isSelected) {
+    const hidden=draft.home.portfolioPhotos.filter(photo=>!chapters.some(item=>item.photos.includes(photo.id)));
+    const details=element('details','visual-gallery-hidden');details.append(element('summary','',`Hidden photos (${hidden.length})`));
+    const hiddenGrid=element('div','visual-gallery-grid');
+    hidden.forEach(photo=>{
+      const card=element('div','visual-gallery-tile');const image=element('img');image.alt=photo.alt||'Hidden photo';imageFromSource(photo.src).then(src=>{image.src=src;});
+      card.append(image,smallButton('Add to this section',()=>changePortfolioPlacement(()=>chapter.photos.push(photo.id),'Photo restored')));hiddenGrid.append(card);
+    });
+    if(!hidden.length)details.append(element('p','group-note','No hidden photos.'));
+    details.append(hiddenGrid);content.append(details);
+    const titles=element('details','visual-gallery-hidden');titles.append(element('summary','','Edit section name'));bilingual(titles,'Section name',chapter.title);content.append(titles);
+  }
+  editor.append(content);
+}
+function renderVisualMotionArrangement() {
+  document.documentElement.classList.add('visual-gallery-focus');
+  const content=element('section','visual-gallery');
+  content.append(element('p','group-note','Drag the handle or use the arrows.'));
+  const grid=element('div','visual-gallery-grid');
+  const order={photos:draft.home.motion.map(video=>video.id||`wistia:${video.mediaId}`)};
+  const reorder=change=>{
+    const map=new Map(draft.home.motion.map(video=>[video.id||`wistia:${video.mediaId}`,video]));
+    change();draft.home.motion=order.photos.map(id=>map.get(id));markChanged();renderSection();
+  };
+  draft.home.motion.forEach((video,index)=>{
+    const id=order.photos[index],card=element('div','portfolio-tile visual-gallery-tile');card.dataset.photoId=id;
+    const preview=element('div','visual-motion-thumbnail');
+    if(video.provider==='file') {
+      const player=element('video');player.muted=true;player.playsInline=true;player.preload='metadata';
+      imageFromSource(video.src).then(src=>{player.src=src;});preview.append(player);
+    } else {
+      const image=element('img');image.src=`https://fast.wistia.com/embed/medias/${encodeURIComponent(video.mediaId)}/swatch`;
+      image.alt=motionTitle(video,index);preview.append(image);
+    }
+    card.append(preview,element('p','visual-motion-name',motionTitle(video,index)));
+    const handle=element('button','drag-handle','⠿');handle.type='button';handle.setAttribute('aria-label',`Drag video ${index+1} to reorder`);
+    enablePhotoDrag(handle,card,grid,order,id,reorder);card.append(handle);
+    const actions=element('div','visual-gallery-order');actions.append(element('span','',String(index+1)));
+    for(const [direction,symbol,label] of [[-1,'←','earlier'],[1,'→','later']]) {
+      const button=smallButton(symbol,()=>reorder(()=>{const next=index+direction;[order.photos[index],order.photos[next]]=[order.photos[next],order.photos[index]];}),index+direction<0||index+direction>=order.photos.length);
+      button.setAttribute('aria-label',`Move video ${index+1} ${label}`);actions.append(button);
+    }
+    card.append(actions);grid.append(card);
+  });
+  if(!order.photos.length)grid.append(element('p','empty-state','No videos yet. Add one in Edit videos.'));
+  content.append(grid,element('h3','group-title','Motion stills'));
+  const stills=element('div','visual-gallery-grid');
+  const photos=new Map(draft.home.portfolioPhotos.map(photo=>[photo.id,photo]));
+  draft.home.motionStills.forEach((id,index)=>{
+    const photo=photos.get(id);if(!photo)return;
+    const card=element('div','visual-gallery-tile'),image=element('img');image.alt=photo.alt||`Still ${index+1}`;
+    imageFromSource(photo.src).then(src=>{image.src=src;});
+    const move=smallButton(index?'Move earlier':'Move later',()=>{draft.home.motionStills.reverse();markChanged();renderSection();},draft.home.motionStills.length<2);
+    card.append(image,move);stills.append(card);
+  });
+  content.append(stills);editor.append(content);
 }
 function chooseSection(section) {
   if (!sectionTitles[section]) return;
@@ -975,41 +1314,7 @@ async function applyHomePreview(doc, content) {
       }
     } else value.textContent = item.value;
   });
-  const photoMap = new Map(content.home.portfolioPhotos.map(photo => [photo.id, photo]));
-  const chapters = doc.querySelectorAll('.work-chapter');
-  for (let c = 0; c < chapters.length; c++) {
-    const chapter = content.home.portfolioChapters[c];
-    if (!chapter) continue;
-    setLang(chapters[c], '.chapter-heading h3', chapter.title);
-    const container = chapters[c].querySelector('.chapter-images');
-    container.querySelectorAll('.studio-added-spread').forEach(spread => spread.remove());
-    const images = container.querySelectorAll('img');
-    for (let i = 0; i < images.length; i++) {
-      const photo = photoMap.get(chapter.photos[i]);
-      images[i].style.display = photo ? '' : 'none';
-      if (photo) {
-        await setImage(images[i], photo.src, photo.alt);
-        images[i].dataset.captionEn = photo.caption?.en || '';
-        images[i].dataset.captionTh = photo.caption?.th || '';
-      }
-    }
-    for (let i = images.length; i < chapter.photos.length; i += 2) {
-      const spread = doc.createElement('div');
-      spread.className = 'portfolio-spread portfolio-spread-left studio-added-spread';
-      for (const id of chapter.photos.slice(i, i + 2)) {
-        const photo = photoMap.get(id);
-        if (!photo) continue;
-        const image = doc.createElement('img');
-        image.className = 'reveal active';
-        image.loading = 'lazy';
-        await setImage(image, photo.src, photo.alt);
-        image.dataset.captionEn = photo.caption?.en || '';
-        image.dataset.captionTh = photo.caption?.th || '';
-        spread.append(image);
-      }
-      container.append(spread);
-    }
-  }
+  await renderPortfolioChapters(doc,content.home,imageFromSource);
   const digitalsContainer = doc.querySelector('.digitals-grid');
   digitalsContainer.replaceChildren();
   for (const photo of content.home.digitals) {
@@ -1111,6 +1416,7 @@ async function applyPreview() {
   if (page === 'booking') applyBookingPreview(doc, content);
 }
 function loadPreviewPage() {
+  if (visualMode) return;
   const page = document.querySelector('#previewPage').value;
   const anchors = {
     identity: '#measurements', portfolio: '#portfolio', digitals: '#digitals',
@@ -1214,6 +1520,7 @@ function resetDemo() {
   published = copy(seed);
   savedSnapshot = snapshot(draft);
   publishedSnapshot = snapshot(published);
+  resetHistory();
   renderSection();
   loadPreviewPage();
   setSaveStatus('saved', 'Demo reset · public website unchanged');
@@ -1238,6 +1545,7 @@ async function loadRemotePortfolio() {
   published = copy(publication?.content || seed);
   savedSnapshot = snapshot(draft);
   publishedSnapshot = snapshot(published);
+  resetHistory();
   activeSection = 'portfolio';
   previewVersion = 'draft';
   document.querySelector('#studioLogin').hidden = true;
@@ -1359,6 +1667,7 @@ async function start() {
     await applyPreview();
     requestAnimationFrame(scrollPreviewToSection);
   });
+  exposeVisualStudio();
   if (portfolioBackendReady) {
     configureRemoteInterface();
     if (hasOwnerSession()) {
@@ -1366,6 +1675,8 @@ async function start() {
       catch (error) { showLogin(error.message); }
     } else showLogin();
     document.querySelector('#studioOpening').hidden = true;
+    openingStudio=false;
+    if(visualMode)parent.dispatchEvent(new Event('visual-studio-ready'));
     return;
   }
   draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') || copy(seed);
@@ -1376,12 +1687,115 @@ async function start() {
   }
   savedSnapshot = snapshot(draft);
   publishedSnapshot = snapshot(published);
+  resetHistory();
   renderSection();
   requestAnimationFrame(updatePreviewScale);
   setSaveStatus('saved', 'Demo ready · public website unchanged');
   updatePreviewVersionNote();
   applyPreview();
   document.querySelector('#studioOpening').hidden = true;
+  openingStudio=false;
+  if(visualMode)parent.dispatchEvent(new Event('visual-studio-ready'));
+}
+function exposeVisualStudio() {
+  if (visualMode) {
+    window.visualStudio = {
+      get content() { return draft; },
+      get dirty() { return hasUnsavedChanges(); },
+      get status() { return { state: status.dataset.state, text:status.textContent }; },
+      get ready(){return !!draft;},
+      get opening(){return openingStudio;},
+      get connected(){return portfolioBackendReady;},
+      get backendConfigured(){return configuredBackendReady;},
+      get canSave(){return !!draft;},
+      get needsPublish(){return !!draft&&snapshot(draft)!==publishedSnapshot;},
+      async signIn(email,password){
+        await signIn(email,password);
+        await loadRemotePortfolio();
+        parent.dispatchEvent(new Event('visual-studio-ready'));
+      },
+      signOut(){
+        if(hasUnsavedChanges()&&!confirm('Discard unsaved changes and sign out?'))return false;
+        signOut();draft=null;published=null;savedSnapshot=null;publishedSnapshot=null;remotePortfolio=null;
+        showLogin();parent.dispatchEvent(new Event('visual-studio-ready'));return true;
+      },
+      save:saveDraft,
+      async publish(){await simulatePublish();return status.dataset.state!=='error'&&!hasUnsavedChanges()&&snapshot(draft)===publishedSnapshot;},
+      get canUndo(){return historyPosition>0;},
+      get canRedo(){return historyPosition<editHistory.length-1;},
+      undo(){travelHistory(-1);},
+      redo(){travelHistory(1);},
+      reorderPhotos(group, fromId, toId) {
+        const chapter=group.startsWith('portfolio:')?draft.home.portfolioChapters.find(item=>item.id===group.slice(10)):null;
+        const key=['selectedWork','digitals','motion','motionStills'].includes(group)?group:null;
+        if(!chapter&&!key)return false;
+        const items=chapter?chapter.photos:draft.home[key];
+        const id=item=>chapter||key==='motionStills'?item:item.id||`wistia:${item.mediaId}`;
+        const from=items.findIndex(item=>id(item)===fromId),to=items.findIndex(item=>id(item)===toId);
+        if(from<0||to<0||from===to)return false;
+        const [moved]=items.splice(from,1);items.splice(to,0,moved);markChanged();renderSection();
+        return true;
+      },
+      galleryTarget(section, photoId) {
+        if(section==='home')return {gallery:'selectedWork'};
+        if(section==='digitals')return {};
+        return {chapterId:draft.home.portfolioChapters.find(chapter=>chapter.photos.includes(photoId))?.id||visualGalleryId};
+      },
+      restoreGalleryPosition(scrollY, photoId) {
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          const tile=[...editor.querySelectorAll('[data-photo-id]')].find(node=>node.dataset.photoId===photoId);
+          tile?.querySelector('.visual-gallery-photo')?.focus({preventScroll:true});
+          if(Number.isFinite(scrollY))window.scrollTo(0,scrollY);
+          else tile?.scrollIntoView({block:'nearest'});
+        }));
+      },
+      choose(section, target) {
+        visualTarget = target || null;
+        chooseSection(section);
+        let node;
+        if (target?.photoId) node = [...editor.querySelectorAll('[data-photo-id]')].find(item => item.dataset.photoId === target.photoId);
+        if (target?.group) node = [...editor.querySelectorAll('.group-title,summary')].find(item => item.textContent === target.group)?.closest('section,details');
+        if (target?.label) node = [...editor.querySelectorAll('.field')].find(item => item.querySelector('span')?.textContent === target.label);
+        if (node) {
+          for (let ancestor=node; ancestor && ancestor!==editor; ancestor=ancestor.parentElement) if (ancestor.tagName==='DETAILS') ancestor.open=true;
+          if (!document.documentElement.classList.contains('visual-photo-focus') && !document.documentElement.classList.contains('visual-text-focus')) node.querySelectorAll('details').forEach(details => details.open=true);
+          updateLanguageVisibility();
+          if (!target?.photoId) requestAnimationFrame(() => node.scrollIntoView({block:'start'}));
+        } else window.scrollTo(0,0);
+      },
+      async applyTo(doc,page) {
+        if(page==='home') await applyHomePreview(doc,draft);
+        if(page==='about') {
+          await applyAboutPreview(doc,draft);
+          const body = doc.querySelector('.about-body');
+          if(body) {
+            body.replaceChildren();
+            for(const paragraph of draft.about.biography.slice(1)) for(const lang of ['en','th']) {
+              const p=doc.createElement('p');p.lang=lang;p.textContent=paragraph[lang]||'';body.append(p);
+            }
+          }
+        }
+        if(page==='booking') applyBookingPreview(doc,draft);
+      },
+      async addPhotos(files, target) {
+        const additions=[];
+        for (const file of files) {
+          if (!['image/jpeg','image/png','image/webp','image/avif'].includes(file.type) || file.size>20*1024*1024) throw new Error('Choose JPG, PNG, WebP or AVIF photos under 20 MB each.');
+        }
+        for (const file of files) {
+          const src=await storeAsset(file);
+          additions.push({id:`photo-${crypto.randomUUID()}`,src,alt:file.name.replace(/\.[^.]+$/,''),caption:{en:'',th:''}});
+        }
+        if (target==='digitals') draft.home.digitals.push(...additions);
+        else {
+          const chapter=draft.home.portfolioChapters.find(item=>item.id===target);
+          if(!chapter) throw new Error('Choose a portfolio section first.');
+          draft.home.portfolioPhotos.push(...additions); chapter.photos.push(...additions.map(item=>item.id));
+        }
+        markChanged(); renderSection();
+      },
+    };
+  }
 }
 function setPreviewVersion(version) {
   previewVersion = version;
@@ -1394,7 +1808,9 @@ function setPreviewVersion(version) {
   else applyPreview();
 }
 start().catch(error => {
+  openingStudio=false;
   setSaveStatus('error', error.message);
   document.querySelector('#studioOpening p').textContent = `Could not open Studio: ${error.message}`;
+  if(visualMode)parent.dispatchEvent(new Event('visual-studio-ready'));
   console.error(error);
 });
