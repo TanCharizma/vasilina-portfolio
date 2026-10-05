@@ -5,6 +5,7 @@ import {
 import { renderPortfolioChapters } from '../portfolio-layout.js?v=1';
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
 import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=2';
+import { IMAGE_ACCEPT, HEIC_ACCEPT, validateImage, prepareImage } from './image-upload.js?v=1';
 
 // The visual workspace shares the editor; the local trial keeps separate storage.
 const visualLocal = new URLSearchParams(location.search).has('visual-local');
@@ -243,7 +244,7 @@ function smallButton(label, action, disabled = false) {
   button.addEventListener('click', action);
   return button;
 }
-function filePicker(parent, label, update, accept = 'image/jpeg,image/png,image/webp,image/avif') {
+function filePicker(parent, label, update, accept = IMAGE_ACCEPT) {
   const wrap = element('label', 'file-action', label);
   const input = document.createElement('input');
   input.type = 'file';
@@ -251,16 +252,20 @@ function filePicker(parent, label, update, accept = 'image/jpeg,image/png,image/
   input.addEventListener('change', async () => {
     const file = input.files?.[0];
     if (!file) return;
-    if (!accept.split(',').includes(file.type)) { alert('Choose one of the supported file types.'); return; }
-    if (file.size > 20 * 1024 * 1024) { alert('Choose a file smaller than 20 MB.'); return; }
+    try { validateImage(file, accept); } catch (error) { alert(error.message); return; }
+    input.disabled = true;
     try {
-      const src = await storeAsset(file);
-      update(src, file);
+      const prepared = await prepareImage(file, () => setSaveStatus('busy', 'Converting HEIC photo…'));
+      const src = await storeAsset(prepared);
+      update(src, prepared);
       markChanged();
       renderSection();
     } catch (error) {
       updateSaveStatus();
       alert(`The image could not be uploaded: ${error.message}`);
+    } finally {
+      input.disabled = false;
+      input.value = '';
     }
   });
   wrap.append(input);
@@ -912,8 +917,8 @@ function renderCompCard() {
   const upload = element('div', 'comp-card-upload');
   filePicker(upload, visualMode ? 'Replace comp card' : uploadedImage ? 'Replace comp card' : 'Upload your comp card', (src, file) => {
     draft.compCard.uploadedFile = { src, name: file.name, type: file.type };
-  }, 'image/png,image/jpeg,image/webp');
-  upload.append(element('p', 'group-note', visualMode ? 'PNG, JPG, or WebP · Up to 20 MB' : 'PNG, JPG, or WebP · Up to 20 MB. Publish to update the public download.'));
+  }, 'image/png,image/jpeg,image/webp,' + HEIC_ACCEPT);
+  upload.append(element('p', 'group-note', visualMode ? 'PNG, JPG, WebP, or HEIC · Up to 20 MB' : 'PNG, JPG, WebP, or HEIC · Up to 20 MB. Publish to update the public download.'));
   if (visualMode) card.append(upload, preview);
   else card.append(preview, upload);
 }
@@ -1090,7 +1095,7 @@ function renderVisualGallery() {
     label.append(select);toolbar.append(label);
   }
   const upload=element('label','file-action visual-gallery-add','+ Add photos');
-  const input=document.createElement('input');input.type='file';input.multiple=true;input.accept='image/jpeg,image/png,image/webp,image/avif';
+  const input=document.createElement('input');input.type='file';input.multiple=true;input.accept=IMAGE_ACCEPT;
   const progress=element('p','group-note');progress.setAttribute('role','status');
   input.onchange=async()=>{
     const files=[...input.files];if(!files.length)return;
@@ -1210,6 +1215,12 @@ function openAssetDb() {
   });
 }
 async function storeAsset(file) {
+  try {
+    file = await prepareImage(file, () => setSaveStatus('busy', 'Converting HEIC photo…'));
+  } catch (error) {
+    updateSaveStatus();
+    throw error;
+  }
   if (portfolioBackendReady) {
     setSaveStatus('busy', 'Uploading photo…');
     return uploadOwnerImage(file);
@@ -1780,7 +1791,7 @@ function exposeVisualStudio() {
       async addPhotos(files, target) {
         const additions=[];
         for (const file of files) {
-          if (!['image/jpeg','image/png','image/webp','image/avif'].includes(file.type) || file.size>20*1024*1024) throw new Error('Choose JPG, PNG, WebP or AVIF photos under 20 MB each.');
+          validateImage(file);
         }
         for (const file of files) {
           const src=await storeAsset(file);

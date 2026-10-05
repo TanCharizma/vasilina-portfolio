@@ -11,6 +11,11 @@ editing controls. The older form editor remains at `/studio/?legacy=1`.
 that device and cannot publish to the live website. Use the connected Studio
 for the owner's real workflow.
 
+Photo uploads accept HEIC/HEIF files up to 20 MB. Studio converts them on the
+device to JPEG before storing or uploading them; the website uses that JPEG.
+The converter is bundled in `vendor/heic-to/` and loads only for HEIC/HEIF files.
+Include that directory and `image-upload.js` when pushing the update.
+
 **Save draft** keeps changes private. **Publish changes** saves and publishes
 the current draft. The status distinguishes unsaved changes, a saved draft
 that is not published, and a website that is up to date. Undo and Redo cover
@@ -29,8 +34,7 @@ Studio and public rendering files. Include new files when committing the release
 
 ## Original form editor
 
-Open `/studio/` from a local web server at the repository root. For example, with
-the server running on port 8052, visit `http://127.0.0.1:8052/studio/`.
+Open `/studio/?legacy=1` from a local web server at the repository root.
 
 Without a Supabase project connected, this is a local demonstration of the owner
 workflow. It starts with Vasilina's current portfolio content, displays the
