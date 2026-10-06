@@ -1,5 +1,6 @@
 import { visualDraftStatus } from './visual-status.js?v=1';
 import { createStudioTour } from './visual-tour.js?v=4';
+import { createInlineBiography } from './inline-biography.js?v=2';
 
 const $ = id => document.getElementById(id);
 const frame = $('website'), controls = $('controls'), dialog = $('editor');
@@ -14,6 +15,13 @@ let editorReturnMenu = null;
 let editorMenuTitle = 'Edit section';
 let editorReturnGallery = null;
 let tourSection = '';
+const inlineBiography = createInlineBiography({
+  enabled: () => editing && Boolean(api?.ready),
+  commit: (index, lang, value) => api.updateBiography(index, lang, value),
+  changed: () => { syncStatus(); notify('Biography updated. Save draft to keep it.'); },
+  closeEditor: () => dialog.close(),
+  layoutChanged: () => fit(),
+});
 const studioTour = createStudioTour({
   ready:()=>Boolean(api?.ready),
   beforeStart:()=>{ dialog.close(); tourSection=$('section').value; },
@@ -187,6 +195,7 @@ function enableDirectDrag(handle,image,group,id) {
   handle.addEventListener('keydown',event=>{if(event.key==='Escape')finish(false);});
 }
 function openEditor(section,target,trigger) {
+  inlineBiography.finish(true);
   if(!api?.ready||!editing)return;
   if (!target && sectionMenus[section]) target = {menu:sectionMenus[section]};
   $('editor-menu').hidden=true;controls.hidden=false;
@@ -243,6 +252,7 @@ function returnToSectionMenu() {
 }
 document.getElementById('editor-back').addEventListener('click',returnToSectionMenu);
 function loadPage(next,anchor='') {
+  inlineBiography.finish(true);
   page=next;$('page').value=next;pendingAnchor=anchor;updateSections();
   frame.src=`../${next==='home'?'index':next}.html?studio-preview=visual-v2`;
 }
@@ -361,6 +371,7 @@ function attachControls(doc) {
   positionPhotoLabels();
 }
 async function refresh() {
+  if (inlineBiography.active) return;
   if(updating){updateAgain=true;return;}
   const doc=frame.contentDocument;
   if(!api?.ready||!doc?.querySelector(page==='home'?'.home-hero':page==='about'?'.about-opening':'.booking-opening'))return;
@@ -370,6 +381,7 @@ async function refresh() {
     await api.applyTo(doc,renderingPage);
     if(doc===frame.contentDocument && renderingPage===page) {
       attachControls(doc);
+      if (renderingPage === 'about') inlineBiography.attach(doc);
       if(pendingAnchor){doc.querySelector(pendingAnchor)?.scrollIntoView({block:'start',behavior:'instant'});pendingAnchor='';}
     }
   } catch(error){notify(`Preview could not update: ${error.message}`);}
@@ -474,15 +486,16 @@ $('add-files').onchange=async()=>{
   catch(error){notify(error.message);}
   finally{$('add-files').value='';$('add-files').disabled=false;}
 };
-$('save').onclick=async()=>{if(!api)return;$('save').disabled=true;if(await api.save())notify(api.connected?'Draft saved online. Website unchanged.':'Draft saved in this browser.');syncStatus();};
+$('save').onclick=async()=>{if(!api)return;inlineBiography.finish(true);$('save').disabled=true;if(await api.save())notify(api.connected?'Draft saved online. Website unchanged.':'Draft saved in this browser.');syncStatus();};
 $('editor-save').onclick=()=>$('save').click();
 $('publish').onclick=async()=>{
+  inlineBiography.finish(true);
   if(!api?.connected||!confirm('Publish these changes to Vasilina’s public website?'))return;
   $('publish').disabled=true;
   if(await api.publish())notify('Published. Your website is updated.');
   syncStatus();
 };
-$('undo').onclick=()=>api?.undo();$('redo').onclick=()=>api?.redo();
+$('undo').onclick=()=>{inlineBiography.finish(true);api?.undo();};$('redo').onclick=()=>{inlineBiography.finish(true);api?.redo();};
 $('editor-undo').onclick=()=>api?.undo();$('editor-redo').onclick=()=>api?.redo();
 $('editor-done').onclick=()=>dialog.close();
 $('page').onchange=()=>{dialog.close();loadPage($('page').value);};
@@ -550,6 +563,7 @@ dialog.addEventListener('close',()=>{
 document.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
 for(const name of ['desktop','mobile'])$(name).onclick=()=>{device=name;fit();};
 for(const mode of ['edit','view'])$(mode).onclick=()=>{
+  inlineBiography.finish(true);
   editing=mode==='edit';$('edit').setAttribute('aria-pressed',String(editing));$('view').setAttribute('aria-pressed',String(!editing));
   $('section').disabled=!editing;frame.contentDocument?.documentElement.classList.toggle('visual-edit',editing);
   if(!editing)dialog.close();
@@ -557,7 +571,7 @@ for(const mode of ['edit','view'])$(mode).onclick=()=>{
 };
 window.addEventListener('resize',fit);
 window.visualViewport?.addEventListener('resize',fit);
-window.addEventListener('beforeunload',event=>{if(api?.dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(api?.dirty||inlineBiography.dirty){event.preventDefault();event.returnValue='';}});
 document.body.classList.add('signed-out');
 controls.src=localTrial?'./?visual-local=1&v=controls-33':'./?visual-connected=1&v=controls-33';
 updateSections();connect();fit();
