@@ -4,7 +4,7 @@ import {
 } from '../portfolio-backend.js?v=4';
 import { renderPortfolioChapters } from '../portfolio-layout.js?v=1';
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
-import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=2';
+import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=3';
 import { IMAGE_ACCEPT, HEIC_ACCEPT, validateImage, prepareImage } from './image-upload.js?v=1';
 
 // The visual workspace shares the editor; the local trial keeps separate storage.
@@ -1362,7 +1362,7 @@ async function applyAboutPreview(doc, content) {
     const firstText = [...part.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
     if (firstText) firstText.textContent = words[0] || '';
     const surname = part.querySelector('em');
-    if (surname) surname.textContent = words.slice(1).join(' ') + (lang === 'en' ? '.' : '');
+    if (surname) surname.textContent = words.slice(1).join(' ');
   }
   await setImage(doc.querySelector('.about-image img'), content.about.portrait.src, content.about.portrait.alt);
   const caption = doc.querySelector('.about-image figcaption span:last-child');

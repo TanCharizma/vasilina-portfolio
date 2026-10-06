@@ -29,7 +29,8 @@ function setHeadline(doc, headline) {
   if (!root || !headline) return;
   for (const lang of ['en', 'th']) {
     const target = root.querySelector(`[lang="${lang}"]`);
-    const value = headline[lang]?.trim();
+    const raw = headline[lang]?.trim();
+    const value = raw === 'Booking & availability.' ? raw.slice(0, -1) : raw;
     if (!target || !value) continue;
     const split = lang === 'th' ? value.indexOf('และ') : value.lastIndexOf(' ');
     if (split < 1) { target.textContent = value; continue; }

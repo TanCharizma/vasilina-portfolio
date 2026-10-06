@@ -1,7 +1,7 @@
 import { getPublishedPortfolio, portfolioBackendReady } from './portfolio-backend.js';
 import { renderPortfolioChapters } from './portfolio-layout.js?v=1';
 import { renderMotionGallery, renderMotionStills } from './portfolio-motion.js';
-import { applyBookingContent, mountBookingCalendar, DEFAULT_CAL_LINK } from './portfolio-booking.js?v=2';
+import { applyBookingContent, mountBookingCalendar, DEFAULT_CAL_LINK } from './portfolio-booking.js?v=3';
 
 const isBookingPage = !!document.querySelector('.booking-opening');
 if (!portfolioBackendReady && isBookingPage) mountBookingCalendar(document, DEFAULT_CAL_LINK);
@@ -156,7 +156,7 @@ function applyPublishedProfile(content) {
       const firstText = [...(part?.childNodes || [])].find(node => node.nodeType === Node.TEXT_NODE);
       if (firstText) firstText.textContent = words[0] || '';
       const surname = part?.querySelector('em');
-      if (surname) surname.textContent = words.slice(1).join(' ') + (lang === 'en' ? '.' : '');
+      if (surname) surname.textContent = words.slice(1).join(' ');
     }
   }
   setLanguageText(document.querySelector('.booking-opening .subpage-kicker'), identity.location);
