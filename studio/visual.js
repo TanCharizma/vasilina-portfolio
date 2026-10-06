@@ -1,6 +1,6 @@
 import { visualDraftStatus } from './visual-status.js?v=1';
 import { createStudioTour } from './visual-tour.js?v=4';
-import { createInlineBiography } from './inline-biography.js?v=2';
+import { createInlineBiography } from './inline-biography.js?v=4';
 
 const $ = id => document.getElementById(id);
 const frame = $('website'), controls = $('controls'), dialog = $('editor');

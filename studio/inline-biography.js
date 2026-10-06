@@ -64,6 +64,13 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
     if (!doc.querySelector('#inline-biography-style')) {
       const style = doc.createElement('style'); style.id = 'inline-biography-style';
       style.textContent = `.visual-edit .inline-biography{cursor:text!important;outline:1px solid transparent;outline-offset:7px;position:relative}.visual-edit .inline-biography:hover,.visual-edit .inline-biography:focus-visible,.visual-edit .inline-biography-active{outline-color:#b99b79}.inline-biography-field{display:block;width:100%;min-height:1.5em;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;resize:none;overflow:hidden;outline:none;cursor:text!important}.visual-edit .inline-biography::after{content:'✎';position:absolute;right:0;top:-24px;color:#916a40;font:16px Arial,sans-serif;opacity:0}.visual-edit .inline-biography:hover::after,.visual-edit .inline-biography:focus-visible::after{opacity:1}.inline-biography-active::after{display:none}@media(pointer:coarse){.visual-edit .inline-biography{outline-color:#b99b7955}.visual-edit .inline-biography::after{opacity:1}.inline-biography-field{font-size:max(16px,1em)}}`;
+      style.textContent += `
+        .visual-edit .inline-biography{box-sizing:border-box;margin:0;padding:12px 36px 12px 12px;border:1px solid transparent;outline-offset:0}
+        .visual-edit .about-body{display:flex;flex-direction:column;gap:24px}
+        .visual-edit .inline-biography::after{top:12px;right:12px;line-height:20px}
+        .visual-edit .inline-biography-active{border-color:#b99b79;outline:none}
+        @media(pointer:coarse),(max-width:600px){.visual-edit .inline-biography{border-color:#b99b7955;outline-color:transparent}.visual-edit .inline-biography::after{opacity:1}.visual-edit .inline-biography-active{border-color:#b99b79}}
+      `;
       doc.head.append(style);
     }
     for (const lang of ['en', 'th']) {
