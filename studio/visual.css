@@ -56,6 +56,11 @@ body:has(#editor[open]) .actions #undo,body:has(#editor[open]) .actions #redo{di
 }
 
 
+.inline-edit-actions{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 14px;background:#faf8f4;color:#463c30;border:1px solid #b99b79;box-shadow:0 4px 24px #20190d25;z-index:60}
+.inline-edit-actions span{font-size:12px;margin-right:12px}
+.inline-edit-actions button{min-height:44px;font-size:13px}
+.inline-edit-actions .inline-edit-done{background:#463c30;color:white;border-color:#463c30}
+@media(max-width:900px){.inline-edit-actions{left:0;right:0;transform:none;justify-content:flex-end;padding:8px 12px max(8px,env(safe-area-inset-bottom));border-left:0;border-right:0}.inline-edit-actions span{margin-right:auto}.inline-editing .actions #publish{display:none!important}.inline-editing .switches,.inline-editing .guide{display:none}}
 .account-gate{min-height:100dvh;display:grid;place-items:center;padding:24px}
 #status[data-state],#editor-status[data-state],#mobile-status[data-state]{color:#655c50}
 #status[data-state]::before,#editor-status[data-state]::before,#mobile-status[data-state]::before{content:'';display:inline-block;width:6px;height:6px;margin-right:6px;vertical-align:middle;border-radius:50%;background:#948c80}

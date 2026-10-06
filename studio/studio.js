@@ -1736,6 +1736,11 @@ function exposeVisualStudio() {
       get canRedo(){return historyPosition<editHistory.length-1;},
       undo(){travelHistory(-1);},
       redo(){travelHistory(1);},
+      updateBiography(index, lang, value) {
+        if (!draft?.about.biography[index] || !['en', 'th'].includes(lang)) return;
+        draft.about.biography[index][lang] = value;
+        markChanged(); renderSection();
+      },
       reorderPhotos(group, fromId, toId) {
         const chapter=group.startsWith('portfolio:')?draft.home.portfolioChapters.find(item=>item.id===group.slice(10)):null;
         const key=['selectedWork','digitals','motion','motionStills'].includes(group)?group:null;
