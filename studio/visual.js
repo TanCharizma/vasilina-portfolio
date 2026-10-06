@@ -1,4 +1,5 @@
 import { visualDraftStatus } from './visual-status.js?v=1';
+import { createStudioTour } from './visual-tour.js?v=4';
 
 const $ = id => document.getElementById(id);
 const frame = $('website'), controls = $('controls'), dialog = $('editor');
@@ -12,6 +13,20 @@ let popupSize = null;
 let editorReturnMenu = null;
 let editorMenuTitle = 'Edit section';
 let editorReturnGallery = null;
+let tourSection = '';
+const studioTour = createStudioTour({
+  ready:()=>Boolean(api?.ready),
+  beforeStart:()=>{ dialog.close(); tourSection=$('section').value; },
+  showPhotos:()=>{
+    const wasEditing=editing;
+    editing=true;
+    dialog.classList.add('tour-photo-demo');
+    openEditor('portfolio',{chapterId:api.content.home.portfolioChapters[0]?.id});
+    editing=wasEditing;
+  },
+  hidePhotos:()=>{ dialog.close(); dialog.classList.remove('tour-photo-demo'); $('section').value=tourSection; },
+  localTrial
+});
 const pageSections={
   home:[['home','Homepage','home'],['selectedWork','Selected work','home',{gallery:'selectedWork'},'#highlights'],['portfolio','Portfolio','portfolio'],['digitals','Digitals','digitals'],['motion','Videos & stills','motion'],['arrangeMotion','Arrange motion','motion',{gallery:'motion'},'#motion'],['identity','Profile & measurements','identity'],['compCard','Comp card','compCard'],['clientLogos','Client logos','home',{group:'Client logos'},'#selected-clients'],['footer','Footer','home',{group:'Footer wording'},'footer']],
   about:[['name','Name','identity',{label:'Name'},'.about-opening'],['about','About & biography','about'],['clientLogos','Client logos','home',{group:'Client logos'},'.about-clients'],['footer','Footer','home',{group:'Footer wording'},'footer']],
@@ -364,6 +379,7 @@ function connect() {
   const bridge=controls.contentWindow.visualStudio;if(!bridge)return;
   api=bridge;if(api.opening)return;
   if(!api.ready){
+    studioTour.close();
     $('account-gate').hidden=false;$('workspace').hidden=true;
     document.body.classList.add('signed-out');dialog.close();frame.src='about:blank';
     $('account-title').textContent=api.backendConfigured?'Sign in to your Studio':'Studio connection unavailable';
@@ -377,6 +393,7 @@ function connect() {
   $('workspace-mode').textContent=api.connected?'Online draft':'Local trial';
   $('sign-out').hidden=!api.connected;
   syncStatus();loadPage('home');fit();
+  studioTour.maybeStart();
   controls.contentDocument.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
 }
 $('account-form').addEventListener('submit',async event=>{

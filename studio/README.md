@@ -16,6 +16,16 @@ device to JPEG before storing or uploading them; the website uses that JPEG.
 The converter is bundled in `vendor/heic-to/` and loads only for HEIC/HEIF files.
 Include that directory and `image-upload.js` when pushing the update.
 
+Studio shows a four-step tour the first time the workspace opens in a browser.
+Finish, Skip tour, or Escape dismisses it; **Help → Show Studio tour** replays it.
+Completion is remembered on that browser, with separate flags for the local trial
+and connected Studio. Clearing browser storage or using another device shows it
+again. The photo step opens the gallery editor to show uploading and rearranging;
+leaving that step closes the demonstration and restores the section picker.
+Highlighted controls stay bright while the surrounding screen is dimmed.
+The tour changes no portfolio content and never saves or publishes.
+Include `visual-tour.js` with the updated visual editor files when deploying.
+
 **Save draft** keeps changes private. **Publish changes** saves and publishes
 the current draft. The status distinguishes unsaved changes, a saved draft
 that is not published, and a website that is up to date. Undo and Redo cover
