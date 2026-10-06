@@ -1786,8 +1786,12 @@ function exposeVisualStudio() {
           const body = doc.querySelector('.about-body');
           if(body) {
             body.replaceChildren();
-            for(const paragraph of draft.about.biography.slice(1)) for(const lang of ['en','th']) {
-              const p=doc.createElement('p');p.lang=lang;p.textContent=paragraph[lang]||'';body.append(p);
+            for(const paragraph of draft.about.biography.slice(1)) {
+              const group=doc.createElement('div');
+              for(const lang of ['en','th']) {
+                const p=doc.createElement('p');p.lang=lang;p.textContent=paragraph[lang]||'';group.append(p);
+              }
+              body.append(group);
             }
           }
         }
