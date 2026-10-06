@@ -1792,8 +1792,8 @@ html:has(.home-page) {
 }
 
 .home-page .home-hero h1 span:last-child {
-    margin-left: 0.7em;
-    font-style: italic;
+    margin-left: 0;
+    font-style: normal;
 }
 
 .home-page .home-hero .hero-tagline {
@@ -4496,4 +4496,33 @@ html:has(.home-page) {
         padding-top: var(--overlay-bleed);
         padding-bottom: calc(var(--overlay-bleed) + 100lvh - 100dvh);
     }
+}
+
+/* Quiet, consistent opening typography across Lina's portfolio. */
+.home-page .home-hero h1 {
+    font-size: clamp(60px, 6.65vw, 108px);
+    line-height: 1.02;
+}
+.about-page .about-opening h1 {
+    font-size: clamp(58px, 7.25vw, 116px);
+    line-height: 1.02;
+}
+.booking-page .booking-opening h1 {
+    font-size: clamp(56px, 6.5vw, 94px);
+    line-height: 1.06;
+}
+.home-page .home-hero h1 span:last-child,
+.about-page .about-opening h1 em,
+.booking-page .booking-opening h1 em {
+    margin-left: 0;
+    font-style: normal;
+}
+.home-page .home-hero h1 span:last-child,
+.about-page .about-opening h1 em {
+    margin-left: clamp(12px, 1.5vw, 24px);
+}
+@media (max-width: 600px) {
+    .home-page .home-hero h1 { font-size: clamp(42px, 12.3vw, 52px); }
+    .about-page .about-opening h1 { font-size: clamp(34px, 10.1vw, 43px); }
+    .booking-page .booking-opening h1 { font-size: clamp(34px, 10.2vw, 44px); }
 }
