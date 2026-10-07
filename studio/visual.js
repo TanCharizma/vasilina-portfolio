@@ -1,6 +1,6 @@
 import { visualDraftStatus } from './visual-status.js?v=1';
 import { createStudioTour } from './visual-tour.js?v=4';
-import { createInlineBiography } from './inline-biography.js?v=5';
+import { createInlineBiography } from './inline-biography.js?v=7';
 
 const $ = id => document.getElementById(id);
 const frame = $('website'), controls = $('controls'), dialog = $('editor');
@@ -21,6 +21,8 @@ const inlineBiography = createInlineBiography({
   changed: () => { syncStatus(); notify('Biography updated. Save draft to keep it.'); },
   closeEditor: () => dialog.close(),
   layoutChanged: () => fit(),
+  addParagraph: async () => { const index = api.addBiography(); await refresh(); syncStatus(); return index; },
+  removeParagraph: async index => { api.removeBiography(index); await refresh(); syncStatus(); notify('Paragraph removed. Undo is available.'); },
 });
 const studioTour = createStudioTour({
   ready:()=>Boolean(api?.ready),

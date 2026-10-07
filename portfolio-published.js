@@ -1,5 +1,6 @@
 import { getPublishedPortfolio, portfolioBackendReady } from './portfolio-backend.js';
 import { renderPortfolioChapters } from './portfolio-layout.js?v=1';
+import { renderBiography } from './portfolio-biography.js?v=1';
 import { renderMotionGallery, renderMotionStills } from './portfolio-motion.js';
 import { applyBookingContent, mountBookingCalendar, DEFAULT_CAL_LINK } from './portfolio-booking.js?v=3';
 
@@ -190,6 +191,7 @@ function applyPublishedAbout(content) {
   const caption = document.querySelector('.about-image figcaption span:last-child');
   if (caption) caption.textContent = about.portrait?.caption || '';
   setLanguageText(document.querySelector('.portrait-intro'), about.intro);
+  renderBiography(document, about.biography);
   for (const lang of ['en', 'th']) {
     const lead = document.querySelector(`.about-lead[lang="${lang}"]`);
     if (lead) lead.textContent = about.biography?.[0]?.[lang] || '';

@@ -60,6 +60,8 @@ body:has(#editor[open]) .actions #undo,body:has(#editor[open]) .actions #redo{di
 .inline-edit-actions span{font-size:12px;margin-right:12px}
 .inline-edit-actions button{min-height:44px;font-size:13px}
 .inline-edit-actions .inline-edit-done{background:#463c30;color:white;border-color:#463c30}
+.inline-edit-actions .inline-edit-remove{color:#8a443a;border-color:transparent;padding:8px}
+@media(max-width:600px){.inline-edit-actions{gap:6px}.inline-edit-actions span{font-size:11px;margin-right:auto}.inline-edit-actions button{padding:8px 10px}}
 @media(max-width:900px){.inline-edit-actions{left:0;right:0;transform:none;justify-content:flex-end;padding:8px 12px max(8px,env(safe-area-inset-bottom));border-left:0;border-right:0}.inline-edit-actions span{margin-right:auto}.inline-editing .actions #publish{display:none!important}.inline-editing .switches,.inline-editing .guide{display:none}}
 .account-gate{min-height:100dvh;display:grid;place-items:center;padding:24px}
 #status[data-state],#editor-status[data-state],#mobile-status[data-state]{color:#655c50}

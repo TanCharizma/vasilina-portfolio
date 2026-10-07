@@ -3,6 +3,7 @@ import {
   getDraft, saveOwnerDraft, publishOwnerDraft, getPublishedPortfolio, uploadOwnerImage, uploadOwnerVideo, ownerVideoFormat,
 } from '../portfolio-backend.js?v=4';
 import { renderPortfolioChapters } from '../portfolio-layout.js?v=1';
+import { renderBiography } from '../portfolio-biography.js?v=1';
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
 import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=3';
 import { IMAGE_ACCEPT, HEIC_ACCEPT, validateImage, prepareImage } from './image-upload.js?v=1';
@@ -1370,6 +1371,7 @@ async function applyAboutPreview(doc, content) {
   const portraitName = doc.querySelector('.about-image figcaption span:first-child');
   if (portraitName) portraitName.textContent = content.identity.name.en;
   setLang(doc, '.portrait-intro', content.about.intro);
+  renderBiography(doc, content.about.biography);
   for (const lang of ['en', 'th']) {
     const lead = doc.querySelector(`.about-lead[lang="${lang}"]`);
     if (lead) lead.textContent = content.about.biography[0]?.[lang] || '';
@@ -1741,6 +1743,16 @@ function exposeVisualStudio() {
         draft.about.biography[index][lang] = value;
         markChanged(); renderSection();
       },
+      addBiography() {
+        draft.about.biography.push({ en: '', th: '' });
+        markChanged(); renderSection();
+        return draft.about.biography.length - 1;
+      },
+      removeBiography(index) {
+        if (index < 1 || index >= draft.about.biography.length) return;
+        draft.about.biography.splice(index, 1);
+        markChanged(); renderSection();
+      },
       reorderPhotos(group, fromId, toId) {
         const chapter=group.startsWith('portfolio:')?draft.home.portfolioChapters.find(item=>item.id===group.slice(10)):null;
         const key=['selectedWork','digitals','motion','motionStills'].includes(group)?group:null;
@@ -1783,17 +1795,6 @@ function exposeVisualStudio() {
         if(page==='home') await applyHomePreview(doc,draft);
         if(page==='about') {
           await applyAboutPreview(doc,draft);
-          const body = doc.querySelector('.about-body');
-          if(body) {
-            body.replaceChildren();
-            for(const paragraph of draft.about.biography.slice(1)) {
-              const group=doc.createElement('div');
-              for(const lang of ['en','th']) {
-                const p=doc.createElement('p');p.lang=lang;p.textContent=paragraph[lang]||'';group.append(p);
-              }
-              body.append(group);
-            }
-          }
         }
         if(page==='booking') applyBookingPreview(doc,draft);
       },
