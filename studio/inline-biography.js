@@ -1,4 +1,4 @@
-export function createInlineBiography({ enabled, commit, changed, closeEditor, layoutChanged }) {
+export function createInlineBiography({ enabled, commit, changed, closeEditor, layoutChanged, addParagraph, removeParagraph }) {
   let active = null;
   const bar = document.createElement('div');
   bar.className = 'inline-edit-actions';
@@ -10,7 +10,9 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
   cancel.type = 'button'; cancel.textContent = 'Cancel';
   const done = document.createElement('button');
   done.type = 'button'; done.textContent = 'Done'; done.className = 'inline-edit-done';
-  bar.append(label, cancel, done);
+  const remove = document.createElement('button');
+  remove.type = 'button'; remove.textContent = 'Remove'; remove.className = 'inline-edit-remove';
+  bar.append(label, remove, cancel, done);
   document.body.append(bar);
   const position = () => {
     const viewport = window.visualViewport;
@@ -23,6 +25,7 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
     active = null;
     node.classList.remove('inline-biography-active');
     node.textContent = save ? value : original;
+    node.toggleAttribute('data-empty', !node.textContent.trim());
     bar.hidden = true;
     document.body.classList.remove('inline-editing');
     layoutChanged();
@@ -31,8 +34,14 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
   }
   done.onclick = () => finish(true);
   cancel.onclick = () => finish(false);
+  remove.onclick = async () => {
+    if (!active || !confirm('Remove this paragraph in both English and Thai? You can undo this.')) return;
+    const index = active.index;
+    finish(false);
+    await removeParagraph(index);
+  };
   // Keep the keyboard open until the action has been handled.
-  for (const button of [done, cancel]) button.addEventListener('pointerdown', event => event.preventDefault());
+  for (const button of [done, cancel, remove]) button.addEventListener('pointerdown', event => event.preventDefault());
   window.visualViewport?.addEventListener('resize', () => {
     position();
     if (active) requestAnimationFrame(() => active?.node.scrollIntoView({ block: 'center', behavior: 'instant' }));
@@ -44,12 +53,15 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
     const original = node.textContent;
     const field = node.ownerDocument.createElement('textarea');
     field.className = 'inline-biography-field';
+    field.rows = 1;
     field.setAttribute('aria-label', `Biography paragraph ${index + 1}`);
+    field.placeholder = lang === 'th' ? 'Add Thai text' : 'Add English text';
     field.value = original;
     const resize = () => { field.style.height = 'auto'; field.style.height = `${field.scrollHeight}px`; };
     node.replaceChildren(field);
     node.classList.add('inline-biography-active');
     active = { node, field, original, index, lang };
+    remove.hidden = index === 0;
     bar.hidden = false; document.body.classList.add('inline-editing'); position();
     layoutChanged();
     field.addEventListener('input', resize);
@@ -70,9 +82,17 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
         .visual-edit .inline-biography::after{content:'✎';position:absolute;right:-10px;top:-12px;width:20px;height:20px;text-align:center;background:var(--bg,#faf8f4);color:#916a40;font:16px/20px Arial,sans-serif;opacity:0;pointer-events:none}
         .visual-edit .inline-biography:hover::after,.visual-edit .inline-biography:focus-visible::after{opacity:1}
         .visual-edit .inline-biography-active::after{display:none}
+        .visual-edit .inline-biography[data-empty]{min-height:1.8em}
+        .visual-edit .inline-biography[data-empty]:not(.inline-biography-active)::before{content:attr(data-placeholder);font:16px/1.8 Arial,sans-serif;color:#8b7966}
+        .inline-biography-field::placeholder{font:16px/1.8 Arial,sans-serif;color:#8b7966}
+        .inline-biography-add{display:none}
+        .visual-edit .inline-biography-add{display:block;margin:20px 0 0;padding:8px 0;min-height:44px;border:0;background:transparent;color:#916a40;font:14px Arial,sans-serif;cursor:pointer!important}
         @media(pointer:coarse),(max-width:600px){.visual-edit .inline-biography{outline-color:#b99b7955}.visual-edit .inline-biography-active{outline-color:#b99b79}.inline-biography-field{font-size:max(16px,1em)}}
       `;
       doc.head.append(style);
+      doc.addEventListener('click', event => {
+        if (event.target.closest('#langToggle')) finish(true);
+      }, true);
     }
     for (const lang of ['en', 'th']) {
       const nodes = [...doc.querySelectorAll(`.about-bio p[lang="${lang}"]`)];
@@ -80,6 +100,7 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
         node.classList.add('inline-biography');
         node.tabIndex = 0;
         node.setAttribute('aria-label', `Edit biography paragraph ${index + 1}`);
+        node.dataset.placeholder = lang === 'th' ? 'Add Thai text' : 'Add English text';
         if (node.dataset.inlineBound) return;
         node.dataset.inlineBound = 'true';
         node.addEventListener('click', () => begin(node, index, lang));
@@ -90,6 +111,20 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
         });
       });
     }
+    doc.querySelector('.inline-biography-add')?.remove();
+    const add = doc.createElement('button');
+    add.type = 'button'; add.className = 'inline-biography-add'; add.textContent = '+ Add paragraph';
+    add.onclick = async () => {
+      if (!enabled()) return;
+      finish(true); add.disabled = true;
+      try {
+        const index = await addParagraph();
+        const lang = doc.body.classList.contains('lang-th') ? 'th' : 'en';
+        const node = doc.querySelectorAll(`.about-bio p[lang="${lang}"]`)[index];
+        if (node) begin(node, index, lang);
+      } finally { add.disabled = false; }
+    };
+    doc.querySelector('.about-bio')?.append(add);
   }
   return { attach, finish, get active() { return Boolean(active); }, get dirty() { return Boolean(active && active.field.value.trim() !== active.original); } };
 }
