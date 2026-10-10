@@ -87,6 +87,7 @@
     "agency": {
       "name": "Charizma Management",
       "description": { "en": "I’m also the co-founder and co-director of Charizma Management, a mother agency focused on developing models and supporting their long-term careers.", "th": "ฉันยังเป็นผู้ร่วมก่อตั้งและผู้อำนวยการร่วมของ Charizma Management ซึ่งเป็นมาเธอร์เอเจนซี่ที่มุ่งพัฒนานางแบบและนายแบบ พร้อมสนับสนุนเส้นทางอาชีพในระยะยาว" },
+      "linkLabel": { "en": "Charizma on Instagram", "th": "Charizma บน Instagram" },
       "url": "https://www.instagram.com/charizma.management/",
       "visible": true
     },

@@ -1,8 +1,11 @@
+import { applyFooterText } from './portfolio-footer-text.js?v=2';
+import { applyHomeText } from './portfolio-home-text.js?v=8';
 import { getPublishedPortfolio, portfolioBackendReady } from './portfolio-backend.js';
+import { applyAboutText } from './portfolio-about-text.js?v=1';
 import { renderPortfolioChapters } from './portfolio-layout.js?v=1';
-import { renderBiography } from './portfolio-biography.js?v=1';
+import { renderBiography, renderClosingInvitation } from './portfolio-biography.js?v=2';
 import { renderMotionGallery, renderMotionStills } from './portfolio-motion.js';
-import { applyBookingContent, mountBookingCalendar, DEFAULT_CAL_LINK } from './portfolio-booking.js?v=3';
+import { applyBookingContent, mountBookingCalendar, DEFAULT_CAL_LINK } from './portfolio-booking.js?v=4';
 
 const isBookingPage = !!document.querySelector('.booking-opening');
 if (!portfolioBackendReady && isBookingPage) mountBookingCalendar(document, DEFAULT_CAL_LINK);
@@ -85,6 +88,7 @@ function applyPublishedHomeImages(home) {
 
 function applyPublishedHomeText(home) {
   if (!home) return;
+  applyHomeText(document, home);
   setEditorialText(document.querySelector('.manifesto-lead'), home.manifesto?.lead);
   for (const lang of ['en', 'th']) {
     const paragraph = document.querySelector(`.manifesto-detail p[lang="${lang}"]`);
@@ -104,21 +108,8 @@ function applyPublishedClients(images, clients) {
 }
 
 function applyPublishedFooter(content) {
-  const footer = document.querySelector('footer');
-  if (!footer) return;
-  for (const lang of ['en', 'th']) {
-    const paragraph = footer.querySelector(`.footer-column p[lang="${lang}"]:not(.footer-label)`);
-    if (paragraph && content.footer?.description) paragraph.textContent = content.footer.description[lang] || '';
-  }
-  const email = footer.querySelector('a[href^="mailto:"]');
-  if (email && content.booking?.contact?.email) {
-    const contact = content.booking.contact.email;
-    email.href = `mailto:${contact.value}`;
-    email.textContent = contact.value;
-    email.hidden = contact.visible === false;
-  }
+  applyFooterText(document, content);
 }
-
 function setLanguageText(root, value) {
   if (!root || !value) return;
   for (const lang of ['en', 'th']) {
@@ -181,6 +172,7 @@ function applyPublishedProfile(content) {
 function applyPublishedAbout(content) {
   const about = content.about;
   if (!about) return;
+  applyAboutText(document, about);
   const portrait = document.querySelector('.about-image img');
   if (portrait && about.portrait?.src) {
     portrait.src = new URL(about.portrait.src, document.baseURI).href;
@@ -209,7 +201,13 @@ function applyPublishedAbout(content) {
     agencyName.replaceChildren(first || '', document.createElement('br'), rest.join(' ') + (rest.length ? '.' : ''));
   }
   const agencyLink = document.querySelector('.practice-copy a');
-  if (agencyLink && about.agency?.url) agencyLink.href = about.agency.url;
-  setEditorialText(document.querySelector('.about-closing .closing-statement'), about.closing);
+  if (agencyLink) {
+    if (about.agency?.url) agencyLink.href = about.agency.url;
+    for (const lang of ['en', 'th']) {
+      const label = agencyLink.querySelector(`[lang="${lang}"]`);
+      if (label && about.agency?.linkLabel?.[lang] != null) label.textContent = about.agency.linkLabel[lang];
+    }
+  }
+  renderClosingInvitation(document, about.closing);
   applyPublishedClients(document.querySelectorAll('.about-client-logos img'), content.home?.selectedClients);
 }

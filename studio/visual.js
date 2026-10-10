@@ -1,6 +1,10 @@
+import { FOOTER_TEXT_FIELDS, footerLinkValue } from '../portfolio-footer-text.js?v=2';
+import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
+import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
+import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=4';
-import { createInlineBiography } from './inline-biography.js?v=7';
+import { createStudioTour } from './visual-tour.js?v=24';
+import { createInlineBiography } from './inline-biography.js?v=25';
 
 const $ = id => document.getElementById(id);
 const frame = $('website'), controls = $('controls'), dialog = $('editor');
@@ -14,53 +18,88 @@ let popupSize = null;
 let editorReturnMenu = null;
 let editorMenuTitle = 'Edit section';
 let editorReturnGallery = null;
-let tourSection = '';
+let tourView = null;
+let refreshWaiters = [];
 const inlineBiography = createInlineBiography({
   enabled: () => editing && Boolean(api?.ready),
   commit: (index, lang, value) => api.updateBiography(index, lang, value),
-  changed: () => { syncStatus(); notify('Biography updated. Save draft to keep it.'); },
+  changed: label => { syncStatus(); notify(`${label} updated. Save draft to keep it.`); },
   closeEditor: () => dialog.close(),
   layoutChanged: () => fit(),
   addParagraph: async () => { const index = api.addBiography(); await refresh(); syncStatus(); return index; },
   removeParagraph: async index => { api.removeBiography(index); await refresh(); syncStatus(); notify('Paragraph removed. Undo is available.'); },
 });
 const studioTour = createStudioTour({
-  ready:()=>Boolean(api?.ready),
-  beforeStart:()=>{ dialog.close(); tourSection=$('section').value; },
-  showPhotos:()=>{
-    const wasEditing=editing;
-    editing=true;
-    dialog.classList.add('tour-photo-demo');
-    openEditor('portfolio',{chapterId:api.content.home.portfolioChapters[0]?.id});
-    editing=wasEditing;
+  ready:()=>Boolean(api?.ready) && api.status.state !== 'busy',
+  beforeStart:async()=>{
+    inlineBiography.finish(true); dialog.close();
+    if (!api.beginTourPractice()) return false;
+    tourView = { page, device, editing, section: $('section').value, scroll: frame.contentWindow.scrollY };
+    editing=false; $('edit').setAttribute('aria-pressed','false'); $('view').setAttribute('aria-pressed','true');
+    await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});loadPage('home');});
+    await refresh(); fit(); syncStatus();
+    return true;
   },
-  hidePhotos:()=>{ dialog.close(); dialog.classList.remove('tour-photo-demo'); $('section').value=tourSection; },
+  prepareStep:async phase=>{
+    inlineBiography.finish(false); dialog.close();
+    document.body.classList.toggle('tour-photo-practice',phase==='arrange');
+    fit();
+    editing=phase==='arrange'||phase==='voice';
+    $('edit').setAttribute('aria-pressed',String(editing));$('view').setAttribute('aria-pressed',String(!editing));
+    $('section').disabled=!editing;
+    frame.contentDocument?.documentElement.classList.toggle('visual-edit',editing);
+    await refresh();
+    const doc=frame.contentDocument;
+    if (phase === 'welcome' || phase === 'preview') {
+      frame.contentWindow.scrollTo(0,0);
+      return { doc, buttons:phase==='preview'?[$('desktop'),$('mobile')]:[], page:phase==='preview'?$('page'):null };
+    }
+    if (phase === 'share') return { doc, buttons:[$('save'),$('publish')].filter(button=>button.getClientRects().length) };
+    if (phase === 'voice') {
+      const text=[...doc.querySelectorAll('.manifesto-detail p[lang]')].find(node=>node.getClientRects().length);
+      text?.scrollIntoView({block:matchMedia('(max-width:900px)').matches?'start':'center',behavior:'instant'});
+      return { doc, text };
+    }
+    const photos=[...doc.querySelectorAll('.story-frame img')];
+    photos[0]?.scrollIntoView({block:matchMedia('(max-width:900px)').matches?'start':'center',behavior:'instant'});
+    if (phase === 'arrange') {
+      revealPhotoTools(photos[0]);
+      const handle=[...doc.querySelectorAll('.visual-drag-chip')].find(button=>button.photoElement===photos[0]);
+      return { doc, source:photos[0], destination:photos[1], handle };
+    }
+    return { doc };
+  },
+  photoOrder:()=>api.content.home.selectedWork.map(photo=>photo.id).join('|'),
+  hasUnsavedChanges:()=>Boolean(api?.dirty||inlineBiography.dirty),
+  switchPhotos:async()=>{
+    const photos=api.content.home.selectedWork;
+    if(photos.length<2)return;
+    api.reorderPhotos('selectedWork',photos[0].id,photos[1].id);
+    await refresh();
+  },
+  restorePractice:async()=>{api.resetTourPractice();await refresh();},
+  finishPractice:async keep=>{
+    document.body.classList.remove('tour-photo-practice');
+    inlineBiography.finish(false); api?.endTourPractice(keep);
+    if (!tourView) return;
+    const previous=tourView; tourView=null;
+    device=previous.device; editing=previous.editing;
+    $('edit').setAttribute('aria-pressed',String(editing));$('view').setAttribute('aria-pressed',String(!editing));
+    $('section').disabled=!editing;
+    await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});loadPage(previous.page);});
+    await refresh(); fit(); $('section').value=previous.section; $('notice').hidden=true;
+    frame.contentWindow.scrollTo(0,previous.scroll);syncStatus();
+    if(keep)notify(api?.dirty?'Your edits are ready. Choose Save draft to keep them.':'Your Studio is ready to explore.');
+    else notify('Your original portfolio is restored.');
+  },
   localTrial
 });
 const pageSections={
-  home:[['home','Homepage','home'],['selectedWork','Selected work','home',{gallery:'selectedWork'},'#highlights'],['portfolio','Portfolio','portfolio'],['digitals','Digitals','digitals'],['motion','Videos & stills','motion'],['arrangeMotion','Arrange motion','motion',{gallery:'motion'},'#motion'],['identity','Profile & measurements','identity'],['compCard','Comp card','compCard'],['clientLogos','Client logos','home',{group:'Client logos'},'#selected-clients'],['footer','Footer','home',{group:'Footer wording'},'footer']],
-  about:[['name','Name','identity',{label:'Name'},'.about-opening'],['about','About & biography','about'],['clientLogos','Client logos','home',{group:'Client logos'},'.about-clients'],['footer','Footer','home',{group:'Footer wording'},'footer']],
-  booking:[['booking','Booking & contact','booking'],['footer','Footer','home',{group:'Footer wording'},'footer']],
+  home:[['home','Cover photo','home',{group:'Cover image'},'#hero'],['selectedWork','Selected work','home',{gallery:'selectedWork'},'#highlights'],['portfolio','Portfolio','portfolio'],['digitals','Digitals','digitals'],['motion','Videos & stills','motion'],['arrangeMotion','Arrange motion','motion',{gallery:'motion'},'#motion'],['identity','Measurement visibility','identity',{group:'Measurements'},'#measurements'],['compCard','Comp card','compCard'],['clientLogos','Client logos','home',{group:'Client logos'},'#selected-clients']],
+  about:[['about','Portrait photo','about',{group:'Portrait'},'#about-portrait'],['agency','Agency visibility','about',{group:'Agency details'},'.about-practice'],['clientLogos','Client logos','home',{group:'Client logos'},'.about-clients']],
+  booking:[['calendar','Calendar settings','booking',{group:'Your calendar'},'.calendar-frame'],['contact','Contact settings','booking',{group:'Contact options'},'.direct-inquiries']],
 };
 const sectionMenus = {
-  home: [
-    {label:'Cover photo',section:'home',target:{group:'Cover image'}},
-    {label:'Name & tagline',section:'identity',target:{group:'Role & tagline'}},
-    {label:'Introduction',section:'home',target:{label:'Introduction'}},
-    {label:'Booking invitation',section:'home',target:{label:'Invitation'}},
-  ],
-  identity: [
-    {label:'Name & location',section:'identity',target:{group:'Profile'}},
-    {label:'Measurements',section:'identity',target:{group:'Measurements'}},
-    {label:'Role & tagline',section:'identity',target:{group:'Role & tagline'}},
-  ],
-  about: [
-    {label:'Introduction',section:'about',target:{label:'Introduction'}},
-    {label:'Portrait',section:'about',target:{group:'Portrait'}},
-    {label:'Biography',section:'about',target:{group:'Your story'}},
-    {label:'Agency',section:'about',target:{group:'Agency details'}},
-    {label:'Closing invitation',section:'about',target:{group:'Closing invitation'}},
-  ],
   motion: [
     {label:'Videos',section:'motion',target:{group:'Videos'}},
     {label:'Motion stills',section:'motion',target:{group:'Motion stills'}},
@@ -69,7 +108,6 @@ const sectionMenus = {
   booking: [
     {label:'Contact options',section:'booking',target:{group:'Contact options'}},
     {label:'Calendar',section:'booking',target:{group:'Your calendar'}},
-    {label:'Page wording',section:'booking',target:{group:'Booking page wording'}},
   ],
 };
 function updateSections(){
@@ -227,7 +265,7 @@ function openEditor(section,target,trigger) {
   returnPhoto=Number.isInteger(target?.stillIndex)?{selector:`.motion-stills img:nth-child(${target.stillIndex+1})`,page}:target?.photoId ? {id:target.photoId,page} : target?.group==='Portrait' ? {selector:'.about-image img',page} : target?.group==='Cover image' ? {selector:'.hero-bg',page} : null;
   dialog.classList.toggle('photo-editor',!!target?.photoId||['Cover image','Portrait'].includes(target?.group));
   dialog.classList.toggle('gallery-editor',!!((['portfolio','digitals'].includes(section)||target?.gallery)&&!target?.photoId));
-  const textTitles={'Name':'Edit name','Profile':'Edit name & location','Client logos':'Edit client logos','Contact options':'Edit contact options','Your calendar':'Edit calendar','Videos':'Edit videos','Motion stills':'Edit motion stills','Role & tagline':'Edit name & tagline','Measurements':'Edit measurements','Introduction':'Edit introduction','Invitation':'Edit invitation','Footer wording':'Edit footer','Your story':'Edit biography','Agency details':'Edit agency','Closing invitation':'Edit invitation','Booking page wording':'Edit headline & wording'};
+  const textTitles={'Name':'Edit name','Profile':'Edit name & location','Client logos':'Edit client logos','Contact options':'Edit contact options','Your calendar':'Edit calendar','Videos':'Edit videos','Motion stills':'Edit motion stills','Role & tagline':'Edit name & tagline','Measurements':'Measurement visibility','Introduction':'Edit introduction','Invitation':'Edit invitation','Footer wording':'Edit footer','Your story':'Edit biography','Agency details':'Agency visibility','Closing invitation':'Edit invitation','Booking page wording':'Edit headline & wording'};
   const textTitle=target&&!target.photoId?textTitles[target.label||target.group]:null;
   dialog.classList.toggle('text-editor',!!textTitle);
   dialog.classList.toggle('comp-card-editor',section==='compCard');
@@ -262,18 +300,18 @@ function syncStatus() {
   if(!api?.ready)return;
   const draftStatus=visualDraftStatus(api);
   for(const id of ['status','mobile-status','editor-status']) {
-    $(id).textContent=draftStatus.text;
+    $(id).textContent=tourView?'Exploring · your live website stays unchanged':draftStatus.text;
     $(id).dataset.state=draftStatus.state;
   }
   $('save').disabled=!api.canSave||!api.dirty||api.status.state==='busy';
   $('editor-save').disabled=$('save').disabled;
-  $('publish').disabled=!api.connected||!api.needsPublish||api.status.state==='busy';
+  $('publish').disabled=Boolean(tourView)||!api.connected||!api.needsPublish||api.status.state==='busy';
   $('publish').textContent=api.connected&&api.needsPublish?'Publish changes':'Publish';
   $('publish').classList.toggle('trial-publish',!api.connected);
-  $('undo').disabled=!api.canUndo||api.status.state==='busy';$('redo').disabled=!api.canRedo||api.status.state==='busy';
+  $('undo').disabled=Boolean(tourView)||!api.canUndo||api.status.state==='busy';$('redo').disabled=Boolean(tourView)||!api.canRedo||api.status.state==='busy';
   $('editor-undo').disabled=$('undo').disabled;$('editor-redo').disabled=$('redo').disabled;
   clearTimeout(syncStatus.previewTimer);
-  syncStatus.previewTimer=setTimeout(refresh,180);
+  if (!tourView) syncStatus.previewTimer=setTimeout(refresh,180);
 }
 function chip(parent,label,section,target,extra='') {
   if(!parent)return;
@@ -318,13 +356,14 @@ function revealPhotoTools(image) {
     if(button.photoElement===image)button.classList.add('visual-tool-visible');
   });
 }
-function sectionControl(parent,section,target,name,opening=false) {
+function sectionControl(parent,section,target,name,opening=false,label='Edit section') {
   if(!parent)return;
   const row=parent.ownerDocument.createElement('div');row.className='visual-section-toolbar'+(opening?' visual-opening-toolbar':'');
   parent.prepend(row);
-  const button=chip(row,'Edit section',section,target,'visual-section-button');
-  button.setAttribute('aria-label','Edit '+name);
-  button.title='Edit '+name;
+  const button=chip(row,label,section,target,'visual-section-button');
+  const accessibleLabel=label==='Edit section'?'Edit '+name:label;
+  button.setAttribute('aria-label',accessibleLabel);
+  button.title=accessibleLabel;
 }
 function attachControls(doc) {
   doc.querySelectorAll('.visual-control').forEach(node=>node.remove());
@@ -332,18 +371,18 @@ function attachControls(doc) {
   doc.querySelectorAll('.visual-section-heading').forEach(node=>node.classList.remove('visual-section-heading'));
   doc.querySelectorAll('[data-visual-section]').forEach(node=>delete node.dataset.visualSection);
   if(page==='home') {
-    sectionControl(doc.querySelector('#hero'),'home',{menu:[{label:'Cover photo',section:'home',target:{group:'Cover image'}},{label:'Name & tagline',section:'identity',target:{group:'Role & tagline'}}]},'Homepage hero',true);
-    sectionControl(doc.querySelector('.manifesto-copy'),'home',{label:'Introduction'},'introduction');
-    sectionControl(doc.querySelector('#selected-clients'),'home',{group:'Client logos'},'client logos');
-    sectionControl(doc.querySelector('#measurements'),'identity',{menu:[{label:'Measurements',section:'identity',target:{group:'Measurements'}},{label:'Comp card',section:'compCard'}]},'profile & comp card');
-    sectionControl(doc.querySelector('#highlights .home-section-heading'),'home',{gallery:'selectedWork'},'Selected work');
+    sectionControl(doc.querySelector('#hero'),'home',{group:'Cover image'},'cover photo',true,'Edit cover photo');
+
+    sectionControl(doc.querySelector('#selected-clients'),'home',{group:'Client logos'},'client logos',false,'Manage logos');
+    sectionControl(doc.querySelector('#measurements'),'identity',{menu:[{label:'Measurement visibility',section:'identity',target:{group:'Measurements'}},{label:'Comp card',section:'compCard'}]},'measurements & comp card',false,'Measurements & comp card');
+    sectionControl(doc.querySelector('#highlights .home-section-heading'),'home',{gallery:'selectedWork'},'Selected work',false,'Manage photos');
     doc.querySelectorAll('.story-grid .story-frame img').forEach((image,i)=>photo(image,'home',{photoId:api.content.home.selectedWork[i]?.id},'selectedWork'));
     doc.querySelectorAll('.work-chapter').forEach((chapter,i)=>{
       const data=api.content.home.portfolioChapters[i];if(!data)return;
-      sectionControl(chapter.querySelector('.chapter-heading'),'portfolio',{chapterId:data.id},data.title.en);
+      sectionControl(chapter.querySelector('.chapter-heading'),'portfolio',{chapterId:data.id},data.title.en,false,'Manage photos');
       chapter.querySelectorAll('.chapter-images img').forEach((image,j)=>photo(image,'portfolio',{photoId:data.photos[j]},`portfolio:${data.id}`));
     });
-    sectionControl(doc.querySelector('#motion .motion-heading'),'motion',{menu:sectionMenus.motion},'Motion');
+    sectionControl(doc.querySelector('#motion .motion-heading'),'motion',{menu:sectionMenus.motion},'Motion',false,'Manage videos & stills');
     doc.querySelectorAll('.motion-video-grid .video-item').forEach((item,i)=>{
       const video=api.content.home.motion[i];if(!video)return;
       const id=video.id||`wistia:${video.mediaId}`;item.dataset.dragGroup='motion';item.dataset.dragId=id;
@@ -352,29 +391,25 @@ function attachControls(doc) {
       handle.setAttribute('aria-label',`Drag video ${i+1} to rearrange`);enableDirectDrag(handle,item,'motion',id);
     });
     doc.querySelectorAll('.motion-stills img').forEach((image,i)=>photo(image,'motion',{photoId:api.content.home.motionStills[i],stillIndex:i},'motionStills'));
-    sectionControl(doc.querySelector('.digitals-heading'),'digitals',null,'Digitals');
+    sectionControl(doc.querySelector('.digitals-heading'),'digitals',null,'Digitals',false,'Manage digitals');
     doc.querySelectorAll('.digitals-grid img').forEach((image,i)=>photo(image,'digitals',{photoId:api.content.home.digitals[i]?.id},'digitals'));
-    sectionControl(doc.querySelector('#availability'),'home',{label:'Invitation'},'invitation');
   }
   if(page==='about') {
-    sectionControl(doc.querySelector('.about-opening'),'identity',{label:'Name'},'About name',true);
     photo(doc.querySelector('.about-image img'),'about',{group:'Portrait'});
-    sectionControl(doc.querySelector('.portrait-intro'),'about',{label:'Introduction'},'About introduction');
-    sectionControl(doc.querySelector('.about-story'),'about',{group:'Your story'},'biography');
-    sectionControl(doc.querySelector('.about-practice'),'about',{group:'Agency details'},'agency');
-    sectionControl(doc.querySelector('.about-clients'),'home',{group:'Client logos'},'client logos');
-    sectionControl(doc.querySelector('.about-closing'),'about',{group:'Closing invitation'},'invitation');
+    sectionControl(doc.querySelector('.about-practice'),'about',{group:'Agency details'},'agency visibility',false,'Agency visibility');
+
+    sectionControl(doc.querySelector('.about-clients'),'home',{group:'Client logos'},'client logos',false,'Manage logos');
+
   }
   if(page==='booking') {
-    sectionControl(doc.querySelector('.booking-opening'),'booking',{group:'Booking page wording'},'Booking headline',true);
-    sectionControl(doc.querySelector('.booking-desk'),'booking',null,'calendar & contact');
+    sectionControl(doc.querySelector('.calendar-frame'),'booking',{group:'Your calendar'},'calendar',false,'Calendar settings');
+    sectionControl(doc.querySelector('.direct-inquiries'),'booking',{group:'Contact options'},'contact',false,'Contact settings');
   }
-  sectionControl(doc.querySelector('footer'),'home',{group:'Footer wording'},'footer');
   positionPhotoLabels();
 }
 async function refresh() {
   if (inlineBiography.active) return;
-  if(updating){updateAgain=true;return;}
+  if(updating){updateAgain=true;return new Promise(resolve=>refreshWaiters.push(resolve));}
   const doc=frame.contentDocument;
   if(!api?.ready||!doc?.querySelector(page==='home'?'.home-hero':page==='about'?'.about-opening':'.booking-opening'))return;
   updating=true;
@@ -383,11 +418,204 @@ async function refresh() {
     await api.applyTo(doc,renderingPage);
     if(doc===frame.contentDocument && renderingPage===page) {
       attachControls(doc);
-      if (renderingPage === 'about') inlineBiography.attach(doc);
+      if (renderingPage === 'home') {
+        inlineBiography.attach(doc);
+        doc.querySelectorAll('.story-grid .story-frame').forEach((figure, index) => {
+          const photo = api.content.home.selectedWork[index];
+          if (!photo) return;
+          for (const lang of ['en', 'th']) {
+            inlineBiography.attachText(figure.querySelector(`figcaption > [lang="${lang}"]`), {
+              lang, label: 'photo caption', apply: value => api.updateSelectedWorkCaption(photo.id, lang, value),
+            });
+          }
+        });
+        doc.querySelectorAll('.info-strip > div').forEach((row, index) => {
+          const key = Object.keys(MEASUREMENT_FIELDS)[index];
+          const item = api.content.identity.measurements[key];
+          if (!item) return;
+          if (typeof item.value === 'object') {
+            for (const lang of ['en', 'th']) inlineBiography.attachText(row.querySelector(`b > [lang="${lang}"]`), {
+              lang, label: `${key} value`, apply: value => api.updateMeasurement(key, lang, value),
+            });
+          } else inlineBiography.attachText(row.querySelector('b'), {
+            lang: 'en', label: `${key} value`, apply: value => api.updateMeasurement(key, 'en', value),
+          });
+        });
+        doc.querySelectorAll('.work-chapter').forEach((chapter, index) => {
+          const data = api.content.home.portfolioChapters[index];
+          if (!data) return;
+          for (const lang of ['en', 'th']) inlineBiography.attachText(chapter.querySelector(`.chapter-heading h3 > [lang="${lang}"]`), {
+            lang, label: 'chapter name', apply: value => api.updateChapterTitle(data.id, lang, value),
+          });
+        });
+        const names = doc.querySelectorAll('.hero-content h1 > span');
+        inlineBiography.attachText(names[0], { lang: 'en', label: 'first name', apply: value => api.updateAboutText('firstName', 'en', value) });
+        inlineBiography.attachText(names[1], { lang: 'en', label: 'surname', apply: value => api.updateAboutText('surname', 'en', value) });
+        for (const lang of ['en', 'th']) {
+          inlineBiography.attachText(doc.querySelector(`.manifesto-lead > [lang="${lang}"]`), {
+            lang, label: 'introduction heading', apply: value => api.updateHomeIntroduction('lead', lang, value),
+          });
+          inlineBiography.attachText(doc.querySelector(`.manifesto-detail p[lang="${lang}"]`), {
+            lang, label: 'introduction description', apply: value => api.updateHomeIntroduction('body', lang, value),
+          });
+          inlineBiography.attachText(doc.querySelector(`.availability-copy > p > [lang="${lang}"]`), {
+            lang, label: 'availability description', apply: value => api.updateHomeAvailability(lang, value),
+          });
+          for (const key of ['role', 'tagline']) {
+            inlineBiography.attachText(doc.querySelector(`.hero-${key} > [lang="${lang}"]`), {
+              lang, label: key, apply: value => api.updateIdentityText(key, lang, value),
+            });
+          }
+          for (const [key, field] of Object.entries(HOME_TEXT_FIELDS)) {
+            inlineBiography.attachText(doc.querySelector(`${field.selector} > [lang="${lang}"]`), {
+              lang, label: field.label, apply: value => api.updateHomeLabel(key, lang, value),
+            });
+          }
+        }
+      }
+      if (renderingPage === 'about') {
+        inlineBiography.attach(doc);
+        for (const lang of ['en', 'th']) {
+          for (const [key, field] of Object.entries(ABOUT_TEXT_FIELDS)) {
+            inlineBiography.attachText(doc.querySelector(`${field.selector} > [lang="${lang}"]`), {
+              lang, label: field.label, apply: value => api.updateAboutLabel(key, lang, value),
+            });
+          }
+          const part = doc.querySelector(`.about-opening h1 > [lang="${lang}"]`);
+          if (part) {
+            let first = part.querySelector('.inline-name-first');
+            if (!first) {
+              const text = [...part.childNodes].find(node => node.nodeType === 3);
+              if (text) {
+                first = doc.createElement('span'); first.className = 'inline-name-first';
+                first.textContent = text.textContent; text.replaceWith(first);
+              }
+            }
+            inlineBiography.attachText(first, { lang, label: 'first name', apply: value => api.updateAboutText('firstName', lang, value) });
+            inlineBiography.attachText(part.querySelector('em'), { lang, label: 'surname', apply: value => api.updateAboutText('surname', lang, value) });
+          }
+          inlineBiography.attachText(doc.querySelector(`.about-closing .closing-statement > [lang="${lang}"]`), {
+            lang, label: 'closing invitation', apply: value => api.updateAboutText('closing', lang, value),
+          });
+          inlineBiography.attachText(doc.querySelector(`.practice-copy a > [lang="${lang}"]`), {
+            lang, label: 'link wording', apply: value => api.updateAboutText('agencyLinkLabel', lang, value),
+          });
+          inlineBiography.attachText(doc.querySelector(`.practice-copy p[lang="${lang}"]`), {
+            lang, label: 'agency description', apply: value => api.updateAboutText('agencyDescription', lang, value),
+          });
+          inlineBiography.attachText(doc.querySelector(`.portrait-intro > [lang="${lang}"]`), {
+            lang, label: 'introduction', apply: value => api.updateAboutText('intro', lang, value),
+          });
+        }
+        inlineBiography.attachText(doc.querySelector('.about-image figcaption span:first-child'), {
+          lang: 'en', label: 'portrait name', apply: value => api.updateAboutText('identityName', 'en', value),
+        });
+        inlineBiography.attachText(doc.querySelector('.about-image figcaption span:last-child'), {
+          lang: 'en', label: 'portrait caption', apply: value => api.updateAboutText('portraitCaption', 'en', value),
+        });
+        inlineBiography.attachText(doc.querySelector('.practice-copy h2'), {
+          lang: 'en', label: 'agency name', apply: value => api.updateAboutText('agencyName', 'en', value),
+        });
+        const agencyLink = doc.querySelector('.practice-copy a');
+        if (agencyLink) {
+          let control = doc.querySelector('.inline-agency-link');
+          if (!control) {
+            control = doc.createElement('div'); control.className = 'inline-agency-link';
+            control.setAttribute('role', 'button'); control.textContent = 'Edit link';
+            agencyLink.after(control);
+          }
+          inlineBiography.attachText(control, {
+            lang: 'en', label: 'agency link', input: true, display: 'Edit link',
+            value: agencyLink.getAttribute('href') || '', apply: value => api.updateAboutText('agencyUrl', 'en', value),
+          });
+        }
+      }
+      if (renderingPage === 'booking') {
+        inlineBiography.attach(doc);
+        for (const lang of ['en', 'th']) {
+          for (const [key, field] of Object.entries(BOOKING_TEXT_FIELDS)) {
+            inlineBiography.attachText(doc.querySelector(`${field.selector} > [lang="${lang}"]`), {
+              lang, label: field.label, apply: value => api.updateBookingLabel(key, lang, value),
+            });
+          }
+          for (const [key, selector, label] of [
+            ['headline', '.booking-opening h1 > [lang]', 'booking headline'],
+            ['intro', '.booking-intro p[lang]', 'booking introduction'],
+            ['note', '.booking-intro > span > [lang]', 'rates note'],
+            ['calendarIntro', '.calendar-heading p:not(.subpage-index) > [lang]', 'calendar instruction'],
+            ['contactIntro', '.inquiry-copy > p > [lang]', 'contact introduction'],
+          ]) {
+            inlineBiography.attachText(doc.querySelector(selector.replace('[lang]', `[lang="${lang}"]`)), {
+              lang, label, apply: value => api.updateBookingText(key, lang, value),
+            });
+          }
+          inlineBiography.attachText(doc.querySelector(`.booking-opening .subpage-kicker > [lang="${lang}"]`), {
+            lang, label: 'booking location', apply: value => api.updateIdentityText('location', lang, value),
+          });
+        }
+        for (const key of ['email', 'line', 'whatsapp', 'instagram']) {
+          const link = doc.querySelector(`.inquiry-links [data-contact="${key}"]`);
+          const item = api.content.booking.contact[key];
+          if (!link || !item) continue;
+          let control = doc.querySelector(`[data-contact-editor="${key}"]`);
+          if (!control) {
+            control = doc.createElement('div'); control.className = 'inline-contact-link';
+            control.dataset.contactEditor = key;
+            control.setAttribute('role', 'button'); control.textContent = 'Edit link'; link.after(control);
+          }
+          control.hidden = item.visible === false;
+          inlineBiography.attachText(control, {
+            lang: 'en', label: `${key} contact link`, input: true,
+            inputType: key === 'email' ? 'email' : 'url', inputLabel: `${key} destination`,
+            pattern: key === 'email' ? undefined : 'https://.+', display: 'Edit link',
+            value: item.value, apply: value => api.updateBookingContact(key, value),
+          });
+        }
+      }
+      inlineBiography.attach(doc);
+      for (const lang of ['en', 'th']) {
+        inlineBiography.attachText(doc.querySelector(`footer [data-footer-description][lang="${lang}"]`), {
+          lang, label: 'footer description', apply: value => api.updateFooterText('description', lang, value),
+        });
+        for (const [key, field] of Object.entries(FOOTER_TEXT_FIELDS)) {
+          inlineBiography.attachText(doc.querySelector(`footer [data-footer-text="${key}"] > [lang="${lang}"]`), {
+            lang, label: field.label, apply: value => api.updateFooterText(key, lang, value),
+          });
+        }
+      }
+      const footerEmail = doc.querySelector('footer [data-footer-link="email"]');
+      inlineBiography.attachText(footerEmail, {
+        lang: 'en', label: 'footer email', apply: value => api.updateFooterLink('email', value),
+      });
+      for (const key of ['email', 'instagram', 'agency']) {
+        const link = doc.querySelector(`footer [data-footer-link="${key}"]`);
+        if (!link) continue;
+        let row = link.parentElement;
+        if (!row.classList.contains('inline-footer-row')) {
+          row = doc.createElement('div'); row.className = 'inline-footer-row';
+          link.before(row); row.append(link);
+        }
+        let control = row.querySelector('.inline-footer-link');
+        if (!control) {
+          control = doc.createElement('div'); control.className = 'inline-footer-link';
+          control.setAttribute('role', 'button'); control.textContent = 'Edit link'; row.append(control);
+        }
+        control.hidden = link.hidden;
+        inlineBiography.attachText(control, {
+          lang: 'en', label: `footer ${key} link`, input: true,
+          inputType: key === 'email' ? 'email' : 'url', inputLabel: `Footer ${key} destination`,
+          pattern: key === 'email' ? undefined : 'https?://.+', display: 'Edit link',
+          value: footerLinkValue(api.content, key), apply: value => api.updateFooterLink(key, value),
+        });
+      }
       if(pendingAnchor){doc.querySelector(pendingAnchor)?.scrollIntoView({block:'start',behavior:'instant'});pendingAnchor='';}
     }
   } catch(error){notify(`Preview could not update: ${error.message}`);}
-  finally{updating=false;if(updateAgain){updateAgain=false;refresh();}}
+  finally {
+    updating=false;
+    if(updateAgain){updateAgain=false;await refresh();}
+    const waiting=refreshWaiters;refreshWaiters=[];waiting.forEach(resolve=>resolve());
+  }
 }
 function connect() {
   const bridge=controls.contentWindow.visualStudio;if(!bridge)return;
@@ -446,6 +674,7 @@ frame.addEventListener('load',()=>{
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
   quietStyle.textContent='.visual-section-toolbar{display:none;position:relative;z-index:30;width:100%;flex:0 0 100%;grid-column:1/-1;margin:0 0 16px;padding-right:32px;justify-content:flex-end;gap:8px}.visual-edit .visual-section-toolbar{display:flex}.visual-section-toolbar>.visual-chip{position:static;box-shadow:none;padding:9px 12px;font-size:12px!important}.visual-opening-toolbar{position:absolute;top:calc(var(--visual-header-height,68px) + 16px);right:32px;width:auto;margin:0;padding-right:0}.visual-edit .chapter-heading,.visual-edit #highlights .home-section-heading,.visual-edit .motion-heading,.visual-edit .digitals-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 20px}.visual-edit .visual-photo-chip,.visual-edit .visual-drag-chip{opacity:0;pointer-events:none;transition:opacity .15s}.visual-edit .visual-tool-visible,.visual-edit .visual-photo-chip:focus-visible,.visual-edit .visual-drag-chip:focus-visible{opacity:1;pointer-events:auto}.visual-selectable-photo:focus-visible{outline:2px solid #916a40;outline-offset:3px}@media(max-width:600px){.visual-opening-toolbar{right:24px;padding-right:0}.visual-section-toolbar{margin-bottom:12px;padding-right:24px}.visual-edit .visual-section-heading{padding-right:24px}}';
+  quietStyle.textContent += '.visual-edit .tour-highlight.visual-photo-chip,.visual-edit .tour-highlight.visual-drag-chip{opacity:1;pointer-events:auto}';
   doc.head.append(quietStyle);
   const alignmentStyle=doc.createElement('style');
   alignmentStyle.textContent='.visual-section-button{transform:translateX(var(--visual-section-offset,0px));flex-shrink:0}.visual-section-toolbar{flex-shrink:0}.visual-edit .portrait-intro>.visual-section-toolbar{display:flex;align-items:center;min-height:44px}';
@@ -469,6 +698,7 @@ frame.addEventListener('load',()=>{
       return;
     }
     const link=event.target.closest('a');if(!link)return;
+    if(editing && event.target.closest('.inline-biography')) { event.preventDefault(); return; }
     const url=new URL(link.href,location.href);
     if(url.origin===location.origin&&/\/(index|about|booking)\.html$|\/$/.test(url.pathname)){
       const next=url.pathname.includes('about')?'about':url.pathname.includes('booking')?'booking':'home';
@@ -479,7 +709,7 @@ frame.addEventListener('load',()=>{
     }
   },true);
   doc.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
-  fit();refresh();
+  fit();refresh().then(()=>studioTour.previewLoaded(doc));
 });
 $('add-files').onchange=async()=>{
   const files=Array.from($('add-files').files);if(!files.length)return;
@@ -575,5 +805,5 @@ window.addEventListener('resize',fit);
 window.visualViewport?.addEventListener('resize',fit);
 window.addEventListener('beforeunload',event=>{if(api?.dirty||inlineBiography.dirty){event.preventDefault();event.returnValue='';}});
 document.body.classList.add('signed-out');
-controls.src=localTrial?'./?visual-local=1&v=controls-33':'./?visual-connected=1&v=controls-33';
+controls.src=localTrial?'./?visual-local=1&v=controls-35':'./?visual-connected=1&v=controls-35';
 updateSections();connect();fit();

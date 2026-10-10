@@ -1,11 +1,14 @@
+import { FOOTER_TEXT_FIELDS, applyFooterText } from '../portfolio-footer-text.js?v=2';
+import { HOME_TEXT_FIELDS, applyHomeText } from '../portfolio-home-text.js?v=8';
 import {
   portfolioBackendReady as configuredBackendReady, hasOwnerSession, signIn, signOut, getOwnedPortfolio,
   getDraft, saveOwnerDraft, publishOwnerDraft, getPublishedPortfolio, uploadOwnerImage, uploadOwnerVideo, ownerVideoFormat,
 } from '../portfolio-backend.js?v=4';
+import { ABOUT_TEXT_FIELDS, applyAboutText } from '../portfolio-about-text.js?v=1';
 import { renderPortfolioChapters } from '../portfolio-layout.js?v=1';
-import { renderBiography } from '../portfolio-biography.js?v=1';
+import { renderBiography, renderClosingInvitation } from '../portfolio-biography.js?v=2';
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
-import { applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=3';
+import { BOOKING_TEXT_FIELDS, applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=4';
 import { IMAGE_ACCEPT, HEIC_ACCEPT, validateImage, prepareImage } from './image-upload.js?v=1';
 
 // The visual workspace shares the editor; the local trial keeps separate storage.
@@ -60,6 +63,7 @@ let hiddenPhotosOpen = false;
 let editHistory = [];
 let historyPosition = 0;
 let historyGroup = null;
+let tourPractice = null;
 const objectUrls = new Map();
 const previewSizes = {
   desktop: { width: 1440, height: 900 },
@@ -594,10 +598,6 @@ function renderPortfolio() {
   for (const chapter of draft.home.portfolioChapters) {
     const block = group(chapter.title.en, `${chapter.photos.length} photos · Drag or use the arrows to reorder.`);
     block.classList.add('chapter-edit');
-    const titleDetails = element('details', 'chapter-details');
-    titleDetails.append(element('summary', '', 'Edit chapter name'));
-    bilingual(titleDetails, 'Chapter title', chapter.title);
-    block.append(titleDetails);
     const grid = element('div', 'chapter-grid');
     chapter.photos.forEach((id, index) => {
       const photo = photoMap.get(id);
@@ -831,8 +831,8 @@ function renderBooking() {
     const contact = group('Contact options', 'Choose how clients can reach you.');
     for (const [name, item] of Object.entries(draft.booking.contact)) {
       const block = element('div', 'field-group');
-      textField(block, name[0].toUpperCase() + name.slice(1), item.value, next => { item.value = next; });
-      checkbox(block, `Show ${name} publicly`, item.visible, next => { item.visible = next; });
+      if (!visualMode || item.visible === false) textField(block, name[0].toUpperCase() + name.slice(1), item.value, next => { item.value = next; });
+      checkbox(block, `Show ${name} publicly`, item.visible, next => { item.visible = next; if (visualMode) renderSection(); });
       contact.append(block);
   }
   }
@@ -967,9 +967,11 @@ function renderVisualText() {
     for(const name of measurementOrder) {
       const item=draft.identity.measurements[name];if(!item)continue;
       const label=measurementNames[name]||name;
-      if(typeof item.value==='object')words(label,item.value,false);
-      else textField(content,label,item.value,next=>{item.value=next;});
-      checkbox(content,`Show ${label.toLowerCase()}`,item.visible,next=>{item.visible=next;});
+      if (item.visible === false) {
+        if(typeof item.value==='object')words(label,item.value,false);
+        else textField(content,label,item.value,next=>{item.value=next;});
+      }
+      checkbox(content,`Show ${label.toLowerCase()}`,item.visible,next=>{item.visible=next;renderSection();});
     }
   } else if(activeSection==='home' && key==='Introduction') {
     words('Statement',draft.home.manifesto.lead);words('Introduction',draft.home.manifesto.body);
@@ -984,10 +986,12 @@ function renderVisualText() {
     });
     content.append(smallButton('Add paragraph',()=>{draft.about.biography.push({en:'',th:''});markChanged();renderSection();}));
   } else if(activeSection==='about' && key==='Agency details') {
-    textField(content,'Agency name',draft.about.agency.name,next=>{draft.about.agency.name=next;});
-    words('Agency description',draft.about.agency.description);
-    textField(content,'Agency link',draft.about.agency.url,next=>{draft.about.agency.url=next;});
-    checkbox(content,'Show agency',draft.about.agency.visible,next=>{draft.about.agency.visible=next;});
+    if (draft.about.agency.visible === false) {
+      textField(content,'Agency name',draft.about.agency.name,next=>{draft.about.agency.name=next;});
+      words('Agency description',draft.about.agency.description);
+      textField(content,'Agency link',draft.about.agency.url,next=>{draft.about.agency.url=next;});
+    }
+    checkbox(content,'Show agency',draft.about.agency.visible,next=>{draft.about.agency.visible=next;renderSection();});
   } else if(activeSection==='about' && key==='Closing invitation') words('Invitation',draft.about.closing);
   else if(activeSection==='booking' && key==='Booking page wording') {
     words('Headline',draft.booking.headline);
@@ -1143,7 +1147,6 @@ function renderVisualGallery() {
     });
     if(!hidden.length)details.append(element('p','group-note','No hidden photos.'));
     details.append(hiddenGrid);content.append(details);
-    const titles=element('details','visual-gallery-hidden');titles.append(element('summary','','Edit section name'));bilingual(titles,'Section name',chapter.title);content.append(titles);
   }
   editor.append(content);
 }
@@ -1278,6 +1281,7 @@ async function setImage(img, source, alt) {
   if (alt) img.alt = alt;
 }
 async function applyHomePreview(doc, content) {
+  applyHomeText(doc, content.home);
   const hero = doc.querySelector('.home-hero .hero-bg');
   if (hero) hero.style.backgroundImage = `url("${await imageFromSource(content.home.heroImage)}")`;
   const nameParts = content.identity.name.en.trim().split(/\s+/);
@@ -1355,13 +1359,16 @@ async function applyHomePreview(doc, content) {
   applyFooterPreview(doc, content);
 }
 async function applyAboutPreview(doc, content) {
+  applyAboutText(doc, content.about);
   const nameHeading = doc.querySelector('.about-opening h1');
   for (const lang of ['en', 'th']) {
     const part = nameHeading?.querySelector(`[lang="${lang}"]`);
     if (!part) continue;
     const words = content.identity.name[lang].trim().split(/\s+/);
     const firstText = [...part.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
-    if (firstText) firstText.textContent = words[0] || '';
+    const inlineFirst = part.querySelector('.inline-name-first');
+    if (inlineFirst) inlineFirst.textContent = words[0] || '';
+    else if (firstText) firstText.textContent = words[0] || '';
     const surname = part.querySelector('em');
     if (surname) surname.textContent = words.slice(1).join(' ');
   }
@@ -1388,8 +1395,14 @@ async function applyAboutPreview(doc, content) {
     agencyName.replaceChildren(first || '', doc.createElement('br'), rest.join(' ') + (rest.length ? '.' : ''));
   }
   const agencyLink = doc.querySelector('.practice-copy a');
-  if (agencyLink) agencyLink.href = content.about.agency.url;
-  setEditorialLang(doc, '.about-closing .closing-statement', content.about.closing);
+  if (agencyLink) {
+    agencyLink.href = content.about.agency.url;
+    for (const lang of ['en', 'th']) {
+      const label = agencyLink.querySelector(`[lang="${lang}"]`);
+      if (label) label.textContent = content.about.agency.linkLabel?.[lang] ?? seed.about.agency.linkLabel[lang];
+    }
+  }
+  renderClosingInvitation(doc, content.about.closing);
   const logos = doc.querySelectorAll('.about-client-logos img');
   for (let i = 0; i < logos.length; i++) {
     const client = content.home.selectedClients[i];
@@ -1404,18 +1417,7 @@ function applyBookingPreview(doc, content) {
   applyFooterPreview(doc, content);
 }
 function applyFooterPreview(doc, content) {
-  const footer = doc.querySelector('footer');
-  if (!footer) return;
-  for (const lang of ['en', 'th']) {
-    const p = footer.querySelector(`.footer-column p[lang="${lang}"]:not(.footer-label)`);
-    if (p) p.textContent = content.footer.description[lang];
-  }
-  const email = footer.querySelector('a[href^="mailto:"]');
-  if (email) {
-    email.href = `mailto:${content.booking.contact.email.value}`;
-    email.textContent = content.booking.contact.email.value;
-    email.hidden = content.booking.contact.email.visible === false;
-  }
+  applyFooterText(doc, content);
 }
 async function applyPreview() {
   const doc = frame.contentDocument;
@@ -1447,6 +1449,7 @@ function scrollPreviewToSection() {
   previewWindow.scrollTo(0, target.getBoundingClientRect().top + previewWindow.scrollY - 64);
 }
 async function saveDraft() {
+  if (tourPractice) return false;
   if (saveInProgress) return false;
   if (!normalizeCalLink(draft.booking?.calLink)) {
     setSaveStatus('error', 'Could not save · enter a valid Cal.com event link');
@@ -1489,6 +1492,7 @@ function openPublishDialog() {
   dialog.showModal();
 }
 async function simulatePublish() {
+  if (tourPractice) return false;
   if (saveInProgress || publishInProgress) return;
   const button = document.querySelector('#publishButton');
   const saveButton = document.querySelector('#saveButton');
@@ -1720,7 +1724,27 @@ function exposeVisualStudio() {
       get opening(){return openingStudio;},
       get connected(){return portfolioBackendReady;},
       get backendConfigured(){return configuredBackendReady;},
-      get canSave(){return !!draft;},
+      get canSave(){return !!draft && !tourPractice;},
+      beginTourPractice() {
+        if (tourPractice || !draft || saveInProgress || publishInProgress) return false;
+        tourPractice = { draft: snapshot(draft), history: [...editHistory], position: historyPosition, group: historyGroup };
+        return true;
+      },
+      resetTourPractice() {
+        if (!tourPractice) return;
+        clearTimeout(previewTimer);
+        draft = JSON.parse(tourPractice.draft);
+        editHistory = [...tourPractice.history]; historyPosition = tourPractice.position; historyGroup = tourPractice.group;
+        renderSection(); updateHistoryButtons(); updateSaveStatus();
+        parent.dispatchEvent(new Event('visual-studio-change'));
+      },
+      endTourPractice(keep = false) {
+        if (!tourPractice) return;
+        if (!keep) this.resetTourPractice();
+        tourPractice = null;
+        updateHistoryButtons(); updateSaveStatus();
+        parent.dispatchEvent(new Event('visual-studio-change'));
+      },
       get needsPublish(){return !!draft&&snapshot(draft)!==publishedSnapshot;},
       async signIn(email,password){
         await signIn(email,password);
@@ -1741,6 +1765,118 @@ function exposeVisualStudio() {
       updateBiography(index, lang, value) {
         if (!draft?.about.biography[index] || !['en', 'th'].includes(lang)) return;
         draft.about.biography[index][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateIdentityText(key, lang, value) {
+        if (!draft || !['role', 'tagline', 'location'].includes(key) || !['en', 'th'].includes(lang)) return;
+        draft.identity[key][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateChapterTitle(id, lang, value) {
+        if (!draft || !['en', 'th'].includes(lang)) return;
+        const chapter = draft.home.portfolioChapters.find(item => item.id === id);
+        if (!chapter) return;
+        chapter.title[lang] = value;
+        markChanged(); renderSection();
+      },
+      updateMeasurement(key, lang, value) {
+        if (!draft || !measurementOrder.includes(key) || !['en', 'th'].includes(lang)) return;
+        const item = draft.identity.measurements[key];
+        if (typeof item.value === 'object') item.value[lang] = value;
+        else item.value = value;
+        markChanged(); renderSection();
+      },
+      updateSelectedWorkCaption(id, lang, value) {
+        if (!draft || !['en', 'th'].includes(lang)) return;
+        const photo = draft.home.selectedWork.find(item => item.id === id);
+        if (!photo) return;
+        photo.caption ||= { en: '', th: '' };
+        photo.caption[lang] = value;
+        markChanged(); renderSection();
+      },
+      updateHomeIntroduction(key, lang, value) {
+        if (!draft || !['lead', 'body'].includes(key) || !['en', 'th'].includes(lang)) return;
+        draft.home.manifesto[key][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateBookingText(key, lang, value) {
+        if (!draft || !['en', 'th'].includes(lang) || !['headline', 'intro', 'note', 'calendarIntro', 'contactIntro'].includes(key)) return;
+        draft.booking[key] ||= { en: '', th: '' };
+        draft.booking[key][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateBookingContact(key, value) {
+        if (!draft || !['email', 'line', 'whatsapp', 'instagram'].includes(key)) return;
+        value = value.trim();
+        if (key !== 'email' && value && !/^https:\/\//i.test(value)) return;
+        draft.booking.contact[key].value = value;
+        markChanged(); renderSection();
+      },
+      updateBookingLabel(key, lang, value) {
+        if (!draft || !BOOKING_TEXT_FIELDS[key] || !['en', 'th'].includes(lang)) return;
+        draft.booking.labels ||= {};
+        draft.booking.labels[key] ||= { ...BOOKING_TEXT_FIELDS[key].defaults };
+        draft.booking.labels[key][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateFooterText(key, lang, value) {
+        if (!draft || !['en', 'th'].includes(lang)) return;
+        draft.footer ||= {};
+        if (key === 'description') {
+          draft.footer.description ||= { en: '', th: '' };
+          draft.footer.description[lang] = value;
+        } else if (key === 'name') draft.identity.name[lang] = value;
+        else if (FOOTER_TEXT_FIELDS[key]) {
+          draft.footer.labels ||= {};
+          draft.footer.labels[key] ||= { ...FOOTER_TEXT_FIELDS[key].defaults };
+          draft.footer.labels[key][lang] = value;
+        } else return;
+        markChanged(); renderSection();
+      },
+      updateFooterLink(key, value) {
+        if (!draft || !['email', 'instagram', 'agency'].includes(key)) return;
+        value = value.trim();
+        if (key !== 'email' && value && !/^https?:\/\//i.test(value)) return;
+        if (key === 'email' || key === 'instagram') draft.booking.contact[key].value = value;
+        else if (key === 'agency') draft.about.agency.url = value;
+        markChanged(); renderSection();
+      },
+      updateHomeAvailability(lang, value) {
+        if (!draft || !['en', 'th'].includes(lang)) return;
+        draft.home.availabilityIntro ||= { en: '', th: '' };
+        draft.home.availabilityIntro[lang] = value;
+        markChanged(); renderSection();
+      },
+      updateHomeLabel(key, lang, value) {
+        if (!draft || !HOME_TEXT_FIELDS[key] || !['en', 'th'].includes(lang)) return;
+        draft.home.labels ||= {};
+        draft.home.labels[key] ||= { ...HOME_TEXT_FIELDS[key].defaults };
+        draft.home.labels[key][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateAboutLabel(key, lang, value) {
+        if (!draft || !ABOUT_TEXT_FIELDS[key] || !['en', 'th'].includes(lang)) return;
+        draft.about.labels ||= {};
+        draft.about.labels[key] ||= { ...ABOUT_TEXT_FIELDS[key].defaults };
+        draft.about.labels[key][lang] = value;
+        markChanged(); renderSection();
+      },
+      updateAboutText(kind, lang, value) {
+        if (!draft || !['en', 'th'].includes(lang)) return;
+        if (kind === 'agencyLinkLabel') {
+          draft.about.agency.linkLabel ||= { ...seed.about.agency.linkLabel };
+          draft.about.agency.linkLabel[lang] = value;
+        } else if (kind === 'agencyDescription') draft.about.agency.description[lang] = value;
+        else if (kind === 'agencyName') draft.about.agency.name = value.replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+        else if (kind === 'agencyUrl') draft.about.agency.url = value;
+        else if (kind === 'portraitCaption') draft.about.portrait.caption = value;
+        else if (kind === 'identityName') draft.identity.name[lang] = value;
+        else if (kind === 'closing') draft.about.closing[lang] = value;
+        else if (kind === 'intro') draft.about.intro[lang] = value;
+        else if (kind === 'firstName' || kind === 'surname') {
+          const [first = '', ...rest] = draft.identity.name[lang].trim().split(/\s+/);
+          draft.identity.name[lang] = (kind === 'firstName' ? `${value} ${rest.join(' ')}` : `${first} ${value}`).trim();
+        } else return;
         markChanged(); renderSection();
       },
       addBiography() {
