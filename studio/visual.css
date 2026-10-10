@@ -166,3 +166,44 @@ dialog#studio-tour.tour-preview-compact{display:grid;grid-template-columns:1fr a
   .tour-arrange .tour-footer{align-items:center}
   .tour-arrange #tour-next{padding:8px 10px;font-size:12px;background:transparent;border-color:transparent;color:#745638;text-decoration:underline;text-underline-offset:4px}
 }
+
+#mobile-tools,#mobile-tour-space{display:none}
+dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animation:none}
+@media(max-width:900px){
+  html{background:#faf8f4;min-height:100%;overflow:hidden}
+  body{min-height:100lvh;overflow:hidden;background:#faf8f4}
+  body::before{content:'';position:fixed;z-index:-1;pointer-events:none;left:0;right:0;top:-20lvh;height:140lvh;background:#faf8f4}
+  .toolbar,.tour-photo-practice .toolbar{display:flex;flex-wrap:nowrap;gap:4px;min-height:56px;padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));padding-top:calc(6px + env(safe-area-inset-top));position:relative;z-index:65}
+  .toolbar .identity{margin-right:auto;min-width:0}
+  .toolbar .identity strong{font-size:17px}
+  .toolbar #mobile-tools{display:block;flex:0 0 auto;font-size:12px;padding:8px;min-height:44px}
+  .toolbar .actions,.tour-photo-practice .toolbar .actions{display:flex;gap:0;flex-shrink:0}
+  .toolbar .actions #undo,.toolbar .actions #redo{width:44px;padding:10px}
+  .toolbar .actions #save{padding:8px;font-size:12px}
+  .toolbar .switches,.guide{display:none}
+  .mobile-tools-open .toolbar .switches{display:flex;position:fixed;top:var(--studio-toolbar-bottom,56px);left:0;right:0;width:100%;padding:8px 12px;background:#faf8f4;z-index:64;border-bottom:1px solid #d8d1c6}
+  .mobile-tools-open .guide{display:flex;position:fixed;top:calc(var(--studio-toolbar-bottom,56px) + 60px);left:0;right:0;z-index:64;padding:8px 12px 14px;background:#faf8f4;box-shadow:0 12px 20px #30291f18}
+  .tour-running .identity #sign-out{display:none}
+  .mobile-tools-open #studio-tour{visibility:hidden;pointer-events:none}
+  #mobile-tour-space{display:block;height:var(--mobile-tour-space,0px);background:#faf8f4}
+  dialog#studio-tour.tour-experience{width:calc(100vw - 24px);max-width:calc(100vw - 24px);max-height:var(--tour-max-height,260px);padding:12px 16px;animation:none;box-shadow:none;border-radius:8px;overscroll-behavior:contain}
+  .tour-experience .tour-heading{min-height:32px}
+  .tour-experience #tour-title{font-size:22px;margin:4px 0 8px}
+  .tour-experience #tour-copy{font-size:13px;line-height:1.5;margin-bottom:8px}
+  .tour-experience #tour-skip{min-height:32px}
+  dialog#studio-tour.tour-arrange{position:fixed;padding-top:12px}
+  .tour-arrange .tour-heading{position:absolute;top:4px;right:12px;min-height:40px}
+  .tour-arrange #tour-progress{display:none}
+  .tour-arrange #tour-skip{min-height:40px}
+  .tour-arrange #tour-title{padding-right:100px;font-size:20px;min-height:36px;margin:0 0 4px}
+  .tour-arrange #tour-copy{font-size:13px}
+  dialog#studio-tour.tour-voice-active{width:calc(100vw - 24px);padding:10px 14px}
+  .tour-voice-active .tour-heading,.tour-voice-active #tour-title{display:none}
+  .tour-voice-active #tour-copy{margin:0}
+  dialog#studio-tour.tour-drag-active{opacity:0;pointer-events:none}
+  .tour-handle-outline{animation:none}
+  dialog#studio-tour.tour-preview-compact{width:calc(100vw - 24px);padding:8px 14px}
+  .tour-preview-compact .tour-heading{grid-column:1/-1;justify-content:flex-end;min-height:28px}
+  .tour-preview-compact #tour-title,.tour-preview-compact #tour-copy{display:none}
+  #notice{bottom:max(16px,env(safe-area-inset-bottom));font-size:12px}
+}

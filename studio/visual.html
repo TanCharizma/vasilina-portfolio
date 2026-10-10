@@ -3,21 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#faf8f4">
   <meta name="robots" content="noindex,nofollow">
   <title>Visual Studio · Folio Lab</title>
-  <link rel="stylesheet" href="visual.css?v=41">
-  <script src="visual.js?v=97" type="module"></script>
+  <link rel="stylesheet" href="visual.css?v=44">
+  <script src="visual.js?v=101" type="module"></script>
 </head>
 <body>
   <header class="toolbar">
     <div class="identity"><strong><span class="brand-name">Folio Lab </span><em>Studio</em></strong><button id="sign-out" hidden>Sign out</button></div>
-    <div class="switches">
+    <button id="mobile-tools" type="button" aria-expanded="false" aria-controls="studio-options studio-navigation">Tools</button>
+    <div class="switches" id="studio-options">
       <div class="segment" aria-label="Editing mode"><button id="edit" aria-pressed="true">Edit</button><button id="view" aria-pressed="false">Preview</button></div>
       <div class="segment" aria-label="Preview size"><button id="desktop" aria-pressed="true">Desktop</button><button id="mobile" aria-pressed="false">Mobile</button></div>
     </div>
     <div class="actions"><span id="status" role="status">Opening Studio…</span><button id="undo" aria-label="Undo" title="Undo" disabled><svg class="history-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h9a6 6 0 0 1 6 6"/></svg><span class="history-label">Undo</span></button><button id="redo" aria-label="Redo" title="Redo" disabled><svg class="history-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5m5-5h-9a6 6 0 0 0-6 6"/></svg><span class="history-label">Redo</span></button><button id="save" disabled>Save draft</button><button id="publish" class="trial-publish" disabled>Publish</button></div>
   </header>
-  <div class="guide">
+  <div class="guide" id="studio-navigation">
     <div class="guide-info"><span><span id="workspace-mode">Connecting…</span><span class="desktop-instruction"> · Tap text or a photo to edit</span> <span id="mobile-status" role="status"></span></span><details class="studio-help" id="studio-help"><summary>Help</summary><div><button id="show-tour" type="button">Show Studio tour</button></div></details></div>
     <div class="navigation">
       <label>Page <select id="page"><option value="home">Home</option><option value="about">About</option><option value="booking">Booking</option></select></label>
@@ -38,6 +40,7 @@
       <a href="?local=1">Open the browser trial ↗</a>
     </div>
   </section>
+  <div id="mobile-tour-space" aria-hidden="true"></div>
   <main id="workspace" hidden><div id="viewport"><iframe id="website" title="Your portfolio — visual editor"></iframe></div></main>
   <dialog id="editor" aria-labelledby="editor-title">
     <div class="editor-heading"><button id="editor-back" aria-label="Back to section" hidden>← Back</button><span id="editor-title">Edit your website</span><button id="close" aria-label="Close editor">×</button></div>

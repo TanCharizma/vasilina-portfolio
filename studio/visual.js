@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=24';
+import { createStudioTour } from './visual-tour.js?v=26';
 import { createInlineBiography } from './inline-biography.js?v=25';
 
 const $ = id => document.getElementById(id);
@@ -32,6 +32,7 @@ const inlineBiography = createInlineBiography({
 const studioTour = createStudioTour({
   ready:()=>Boolean(api?.ready) && api.status.state !== 'busy',
   beforeStart:async()=>{
+    setMobileTools(false);
     inlineBiography.finish(true); dialog.close();
     if (!api.beginTourPractice()) return false;
     tourView = { page, device, editing, section: $('section').value, scroll: frame.contentWindow.scrollY };
@@ -43,6 +44,8 @@ const studioTour = createStudioTour({
   prepareStep:async phase=>{
     inlineBiography.finish(false); dialog.close();
     document.body.classList.toggle('tour-photo-practice',phase==='arrange');
+    $('mobile-tools').disabled=phase!=='preview';
+    $('edit').disabled=true;$('view').disabled=true;
     fit();
     editing=phase==='arrange'||phase==='voice';
     $('edit').setAttribute('aria-pressed',String(editing));$('view').setAttribute('aria-pressed',String(!editing));
@@ -52,7 +55,7 @@ const studioTour = createStudioTour({
     const doc=frame.contentDocument;
     if (phase === 'welcome' || phase === 'preview') {
       frame.contentWindow.scrollTo(0,0);
-      return { doc, buttons:phase==='preview'?[$('desktop'),$('mobile')]:[], page:phase==='preview'?$('page'):null };
+      return { doc, buttons:phase==='preview'?[$('desktop'),$('mobile')]:[], page:phase==='preview'?$('page'):null, tools:phase==='preview'?$('mobile-tools'):null };
     }
     if (phase === 'share') return { doc, buttons:[$('save'),$('publish')].filter(button=>button.getClientRects().length) };
     if (phase === 'voice') {
@@ -71,6 +74,12 @@ const studioTour = createStudioTour({
   },
   photoOrder:()=>api.content.home.selectedWork.map(photo=>photo.id).join('|'),
   hasUnsavedChanges:()=>Boolean(api?.dirty||inlineBiography.dirty),
+  mobileGuideSpace:height=>{
+    const value=`${height}px`;
+    if(document.body.style.getPropertyValue('--mobile-tour-space')!==value) {
+      document.body.style.setProperty('--mobile-tour-space',value);fit();
+    }
+  },
   switchPhotos:async()=>{
     const photos=api.content.home.selectedWork;
     if(photos.length<2)return;
@@ -79,7 +88,10 @@ const studioTour = createStudioTour({
   },
   restorePractice:async()=>{api.resetTourPractice();await refresh();},
   finishPractice:async keep=>{
+    setMobileTools(false);
     document.body.classList.remove('tour-photo-practice');
+    $('mobile-tools').disabled=false;
+    $('edit').disabled=false;$('view').disabled=false;
     inlineBiography.finish(false); api?.endTourPractice(keep);
     if (!tourView) return;
     const previous=tourView; tourView=null;
@@ -120,13 +132,21 @@ function fit() {
   dialog.style.setProperty('--editor-height',`${window.visualViewport?.height||innerHeight}px`);
   dialog.style.setProperty('--editor-top',`${window.visualViewport?.offsetTop||0}px`);
   const workspace=$('workspace');
-  workspace.style.height=`${Math.max(180,innerHeight-workspace.getBoundingClientRect().top)}px`;
+  document.body.style.setProperty('--studio-toolbar-bottom',`${document.querySelector('.toolbar').getBoundingClientRect().bottom}px`);
+  const visibleBottom=window.visualViewport?window.visualViewport.offsetTop+window.visualViewport.height:innerHeight;
+  const mobileHost=matchMedia('(max-width:900px)').matches;
+  const fullHeight=mobileHost?Math.max(innerHeight,parseFloat(getComputedStyle(document.body).minHeight)||0):innerHeight;
+  const keyboardOpen=document.body.classList.contains('inline-editing')&&fullHeight-(window.visualViewport?.height||innerHeight)>120;
+  const workspaceBottom=keyboardOpen?visibleBottom:fullHeight;
+  const workspaceHeight=Math.max(120,workspaceBottom-workspace.getBoundingClientRect().top);
+  workspace.style.height=`${workspaceHeight}px`;
   const width=device==='mobile'?390:Math.max(1280,workspace.clientWidth);
   const scale=Math.min(1,workspace.clientWidth/width);
   frame.style.width=`${width}px`;frame.style.height=`${workspace.clientHeight/scale}px`;frame.style.transform=`scale(${scale})`;
   $('viewport').style.width=`${width*scale}px`;$('viewport').style.height=`${workspace.clientHeight}px`;
   for(const name of ['desktop','mobile'])$(name).setAttribute('aria-pressed',String(device===name));
   const doc=frame.contentDocument;
+  doc?.documentElement.style.setProperty('--studio-viewport-bleed',`${Math.max(0,workspaceBottom-visibleBottom)/scale}px`);
   const nav=doc?.querySelector('nav');
   if(nav)doc.documentElement.style.setProperty('--visual-header-height',`${nav.offsetHeight}px`);
   positionPhotoLabels();
@@ -135,6 +155,11 @@ function fit() {
     if(popupSize){dialog.style.width=`${Math.min(popupSize.width,innerWidth-16)}px`;dialog.style.height=`${Math.min(popupSize.height,innerHeight-16)}px`;}
     if(popupPosition)placePopup(popupPosition.x,popupPosition.y);
   }
+}
+function setMobileTools(open) {
+  document.body.classList.toggle('mobile-tools-open',open);
+  $('mobile-tools').setAttribute('aria-expanded',String(open));
+  fit();
 }
 function positionPhotoLabels() {
   const doc=frame.contentDocument;
@@ -671,6 +696,7 @@ frame.addEventListener('load',()=>{
   doc.head.append(style);
   const previewStyle=doc.createElement('style');
   previewStyle.textContent='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
+  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}';
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
   quietStyle.textContent='.visual-section-toolbar{display:none;position:relative;z-index:30;width:100%;flex:0 0 100%;grid-column:1/-1;margin:0 0 16px;padding-right:32px;justify-content:flex-end;gap:8px}.visual-edit .visual-section-toolbar{display:flex}.visual-section-toolbar>.visual-chip{position:static;box-shadow:none;padding:9px 12px;font-size:12px!important}.visual-opening-toolbar{position:absolute;top:calc(var(--visual-header-height,68px) + 16px);right:32px;width:auto;margin:0;padding-right:0}.visual-edit .chapter-heading,.visual-edit #highlights .home-section-heading,.visual-edit .motion-heading,.visual-edit .digitals-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 20px}.visual-edit .visual-photo-chip,.visual-edit .visual-drag-chip{opacity:0;pointer-events:none;transition:opacity .15s}.visual-edit .visual-tool-visible,.visual-edit .visual-photo-chip:focus-visible,.visual-edit .visual-drag-chip:focus-visible{opacity:1;pointer-events:auto}.visual-selectable-photo:focus-visible{outline:2px solid #916a40;outline-offset:3px}@media(max-width:600px){.visual-opening-toolbar{right:24px;padding-right:0}.visual-section-toolbar{margin-bottom:12px;padding-right:24px}.visual-edit .visual-section-heading{padding-right:24px}}';
@@ -685,6 +711,7 @@ frame.addEventListener('load',()=>{
     const photo=event.target.closest('.visual-selectable-photo,.video-item[data-drag-group]');
     revealPhotoTools(tool?.photoElement||photo);
   });
+  doc.addEventListener('pointerdown',()=>{if(document.body.classList.contains('mobile-tools-open'))setMobileTools(false);});
   doc.addEventListener('click',event=>{
     const add=event.target.closest('[data-add-target]'),target=event.target.closest('[data-visual-section]');
     if(editing&&target?.classList.contains('visual-selectable-photo')){
@@ -730,9 +757,10 @@ $('publish').onclick=async()=>{
 $('undo').onclick=()=>{inlineBiography.finish(true);api?.undo();};$('redo').onclick=()=>{inlineBiography.finish(true);api?.redo();};
 $('editor-undo').onclick=()=>api?.undo();$('editor-redo').onclick=()=>api?.redo();
 $('editor-done').onclick=()=>dialog.close();
-$('page').onchange=()=>{dialog.close();loadPage($('page').value);};
+$('page').onchange=()=>{setMobileTools(false);dialog.close();loadPage($('page').value);};
 $('section').onchange=()=>{
   const entry=pageSections[page].find(entry=>entry[0]===$('section').value);if(!entry)return;
+  setMobileTools(false);
   const [, ,section,target,anchor]=entry;
   frame.contentDocument?.querySelector(anchor||sectionAnchor[section])?.scrollIntoView({block:'start'});
   openEditor(section,target);
@@ -793,12 +821,17 @@ dialog.addEventListener('close',()=>{
   $('section').value='';
 });
 document.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
-for(const name of ['desktop','mobile'])$(name).onclick=()=>{device=name;fit();};
+$('mobile-tools').onclick=()=>setMobileTools(!document.body.classList.contains('mobile-tools-open'));
+document.addEventListener('click',event=>{
+  if(document.body.classList.contains('mobile-tools-open')&&!event.target.closest('.toolbar,.guide'))setMobileTools(false);
+});
+for(const name of ['desktop','mobile'])$(name).onclick=()=>{device=name;setMobileTools(false);fit();};
 for(const mode of ['edit','view'])$(mode).onclick=()=>{
   inlineBiography.finish(true);
   editing=mode==='edit';$('edit').setAttribute('aria-pressed',String(editing));$('view').setAttribute('aria-pressed',String(!editing));
   $('section').disabled=!editing;frame.contentDocument?.documentElement.classList.toggle('visual-edit',editing);
   if(!editing)dialog.close();
+  setMobileTools(false);
   fit();
 };
 window.addEventListener('resize',fit);
