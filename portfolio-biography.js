@@ -32,3 +32,26 @@ export function renderBiography(doc, paragraphs = []) {
     doc.head.append(style);
   }
 }
+
+// Keep the invitation's two-line treatment when its wording is edited.
+export function renderClosingInvitation(doc, value = {}) {
+  for (const lang of ['en', 'th']) {
+    const node = doc.querySelector(`.about-closing .closing-statement > [lang="${lang}"]`);
+    if (!node) continue;
+    const text = value[lang] || '';
+    let lines = text.split(/\r?\n/);
+    if (lines.length === 1 && lang === 'en') {
+      const split = text.lastIndexOf(' ');
+      if (split > 0) lines = [text.slice(0, split), text.slice(split + 1)];
+    } else if (lines.length === 1 && text === 'มาร่วมงานกันนะคะ') {
+      lines = ['มาร่วมงาน', 'กันนะคะ'];
+    }
+    node.replaceChildren();
+    lines.forEach((line, index) => {
+      if (index) node.append(doc.createElement('br'));
+      if (index === lines.length - 1 && index > 0) {
+        const emphasis = doc.createElement('em'); emphasis.textContent = line; node.append(emphasis);
+      } else node.append(doc.createTextNode(line));
+    });
+  }
+}
