@@ -1,4 +1,4 @@
-export function createStudioTour({ ready, beforeStart, prepareStep, finishPractice, photoOrder, switchPhotos, restorePractice, hasUnsavedChanges, localTrial }) {
+export function createStudioTour({ ready, beforeStart, prepareStep, finishPractice, photoOrder, switchPhotos, restorePractice, hasUnsavedChanges, mobileGuideSpace, localTrial }) {
   const $ = id => document.getElementById(id), tour = $('studio-tour');
   const seenKey = `folio-lab-vasilina-tour-v2-${localTrial ? 'trial' : 'online'}`;
   const svgNS = 'http://www.w3.org/2000/svg', shade = document.createElementNS(svgNS, 'svg');
@@ -21,12 +21,17 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     if (!tour.open) return;
     const viewport = window.visualViewport, width=viewport?.width || innerWidth, height=viewport?.height || innerHeight;
     const top=viewport?.offsetTop || 0, left=viewport?.offsetLeft || 0, mobile=width<=900;
+    tour.style.setProperty('--tour-max-height',`${Math.max(80,Math.min(300,height*.4))}px`);
+    mobileGuideSpace(mobile?tour.offsetHeight+8:0);
     let x=mobile?16:width-tour.offsetWidth-48, y=height-tour.offsetHeight-24;
+    if(mobile) {
+      x=12;y=document.querySelector('.toolbar').getBoundingClientRect().bottom-top;
+    }
     if (phase==='arrange' && targets.handle && !mobile) {
       const box=boxFor(targets.handle); x=box.left+box.width+24-left; y=box.top+box.height/2-tour.offsetHeight/2-top;
     }
     const voiceAnchor=phase==='voice'?(document.body.classList.contains('inline-editing')?document.querySelector('.inline-edit-done'):targets.text):null;
-    if (voiceAnchor) {
+    if (voiceAnchor && !mobile) {
       const box=boxFor(voiceAnchor),gap=20;
       if(!mobile&&box.left+box.width+gap+tour.offsetWidth<=left+width-16) {
         x=box.left+box.width+gap-left;y=box.top+box.height/2-tour.offsetHeight/2-top;
@@ -38,10 +43,6 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     }
     if(phase==='share'&&targets.buttons?.length) {
       if(!mobile){y=boxFor(targets.buttons[0]).bottom-top+20;}
-      else {
-        const publish=targets.buttons.find(button=>button.id==='publish');
-        if(publish)y=boxFor(publish).top-top-tour.offsetHeight-20;
-      }
     }
     tour.style.left=`${left+Math.max(16,Math.min(x,width-tour.offsetWidth-16))}px`;
     tour.style.top=`${top+Math.max(16,Math.min(y,height-tour.offsetHeight-16))}px`;
@@ -58,7 +59,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       rect.classList.add(`tour-${kind}-outline`);outlines.append(rect);
     }
     const anchor=phase==='voice'?voiceAnchor:targets.handle;
-    if (anchor) {
+    if (anchor && !mobile) {
       const box=boxFor(anchor),card=tour.getBoundingClientRect(),pointer=document.createElementNS(svgNS,'line');
       const beside=card.left>=box.left+box.width;
       const above=card.bottom<=box.top;
@@ -87,16 +88,17 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     if(event.type==='keydown'&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();tour.close();return;}
     if(event.type==='keydown'&&event.key==='Tab') {
       const actions=phase==='voice'?[...document.querySelectorAll('.inline-edit-actions button')]:[];
-      const stops=[targets.handle,phase==='voice'?targets.text:null,...actions,...(phase==='preview'?[...(targets.buttons||[]),targets.page]:[]),$('tour-skip'),alternative,$('tour-back'),$('tour-next')].filter(node=>node&&!node.disabled&&node.getClientRects().length);
+      const stops=[targets.handle,phase==='voice'?targets.text:null,...actions,...(phase==='preview'?[...(targets.buttons||[]),targets.page,targets.tools]:[]),$('tour-skip'),alternative,$('tour-back'),$('tour-next')].filter(node=>node&&!node.disabled&&node.getClientRects().length);
       const current=stops.indexOf(event.target),direction=event.shiftKey?-1:1;
       const next=current<0?(event.shiftKey?stops.length-1:0):(current+direction+stops.length)%stops.length;
       event.preventDefault();event.stopImmediatePropagation();stops[next]?.focus({preventScroll:true});return;
     }
     if(tour.contains(event.target))return;
+    if(event.type==='pointerdown'&&event.target.ownerDocument===targets.doc)return;
     if(phase==='arrange' && (event.target===targets.handle || targets.handle?.contains(event.target)))return;
     if(phase==='voice'&&(targets.text?.contains(event.target)||event.target.closest?.('.inline-edit-actions')))return;
     if(phase==='preview') {
-      if(targets.buttons?.includes(event.target)||event.target===targets.page)return;
+      if(targets.buttons?.includes(event.target)||event.target===targets.page||event.target===targets.tools)return;
     }
     event.preventDefault();event.stopImmediatePropagation();
   }
@@ -112,7 +114,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
   }
   async function show(phaseName) {
     const token=++generation; clearStep();phase=phaseName;preparing=true;
-    tour.className=`tour-experience tour-${phase}`;
+    tour.className=`tour-experience tour-${phase} tour-preparing`;
     $('tour-progress').textContent=phase==='welcome'?'FOLIO LAB / YOUR STUDIO':phase==='arrange'?'MAKE IT YOURS':'YOUR POINT OF VIEW';
     $('tour-skip').textContent=phase==='welcome'?'I’ll explore myself':'Finish exploring';
     $('tour-back').hidden=phase!=='result';$('tour-back').textContent='Keep original order';
@@ -153,8 +155,10 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       }
       $('tour-next').textContent='Back to my Studio';
     }
-    targets=await prepareStep(phase);
+    position();
+    const preparedTargets=await prepareStep(phase);
     if(!running||token!==generation)return;
+    targets=preparedTargets;
     preparing=false;$('tour-next').disabled=false;
     if(phase==='arrange' && (!targets.handle||!targets.destination)) {
       $('tour-title').textContent='Your story starts here.';$('tour-copy').textContent='When you have two or more photos, you can drag them to choose which one leads.';
@@ -162,7 +166,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     }
     targets.handle?.classList.add('tour-highlight');
     if(phase==='arrange')targets.doc?.documentElement.classList.add('tour-arranging');
-    position();
+    tour.classList.remove('tour-preparing');position();
     for(const doc of [document,targets.doc])bindDocument(doc);
     if(phase==='arrange' && targets.handle) {
       const dragObserver=new MutationObserver(()=>tour.classList.toggle('tour-drag-active',targets.doc.documentElement.classList.contains('visual-dragging')));
@@ -172,6 +176,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     if(phase==='preview') {
       for(const button of targets.buttons||[])listen(button,'click',compactPreview);
       if(targets.page)listen(targets.page,'change',compactPreview);
+      if(targets.tools)listen(targets.tools,'click',compactPreview);
     }
     if(phase==='voice') {
       const updateVoiceGuide=()=>{
@@ -196,6 +201,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
   async function finish() {
     if(!running)return;
     running=false;generation++;clearStep();shade.setAttribute('hidden','');
+    document.body.classList.remove('tour-running');mobileGuideSpace(0);
     dismissed=true;try{localStorage.setItem(seenKey,'seen');}catch{}
     await finishPractice(keeping);keeping=false;
     const target=previousFocus?.isConnected&&previousFocus.getClientRects().length?previousFocus:$('studio-help').querySelector('summary');target?.focus();
@@ -203,7 +209,8 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
   async function start() {
     if(!ready()||running)return;
     running=true;keeping=false;previousFocus=document.activeElement;$('studio-help').open=false;
-    if(await beforeStart()===false){running=false;return;}
+    document.body.classList.add('tour-running');
+    if(await beforeStart()===false){running=false;document.body.classList.remove('tour-running');return;}
     originalOrder=photoOrder();tour.show();shade.removeAttribute('hidden');await show('welcome');
   }
   $('tour-title').tabIndex=-1;
