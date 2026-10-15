@@ -298,16 +298,18 @@ function enableDirectDrag(handle,image,group,id) {
     event.preventDefault();event.stopPropagation();pointer=event.pointerId;moved=false;
     doc.getSelection()?.removeAllRanges();
     startX=x=event.clientX;startY=y=event.clientY;handle.setPointerCapture(pointer);
-    const oldFrame=frame.getBoundingClientRect(),oldScale=oldFrame.width/frame.offsetWidth;
-    const screenX=oldFrame.left+x*oldScale,screenY=oldFrame.top+y*oldScale;
-    studioTour.dragging(true,handle);
-    const newFrame=frame.getBoundingClientRect(),newScale=newFrame.width/frame.offsetWidth;
-    startX=x=(screenX-newFrame.left)/newScale;startY=y=(screenY-newFrame.top)/newScale;
   });
   handle.addEventListener('pointermove',event=>{
     if(event.pointerId!==pointer)return;x=event.clientX;y=event.clientY;
     if(!moved&&Math.hypot(x-startX,y-startY)<6)return;
     if(!moved){
+      // Wait for a real drag before resizing the tour. A touch-and-hold alone
+      // should not move the iframe underneath the user's finger in Safari.
+      const oldFrame=frame.getBoundingClientRect(),oldScale=oldFrame.width/frame.offsetWidth;
+      const screenX=oldFrame.left+x*oldScale,screenY=oldFrame.top+y*oldScale;
+      studioTour.dragging(true,handle);
+      const newFrame=frame.getBoundingClientRect(),newScale=newFrame.width/frame.offsetWidth;
+      startX=x=(screenX-newFrame.left)/newScale;startY=y=(screenY-newFrame.top)/newScale;
       moved=true;const r=image.getBoundingClientRect();ghost=image.tagName==='IMG'?image.cloneNode():doc.createElement('div');
       if(image.tagName!=='IMG')ghost.textContent='Moving video';
       for(const attribute of ['data-visual-section','data-drag-group','data-drag-id','data-visual-photo-id'])ghost.removeAttribute(attribute);
