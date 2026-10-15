@@ -22,7 +22,8 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     const viewport = window.visualViewport, width=viewport?.width || innerWidth, height=viewport?.height || innerHeight;
     const top=viewport?.offsetTop || 0, left=viewport?.offsetLeft || 0, mobile=width<=900;
     tour.style.setProperty('--tour-max-height',`${Math.max(80,Math.min(300,height*.4))}px`);
-    mobileGuideSpace(mobile?tour.offsetHeight+8:0);
+    // Photo practice overlays the canvas so hiding its guide never resizes it.
+    mobileGuideSpace(mobile&&phase!=='arrange'?tour.offsetHeight+8:0);
     let x=mobile?16:width-tour.offsetWidth-48, y=height-tour.offsetHeight-24;
     if(mobile) {
       x=12;y=Math.max(document.querySelector('.toolbar').getBoundingClientRect().bottom,parseFloat(getComputedStyle(document.body).paddingTop)||0)-top;
@@ -255,15 +256,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     dragging(active,handle) {
       if(!running||phase!=='arrange'||handle!==targets.handle||!matchMedia('(max-width:900px)').matches)return;
       if(tour.classList.contains('tour-drag-active')===active)return;
-      const image=targets.source,win=image?.ownerDocument.defaultView;
-      const before=image?boxFor(image).top:null;
       tour.classList.toggle('tour-drag-active',active);
-      position();
-      // The frame grows upward; compensate its scroll to keep the photo under the finger.
-      if(image&&before!==null) {
-        const scale=win.frameElement.getBoundingClientRect().width/win.frameElement.offsetWidth;
-        win.scrollBy(0,(boxFor(image).top-before)/scale);
-      }
       position();
     },
     maybeStart(){let seen=dismissed;try{seen ||= localStorage.getItem(seenKey)==='seen';}catch{}if(!seen)start();},
