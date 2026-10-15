@@ -108,8 +108,10 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
     if (!doc.querySelector('#inline-biography-style')) {
       const style = doc.createElement('style'); style.id = 'inline-biography-style';
       style.textContent = `
-        .visual-edit .inline-biography{position:relative;cursor:text!important;outline:1px solid transparent;outline-offset:4px}
+        .visual-edit .inline-biography{position:relative;cursor:pointer!important;outline:1px solid transparent;outline-offset:4px}
         .visual-edit .inline-biography:hover,.visual-edit .inline-biography:focus-visible,.visual-edit .inline-biography-active{outline-color:#b99b79}
+        .visual-edit .inline-biography *{cursor:pointer!important}
+        .visual-edit .inline-biography .inline-biography-field{cursor:text!important}
         .inline-biography-field{display:block;width:100%;min-height:1em;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;resize:none;overflow:hidden;outline:none;cursor:text!important}
         .visual-edit .inline-biography::after{content:'✎';position:absolute;right:-10px;top:-12px;width:20px;height:20px;text-align:center;background:var(--bg,#faf8f4);color:#916a40;font:16px/20px Arial,sans-serif;opacity:0;pointer-events:none}
         .visual-edit .inline-biography:hover::after,.visual-edit .inline-biography:focus-visible::after{opacity:1}
@@ -157,7 +159,7 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
         .about-opening h1 .inline-biography{outline-offset:-1px}
         .about-opening h1 .inline-biography::after{display:none}
         .portrait-intro > .inline-biography{display:block;outline-offset:-1px}
-        .inline-biography[contenteditable]{cursor:text!important;white-space:pre-wrap}
+        .inline-biography[contenteditable]:not([contenteditable=false]),.inline-biography[contenteditable]:not([contenteditable=false]) *{cursor:text!important;white-space:pre-wrap}
         .visual-edit .inline-biography[data-empty]{min-height:1.8em}
         .visual-edit .inline-biography[data-empty]:not(.inline-biography-active)::before{content:attr(data-placeholder);font:16px/1.8 Arial,sans-serif;color:#8b7966}
         .inline-biography-field::placeholder{font:16px/1.8 Arial,sans-serif;color:#8b7966}

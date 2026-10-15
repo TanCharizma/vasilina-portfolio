@@ -101,6 +101,9 @@ body:has(#editor[open]) .actions #undo,body:has(#editor[open]) .actions #redo{di
 .shortcut-help[open] summary::after{content:'−'}
 .shortcut-help p{margin:0;padding:4px 10px 10px;font-size:12px;line-height:1.8;white-space:nowrap}
 #compact-status{display:none}
+body{cursor:default}
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=button]):not([type=submit]),textarea,[contenteditable]:not([contenteditable=false]){cursor:text}
+select,a{cursor:pointer}
 @media(max-width:900px){
   .toolbar .actions #save{min-width:80px}
   .toolbar .actions #compact-status{display:block;font:10px/12px Arial,sans-serif;color:inherit;white-space:nowrap}
