@@ -11,7 +11,7 @@ dialog#editor{inset:145px 16px 16px auto;width:480px;height:calc(100dvh - 161px)
 #controls{width:100%;height:100%;flex:1;min-height:0;transform:none;box-shadow:none}
 #notice{pointer-events:none}
 #mobile-status{display:none}
-@media(max-width:900px){.guide{flex-wrap:wrap;gap:4px;padding:6px 12px}.guide>span{width:100%}.navigation{gap:10px;width:100%;justify-content:space-between}.navigation label{font-size:11px;gap:4px}.navigation select{font-size:16px;max-width:180px;padding:6px;min-height:44px}dialog#editor{top:var(--editor-top,0px);left:0;right:0;bottom:auto;width:100%;height:var(--editor-height,100dvh);max-height:var(--editor-height,100dvh);max-width:none;border-radius:0;border:0}#editor>.editor-heading{padding:max(8px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));gap:8px}#editor .editor-heading #editor-back{min-width:44px;min-height:44px;margin-right:0;padding:8px 6px}#editor .editor-heading #close{flex:0 0 44px;width:44px;min-height:44px}#editor-title{min-width:0;line-height:1.35}.identity a{min-height:24px}}
+@media(max-width:900px){.guide{flex-wrap:wrap;gap:4px;padding:6px 12px}.guide>span{width:100%}.navigation{gap:10px;width:100%;justify-content:space-between}.navigation label{font-size:11px;gap:4px}.navigation select{font-size:16px;max-width:180px;padding:6px;min-height:44px}dialog#editor{z-index:66;top:var(--editor-top,var(--studio-toolbar-bottom,56px));left:0;right:0;bottom:auto;width:100%;height:var(--editor-height,100dvh);max-height:var(--editor-height,100dvh);max-width:none;border-radius:0;border:0}#editor>.editor-heading{padding:8px max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));gap:8px}#editor .editor-heading #editor-back{min-width:44px;min-height:44px;margin-right:0;padding:8px 6px}#editor .editor-heading #close{flex:0 0 44px;width:44px;min-height:44px}#editor-title{min-width:0;line-height:1.35}.identity a{min-height:24px}}
 @media(max-width:360px){.navigation{flex-wrap:wrap}.navigation label{flex:1}.navigation select{width:100%;min-width:0;max-width:160px}}
 
 @media(max-width:900px){#mobile-status{display:inline;color:#654c31}.guide>span{line-height:1.7}}
@@ -95,6 +95,16 @@ body:has(#editor[open]) .actions #undo,body:has(#editor[open]) .actions #redo{di
 .studio-help>div{position:absolute;right:0;top:100%;min-width:160px;padding:6px;background:#faf8f4;border:1px solid #d5ccbf;border-radius:6px;box-shadow:0 8px 24px #30291f1a;z-index:50}
 .studio-help button{width:100%;min-height:44px;text-align:left;white-space:nowrap}
 .studio-help summary:focus-visible{outline:2px solid #78563c;outline-offset:3px}
+.studio-help .shortcut-help{border-top:1px solid #d8d1c6;margin-top:4px}
+.studio-help .shortcut-help summary{justify-content:space-between;gap:16px;min-height:44px;padding:6px 10px;text-decoration:none;white-space:nowrap}
+.shortcut-help summary::after{content:'+'}
+.shortcut-help[open] summary::after{content:'−'}
+.shortcut-help p{margin:0;padding:4px 10px 10px;font-size:12px;line-height:1.8;white-space:nowrap}
+#compact-status{display:none}
+@media(max-width:900px){
+  .toolbar .actions #save{min-width:80px}
+  .toolbar .actions #compact-status{display:block;font:10px/12px Arial,sans-serif;color:inherit;white-space:nowrap}
+}
 .tour-shade{position:fixed;inset:0;width:100%;height:100%;z-index:1000;pointer-events:none}
 @media(min-width:901px){dialog#editor.tour-photo-demo{left:auto!important;right:16px!important;top:145px!important;transform:none!important;width:min(720px,calc(100vw - 420px))!important;height:calc(100dvh - 161px)!important}}
 dialog#studio-tour{inset:auto;margin:0;width:360px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:22px;border:1px solid #d5ccbf;border-radius:12px;background:#faf8f4;box-shadow:0 16px 60px #20190d35}
@@ -225,3 +235,9 @@ dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animatio
 #tour-share-actions #save{background:transparent;color:#463c30}
 .tour-preview-compact #tour-progress{display:inline}
 .tour-preview-compact .tour-heading{justify-content:space-between}
+@media(max-width:900px){
+  dialog#studio-tour.tour-share{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;overflow:hidden}
+  .tour-share #tour-copy{min-height:0;overflow:auto;overscroll-behavior:contain;margin-bottom:0}
+  .tour-share .tour-footer{flex-wrap:nowrap;align-items:center}
+  .tour-share .tour-footer button{min-width:0}
+}

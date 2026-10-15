@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=33';
+import { createStudioTour } from './visual-tour.js?v=34';
 import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
@@ -66,6 +66,7 @@ const studioTour = createStudioTour({
     setMobileTools(false);
     inlineBiography.finish(true); dialog.close();
     if (!api.beginTourPractice()) return false;
+    clearTimeout(timer);$('notice').hidden=true;
     tourView = { page, device, editing, section: $('section').value, scroll: frame.contentWindow.scrollY };
     editing=false; $('edit').setAttribute('aria-pressed','false'); $('view').setAttribute('aria-pressed','true');
     await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});loadPage('home');});
@@ -182,11 +183,14 @@ function fit() {
   if($('publish').parentElement!==publishHome)publishHome.append($('publish'));
   if(mobileHost&&$('mobile-publishing').parentElement!==$('studio-navigation'))$('studio-navigation').append($('mobile-publishing'));
   $('mobile-publishing').hidden=!mobileHost;
-  dialog.style.setProperty('--editor-height',`${window.visualViewport?.height||innerHeight}px`);
-  dialog.style.setProperty('--editor-top',`${window.visualViewport?.offsetTop||0}px`);
   const workspace=$('workspace');
-  document.body.style.setProperty('--studio-toolbar-bottom',`${document.querySelector('.toolbar').getBoundingClientRect().bottom}px`);
+  const toolbarBottom=document.querySelector('.toolbar').getBoundingClientRect().bottom;
+  document.body.style.setProperty('--studio-toolbar-bottom',`${toolbarBottom}px`);
   const visibleBottom=window.visualViewport?window.visualViewport.offsetTop+window.visualViewport.height:innerHeight;
+  // Keep panel navigation below the fixed toolbar, including when Safari's keyboard opens.
+  const editorTop=mobileHost?Math.max(viewport?.offsetTop||0,toolbarBottom):0;
+  dialog.style.setProperty('--editor-top',`${editorTop}px`);
+  dialog.style.setProperty('--editor-height',`${Math.max(0,visibleBottom-editorTop)}px`);
   const actionBar=document.querySelector('.inline-edit-actions');
   const typing=document.body.classList.contains('inline-editing');
   const actionHeight=mobileHost&&typing?actionBar?.offsetHeight||0:0;
@@ -299,7 +303,8 @@ function enableDirectDrag(handle,image,group,id) {
     if(commit&&moved&&destination) {
       movedItem={group,id};followMovedItem=true;
       if(api.reorderPhotos(group,id,destination)) {
-        refresh();notify(`${group==='motion'?'Video':'Photo'} moved. Save draft to keep the order.`);
+        refresh();
+        if(!document.body.classList.contains('tour-running'))notify(`${group==='motion'?'Video':'Photo'} moved. Save draft to keep the order.`);
       } else followMovedItem=false;
     }
   };
@@ -399,6 +404,11 @@ function syncStatus() {
     $(id).textContent=tourView?'Exploring · your live website stays unchanged':draftStatus.text;
     $(id).dataset.state=draftStatus.state;
   }
+  const compact=$('compact-status');
+  compact.textContent=tourView?'Exploring':({unsaved:'Unsaved',local:'Saved locally',unpublished:'Draft saved',published:'Published',busy:'Working…',error:'Error'})[draftStatus.state];
+  compact.dataset.state=draftStatus.state;
+  compact.title=tourView?'Exploring · your live website stays unchanged':draftStatus.text;
+  compact.setAttribute('aria-label',compact.title);
   $('save').disabled=Boolean(tourView)||!api.canSave||!api.dirty||api.status.state==='busy';
   $('editor-save').disabled=$('save').disabled;
   $('publish').disabled=Boolean(tourView)||!api.connected||!api.needsPublish||api.status.state==='busy';

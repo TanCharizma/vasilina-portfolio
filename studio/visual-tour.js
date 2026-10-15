@@ -38,7 +38,10 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     if (!tour.open) return;
     const viewport = window.visualViewport, width=viewport?.width || innerWidth, height=viewport?.height || innerHeight;
     const top=viewport?.offsetTop || 0, left=viewport?.offsetLeft || 0, mobile=width<=900;
-    tour.style.setProperty('--tour-max-height',`${Math.max(80,Math.min(300,height*.4))}px`);
+    const guideLimit=phase==='share'
+      ? Math.min(440,height*.6,height-Math.max(0,document.querySelector('.toolbar').getBoundingClientRect().bottom-top)-16)
+      : Math.min(300,height*.4);
+    tour.style.setProperty('--tour-max-height',`${Math.max(80,guideLimit)}px`);
     // Photo practice overlays the canvas so hiding its guide never resizes it.
     mobileGuideSpace(mobile&&phase!=='arrange'?tour.offsetHeight+8:0);
     let x=mobile?16:width-tour.offsetWidth-48, y=height-tour.offsetHeight-24;
