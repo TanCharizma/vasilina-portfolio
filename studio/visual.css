@@ -112,6 +112,7 @@ select,a{cursor:pointer}
 @media(min-width:901px){dialog#editor.tour-photo-demo{left:auto!important;right:16px!important;top:145px!important;transform:none!important;width:min(720px,calc(100vw - 420px))!important;height:calc(100dvh - 161px)!important}}
 dialog#studio-tour{inset:auto;margin:0;width:360px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:22px;border:1px solid #d5ccbf;border-radius:12px;background:#faf8f4;box-shadow:0 16px 60px #20190d35}
 #studio-tour::backdrop{background:transparent}
+dialog#studio-tour:not([open]){display:none!important}
 .tour-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:#766b5e}
 #tour-skip{padding:6px 0;min-height:44px;border:0;font-size:12px;text-decoration:underline;text-underline-offset:4px}
 #tour-title{font:normal 28px/1.2 Georgia,serif;margin:12px 0}
