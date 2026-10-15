@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=27';
+import { createStudioTour } from './visual-tour.js?v=29';
 import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
@@ -21,6 +21,19 @@ let editorMenuTitle = 'Edit section';
 let editorReturnGallery = null;
 let tourView = null;
 let refreshWaiters = [];
+let movedItem = null;
+let followMovedItem = false;
+function movedElement(doc) {
+  return movedItem && [...doc.querySelectorAll('[data-drag-group]')].find(node=>
+    node.dataset.dragGroup===movedItem.group && (node.dataset.dragId||node.dataset.visualPhotoId)===movedItem.id);
+}
+function followMove(doc) {
+  const element=movedElement(doc);
+  if(!element)return;
+  element.scrollIntoView({block:'center',behavior:'instant'});
+  element.classList.add('visual-just-moved');
+  setTimeout(()=>element.classList.remove('visual-just-moved'),1800);
+}
 function bindStudioShortcuts(doc) {
   installStudioShortcuts(doc, {
     enabled:()=>Boolean(api?.ready)&&!tourView&&api.status.state!=='busy',
@@ -49,6 +62,7 @@ const inlineBiography = createInlineBiography({
 const studioTour = createStudioTour({
   ready:()=>Boolean(api?.ready) && api.status.state !== 'busy',
   beforeStart:async()=>{
+    movedItem=null;followMovedItem=false;
     setMobileTools(false);
     inlineBiography.finish(true); dialog.close();
     if (!api.beginTourPractice()) return false;
@@ -59,7 +73,11 @@ const studioTour = createStudioTour({
     return true;
   },
   prepareStep:async phase=>{
+    setMobileTools(false);
     inlineBiography.finish(false); dialog.close();
+    if(!['preview','share'].includes(phase)&&page!=='home') {
+      await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});loadPage('home');});
+    }
     document.body.classList.toggle('tour-photo-practice',phase==='arrange');
     $('mobile-tools').disabled=phase!=='preview';
     $('edit').disabled=true;$('view').disabled=true;
@@ -81,7 +99,8 @@ const studioTour = createStudioTour({
       return { doc, text };
     }
     const photos=[...doc.querySelectorAll('.story-frame img')];
-    photos[0]?.scrollIntoView({block:matchMedia('(max-width:900px)').matches?'start':'center',behavior:'instant'});
+    if(phase==='result'&&movedElement(doc))followMove(doc);
+    else photos[0]?.scrollIntoView({block:matchMedia('(max-width:900px)').matches?'start':'center',behavior:'instant'});
     if (phase === 'arrange') {
       revealPhotoTools(photos[0]);
       const handle=[...doc.querySelectorAll('.visual-drag-chip')].find(button=>button.photoElement===photos[0]);
@@ -100,6 +119,7 @@ const studioTour = createStudioTour({
   switchPhotos:async()=>{
     const photos=api.content.home.selectedWork;
     if(photos.length<2)return;
+    movedItem={group:'selectedWork',id:photos[0].id};followMovedItem=true;
     api.reorderPhotos('selectedWork',photos[0].id,photos[1].id);
     await refresh();
   },
@@ -149,9 +169,13 @@ function fit() {
   const mobileHost=matchMedia('(max-width:900px)').matches;
   const viewport=window.visualViewport;
   document.body.style.setProperty('--studio-visual-top',`${viewport?.offsetTop||0}px`);
-  const publishHome=mobileHost?$('mobile-publishing'):document.querySelector('.toolbar .actions');
+  const sharing=Boolean(tourView)&&$('studio-tour').classList.contains('tour-share');
+  const actions=document.querySelector('.toolbar .actions');
+  const saveHome=sharing?$('tour-share-actions'):actions;
+  if($('save').parentElement!==saveHome)saveHome.append($('save'));
+  const publishHome=sharing?$('tour-share-actions'):mobileHost?$('mobile-publishing'):actions;
   if($('publish').parentElement!==publishHome)publishHome.append($('publish'));
-  if(mobileHost&&publishHome.parentElement!==$('studio-navigation'))$('studio-navigation').append(publishHome);
+  if(mobileHost&&$('mobile-publishing').parentElement!==$('studio-navigation'))$('studio-navigation').append($('mobile-publishing'));
   $('mobile-publishing').hidden=!mobileHost;
   dialog.style.setProperty('--editor-height',`${window.visualViewport?.height||innerHeight}px`);
   dialog.style.setProperty('--editor-top',`${window.visualViewport?.offsetTop||0}px`);
@@ -255,8 +279,11 @@ function enableDirectDrag(handle,image,group,id) {
     win.cancelAnimationFrame(raf);clear();marker?.remove();marker=null;ghost?.remove();ghost=null;image.style.opacity='';
     doc.documentElement.classList.remove('visual-dragging');
     const captured=pointer;pointer=null;if(handle.hasPointerCapture(captured))handle.releasePointerCapture(captured);
-    if(commit&&moved&&destination&&api.reorderPhotos(group,id,destination)) {
-      refresh();notify(`${group==='motion'?'Video':'Photo'} moved. Save draft to keep the order.`);
+    if(commit&&moved&&destination) {
+      movedItem={group,id};followMovedItem=true;
+      if(api.reorderPhotos(group,id,destination)) {
+        refresh();notify(`${group==='motion'?'Video':'Photo'} moved. Save draft to keep the order.`);
+      } else followMovedItem=false;
     }
   };
   handle.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();});
@@ -353,7 +380,7 @@ function syncStatus() {
     $(id).textContent=tourView?'Exploring · your live website stays unchanged':draftStatus.text;
     $(id).dataset.state=draftStatus.state;
   }
-  $('save').disabled=!api.canSave||!api.dirty||api.status.state==='busy';
+  $('save').disabled=Boolean(tourView)||!api.canSave||!api.dirty||api.status.state==='busy';
   $('editor-save').disabled=$('save').disabled;
   $('publish').disabled=Boolean(tourView)||!api.connected||!api.needsPublish||api.status.state==='busy';
   $('publish').textContent=api.connected&&api.needsPublish?'Publish changes':'Publish';
@@ -665,6 +692,7 @@ async function refresh() {
   finally {
     updating=false;
     if(updateAgain){updateAgain=false;await refresh();}
+    if(followMovedItem&&doc===frame.contentDocument&&renderingPage===page){followMovedItem=false;followMove(doc);}
     const waiting=refreshWaiters;refreshWaiters=[];waiting.forEach(resolve=>resolve());
   }
 }
@@ -723,7 +751,7 @@ frame.addEventListener('load',()=>{
   doc.head.append(style);
   const previewStyle=doc.createElement('style');
   previewStyle.textContent='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
-  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}';
+  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
   quietStyle.textContent='.visual-section-toolbar{display:none;position:relative;z-index:30;width:100%;flex:0 0 100%;grid-column:1/-1;margin:0 0 16px;padding-right:32px;justify-content:flex-end;gap:8px}.visual-edit .visual-section-toolbar{display:flex}.visual-section-toolbar>.visual-chip{position:static;box-shadow:none;padding:9px 12px;font-size:12px!important}.visual-opening-toolbar{position:absolute;top:calc(var(--visual-header-height,68px) + 16px);right:32px;width:auto;margin:0;padding-right:0}.visual-edit .chapter-heading,.visual-edit #highlights .home-section-heading,.visual-edit .motion-heading,.visual-edit .digitals-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 20px}.visual-edit .visual-photo-chip,.visual-edit .visual-drag-chip{opacity:0;pointer-events:none;transition:opacity .15s}.visual-edit .visual-tool-visible,.visual-edit .visual-photo-chip:focus-visible,.visual-edit .visual-drag-chip:focus-visible{opacity:1;pointer-events:auto}.visual-selectable-photo:focus-visible{outline:2px solid #916a40;outline-offset:3px}@media(max-width:600px){.visual-opening-toolbar{right:24px;padding-right:0}.visual-section-toolbar{margin-bottom:12px;padding-right:24px}.visual-edit .visual-section-heading{padding-right:24px}}';

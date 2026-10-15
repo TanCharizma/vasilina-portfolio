@@ -197,11 +197,13 @@ dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animatio
   .tour-experience #tour-title{font-size:22px;margin:4px 0 8px}
   .tour-experience #tour-copy{font-size:13px;line-height:1.5;margin-bottom:8px}
   .tour-experience #tour-skip{min-height:32px}
-  dialog#studio-tour.tour-arrange{position:fixed;padding-top:12px}
-  .tour-arrange .tour-heading{position:absolute;top:4px;right:12px;min-height:40px}
-  .tour-arrange #tour-progress{display:none}
+  dialog#studio-tour.tour-arrange{position:fixed;display:block;height:fit-content;min-height:0;bottom:auto;right:auto;padding-top:12px}
+  .tour-arrange #tour-alternative{display:block;margin:0}
+  .tour-arrange .tour-footer{display:flex;justify-content:flex-end;min-height:44px}
+  .tour-arrange .tour-heading{position:static;min-height:32px}
+  .tour-arrange #tour-progress{display:inline}
   .tour-arrange #tour-skip{min-height:40px}
-  .tour-arrange #tour-title{padding-right:100px;font-size:20px;min-height:36px;margin:0 0 4px}
+  .tour-arrange #tour-title{padding-right:0;font-size:20px;min-height:0;margin:0 0 4px}
   .tour-arrange #tour-copy{font-size:13px}
   dialog#studio-tour.tour-voice-active{width:calc(100vw - 24px);padding:10px 14px}
   .tour-voice-active .tour-heading,.tour-voice-active #tour-title{display:none}
@@ -213,3 +215,9 @@ dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animatio
   .tour-preview-compact #tour-title,.tour-preview-compact #tour-copy{display:none}
   #notice{bottom:max(16px,env(safe-area-inset-bottom));font-size:12px}
 }
+#tour-share-actions{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px}
+#tour-share-actions button{display:block;min-height:44px;font-size:13px;padding:8px 14px;opacity:.75}
+#tour-share-actions #publish{background:#463c30;color:white;border-color:#463c30}
+#tour-share-actions #save{background:transparent;color:#463c30}
+.tour-preview-compact #tour-progress{display:inline}
+.tour-preview-compact .tour-heading{justify-content:space-between}
