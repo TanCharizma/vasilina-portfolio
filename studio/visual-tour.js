@@ -25,7 +25,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     mobileGuideSpace(mobile?tour.offsetHeight+8:0);
     let x=mobile?16:width-tour.offsetWidth-48, y=height-tour.offsetHeight-24;
     if(mobile) {
-      x=12;y=document.querySelector('.toolbar').getBoundingClientRect().bottom-top;
+      x=12;y=Math.max(document.querySelector('.toolbar').getBoundingClientRect().bottom,parseFloat(getComputedStyle(document.body).paddingTop)||0)-top;
     }
     if (phase==='arrange' && targets.handle && !mobile) {
       const box=boxFor(targets.handle); x=box.left+box.width+24-left; y=box.top+box.height/2-tour.offsetHeight/2-top;
@@ -45,7 +45,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       if(!mobile){y=boxFor(targets.buttons[0]).bottom-top+20;}
     }
     tour.style.left=`${left+Math.max(16,Math.min(x,width-tour.offsetWidth-16))}px`;
-    tour.style.top=`${top+Math.max(16,Math.min(y,height-tour.offsetHeight-16))}px`;
+    tour.style.top=`${top+Math.max(mobile?0:16,Math.min(y,height-tour.offsetHeight-16))}px`;
     shade.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
     const outlines=shade.querySelector('.tour-outlines');outlines.replaceChildren();
     if (!['arrange','voice','preview','share'].includes(phase)) return;
