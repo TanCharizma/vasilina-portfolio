@@ -208,7 +208,9 @@ dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animatio
   dialog#studio-tour.tour-voice-active{width:calc(100vw - 24px);padding:10px 14px}
   .tour-voice-active .tour-heading,.tour-voice-active #tour-title{display:none}
   .tour-voice-active #tour-copy{margin:0}
-  dialog#studio-tour.tour-drag-active{opacity:0;pointer-events:none}
+  dialog#studio-tour.tour-drag-active{opacity:1;pointer-events:none;padding:8px 14px;height:auto;min-height:0}
+  dialog#studio-tour.tour-drag-active>*{display:none!important}
+  dialog#studio-tour.tour-drag-active::before{content:'Drag to rearrange';display:block;font:13px/20px Arial,sans-serif;color:#5f5549}
   .tour-handle-outline{animation:none}
   dialog#studio-tour.tour-preview-compact{width:calc(100vw - 24px);padding:8px 14px}
   .tour-preview-compact .tour-heading{grid-column:1/-1;justify-content:flex-end;min-height:28px}
