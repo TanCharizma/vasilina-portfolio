@@ -241,6 +241,10 @@ function placePopup(x,y) {
 }
 function enableDirectDrag(handle,image,group,id) {
   const doc=image.ownerDocument,win=doc.defaultView;
+  // Use our pointer-based drag instead of Safari's native image lift/preview.
+  image.draggable=false;handle.draggable=false;
+  handle.addEventListener('dragstart',event=>event.preventDefault());
+  image.addEventListener('dragstart',event=>event.preventDefault());
   let pointer=null,startX=0,startY=0,x=0,y=0,ghost,target,marker,raf,moved=false;
   const clear=()=>{target?.classList.remove('visual-drop-target');target=null;if(marker)marker.hidden=true;};
   const groupItems=()=>[...doc.querySelectorAll('[data-drag-group]')].filter(node=>node.dataset.dragGroup===group && !node.classList.contains('visual-drag-ghost'));
@@ -310,7 +314,7 @@ function enableDirectDrag(handle,image,group,id) {
       marker=doc.createElement('div');marker.className='visual-drop-marker';marker.hidden=true;
       const label=doc.createElement('span');label.setAttribute('role','status');label.setAttribute('aria-live','polite');marker.append(label);doc.body.append(marker);
       ghost.style.width=`${Math.min(200,r.width)}px`;ghost.style.height=`${Math.min(250,r.height)}px`;
-      doc.body.append(ghost);image.style.opacity='.4';doc.documentElement.classList.add('visual-dragging');draw();
+      doc.body.append(ghost);doc.documentElement.classList.add('visual-dragging');draw();
     }
   });
   handle.addEventListener('pointerup',event=>{if(event.pointerId===pointer)finish(true);});
@@ -756,7 +760,8 @@ frame.addEventListener('load',()=>{
 .visual-edit .visual-section-heading{display:flex!important;align-items:center;flex-wrap:wrap;gap:12px 20px;min-height:44px;padding-right:32px}.visual-edit .visual-section-heading>.visual-section-chip{position:static;margin-left:auto;flex:0 0 auto;padding:10px 14px;box-shadow:none;border-radius:6px}.visual-edit .visual-section-heading>.visual-section-chip~.visual-section-chip{margin-left:0}.visual-photo-chip,.visual-drag-chip{width:44px!important;height:44px!important;min-height:44px!important;padding:10px!important;border-radius:6px!important;box-shadow:0 2px 8px #0001!important}.visual-photo-chip svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}.visual-photo-chip:has(+.visual-drag-chip){border-radius:6px 0 0 6px!important}.visual-photo-chip+.visual-drag-chip{border-radius:0 6px 6px 0!important;border-left:0!important}.visual-add{justify-self:start;min-width:140px;box-shadow:none;border-radius:6px}`;
   doc.head.append(style);
   const previewStyle=doc.createElement('style');
-  previewStyle.textContent='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
+  previewStyle.textContent='.visual-edit .visual-selectable-photo,.visual-edit .visual-drag-chip{-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}';
+  previewStyle.textContent+='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
   previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
