@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=32';
+import { createStudioTour } from './visual-tour.js?v=33';
 import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
@@ -772,7 +772,7 @@ frame.addEventListener('load',()=>{
   previewStyle.textContent='.visual-edit .visual-selectable-photo,.visual-edit .visual-drag-chip{-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}';
   previewStyle.textContent+='.visual-edit body,.visual-edit body *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}.visual-edit [contenteditable],.visual-edit [contenteditable] *,.visual-edit input,.visual-edit textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default}';
   previewStyle.textContent+='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
-  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-edit img[data-drag-group]{transform:none!important;transition:none!important;overflow-anchor:none}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
+  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.tour-mobile-target{outline:2px solid #bd935c!important;outline-offset:4px!important}.visual-edit img[data-drag-group]{transform:none!important;transition:none!important;overflow-anchor:none}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
   quietStyle.textContent='.visual-section-toolbar{display:none;position:relative;z-index:30;width:100%;flex:0 0 100%;grid-column:1/-1;margin:0 0 16px;padding-right:32px;justify-content:flex-end;gap:8px}.visual-edit .visual-section-toolbar{display:flex}.visual-section-toolbar>.visual-chip{position:static;box-shadow:none;padding:9px 12px;font-size:12px!important}.visual-opening-toolbar{position:absolute;top:calc(var(--visual-header-height,68px) + 16px);right:32px;width:auto;margin:0;padding-right:0}.visual-edit .chapter-heading,.visual-edit #highlights .home-section-heading,.visual-edit .motion-heading,.visual-edit .digitals-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 20px}.visual-edit .visual-photo-chip,.visual-edit .visual-drag-chip{opacity:0;pointer-events:none;transition:opacity .15s}.visual-edit .visual-tool-visible,.visual-edit .visual-photo-chip:focus-visible,.visual-edit .visual-drag-chip:focus-visible{opacity:1;pointer-events:auto}.visual-selectable-photo:focus-visible{outline:2px solid #916a40;outline-offset:3px}@media(max-width:600px){.visual-opening-toolbar{right:24px;padding-right:0}.visual-section-toolbar{margin-bottom:12px;padding-right:24px}.visual-edit .visual-section-heading{padding-right:24px}}';
