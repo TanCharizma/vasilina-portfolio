@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=30';
+import { createStudioTour } from './visual-tour.js?v=31';
 import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
@@ -296,6 +296,7 @@ function enableDirectDrag(handle,image,group,id) {
   handle.addEventListener('pointerdown',event=>{
     if(!editing||!event.isPrimary||event.button!==0)return;
     event.preventDefault();event.stopPropagation();pointer=event.pointerId;moved=false;
+    doc.getSelection()?.removeAllRanges();
     startX=x=event.clientX;startY=y=event.clientY;handle.setPointerCapture(pointer);
     const oldFrame=frame.getBoundingClientRect(),oldScale=oldFrame.width/frame.offsetWidth;
     const screenX=oldFrame.left+x*oldScale,screenY=oldFrame.top+y*oldScale;
@@ -761,6 +762,7 @@ frame.addEventListener('load',()=>{
   doc.head.append(style);
   const previewStyle=doc.createElement('style');
   previewStyle.textContent='.visual-edit .visual-selectable-photo,.visual-edit .visual-drag-chip{-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}';
+  previewStyle.textContent+='.visual-edit body,.visual-edit body *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}.visual-edit [contenteditable],.visual-edit [contenteditable] *,.visual-edit input,.visual-edit textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default}';
   previewStyle.textContent+='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
   previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
   doc.head.append(previewStyle);
@@ -802,6 +804,9 @@ frame.addEventListener('load',()=>{
     }
   },true);
   doc.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
+  doc.addEventListener('selectstart',event=>{
+    if(doc.documentElement.classList.contains('visual-edit')&&!event.target.closest?.('input,textarea,[contenteditable]'))event.preventDefault();
+  });
   bindStudioShortcuts(doc);
   fit();refresh().then(()=>studioTour.previewLoaded(doc));
 });

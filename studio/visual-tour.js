@@ -141,7 +141,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       $('tour-progress').textContent='THROUGH THEIR EYES';
       $('tour-title').textContent='See your work take the stage.';
       $('tour-copy').textContent=matchMedia('(max-width:900px)').matches
-        ? 'Scroll, open photos, and explore. Open Studio menu to switch pages or try the Desktop preview.'
+        ? 'Scroll, open photos, and explore. Open Menu to switch pages or try the Desktop preview.'
         : 'Scroll, open photos, and explore your pages. Try Desktop or Mobile above to see how your website feels.';
       $('tour-next').textContent='How do I share it?';
       alternative.hidden=false;alternative.textContent='More room to look';
