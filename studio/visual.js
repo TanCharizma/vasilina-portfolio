@@ -5,6 +5,7 @@ import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
 import { createStudioTour } from './visual-tour.js?v=26';
 import { createInlineBiography } from './inline-biography.js?v=25';
+import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
 const $ = id => document.getElementById(id);
 const frame = $('website'), controls = $('controls'), dialog = $('editor');
@@ -20,6 +21,22 @@ let editorMenuTitle = 'Edit section';
 let editorReturnGallery = null;
 let tourView = null;
 let refreshWaiters = [];
+function bindStudioShortcuts(doc) {
+  installStudioShortcuts(doc, {
+    enabled:()=>Boolean(api?.ready)&&!tourView&&api.status.state!=='busy',
+    undo:()=>{if(api.canUndo)$('undo').click();},
+    redo:()=>{if(api.canRedo)$('redo').click();},
+    save:saveCurrentDraft,
+  });
+}
+bindStudioShortcuts(document);
+for(const [id,label,keys] of [
+  ['undo','Undo (⌘Z / Ctrl+Z)','Meta+Z Control+Z'],
+  ['redo','Redo (⌘⇧Z / Ctrl+Shift+Z / Ctrl+Y)','Meta+Shift+Z Control+Shift+Z Control+Y'],
+  ['save','Save draft (⌘S / Ctrl+S)','Meta+S Control+S'],
+]) {
+  $(id).title=label;$(id).setAttribute('aria-keyshortcuts',keys);
+}
 const inlineBiography = createInlineBiography({
   enabled: () => editing && Boolean(api?.ready),
   commit: (index, lang, value) => api.updateBiography(index, lang, value),
@@ -437,6 +454,7 @@ async function refresh() {
   if(updating){updateAgain=true;return new Promise(resolve=>refreshWaiters.push(resolve));}
   const doc=frame.contentDocument;
   if(!api?.ready||!doc?.querySelector(page==='home'?'.home-hero':page==='about'?'.about-opening':'.booking-opening'))return;
+  bindStudioShortcuts(doc);
   updating=true;
   const renderingPage=page;
   try {
@@ -662,6 +680,7 @@ function connect() {
   syncStatus();loadPage('home');fit();
   studioTour.maybeStart();
   controls.contentDocument.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
+  bindStudioShortcuts(controls.contentDocument);
 }
 $('account-form').addEventListener('submit',async event=>{
   event.preventDefault();const form=event.currentTarget,button=form.querySelector('button');
@@ -736,6 +755,7 @@ frame.addEventListener('load',()=>{
     }
   },true);
   doc.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});
+  bindStudioShortcuts(doc);
   fit();refresh().then(()=>studioTour.previewLoaded(doc));
 });
 $('add-files').onchange=async()=>{
@@ -745,7 +765,15 @@ $('add-files').onchange=async()=>{
   catch(error){notify(error.message);}
   finally{$('add-files').value='';$('add-files').disabled=false;}
 };
-$('save').onclick=async()=>{if(!api)return;inlineBiography.finish(true);$('save').disabled=true;if(await api.save())notify(api.connected?'Draft saved online. Website unchanged.':'Draft saved in this browser.');syncStatus();};
+async function saveCurrentDraft() {
+  if(!api?.ready||!api.canSave||tourView||api.status.state==='busy')return;
+  inlineBiography.finish(true);
+  if(!api.dirty)return;
+  $('save').disabled=true;
+  if(await api.save())notify(api.connected?'Draft saved online. Website unchanged.':'Draft saved in this browser.');
+  syncStatus();
+}
+$('save').onclick=saveCurrentDraft;
 $('editor-save').onclick=()=>$('save').click();
 $('publish').onclick=async()=>{
   inlineBiography.finish(true);

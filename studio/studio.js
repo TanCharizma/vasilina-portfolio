@@ -10,6 +10,7 @@ import { renderBiography, renderClosingInvitation } from '../portfolio-biography
 import { renderMotionGallery, renderMotionStills } from '../portfolio-motion.js';
 import { BOOKING_TEXT_FIELDS, applyBookingContent, mountBookingCalendar, normalizeCalLink } from '../portfolio-booking.js?v=4';
 import { IMAGE_ACCEPT, HEIC_ACCEPT, validateImage, prepareImage } from './image-upload.js?v=1';
+import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
 // The visual workspace shares the editor; the local trial keeps separate storage.
 const visualLocal = new URLSearchParams(location.search).has('visual-local');
@@ -179,9 +180,10 @@ function travelHistory(direction) {
   clearTimeout(previewTimer);previewTimer=setTimeout(applyPreview,150);
 }
 document.addEventListener('focusout',()=>{historyGroup=null;});
-document.addEventListener('keydown',event=>{
-  if(!(event.metaKey||event.ctrlKey)||event.key.toLowerCase()!=='z'||event.target.closest('input,textarea,[contenteditable]'))return;
-  event.preventDefault();travelHistory(event.shiftKey?1:-1);
+if(!visualMode)installStudioShortcuts(document,{
+  enabled:()=>Boolean(draft)&&!tourPractice&&!saveInProgress&&!publishInProgress,
+  undo:()=>travelHistory(-1),redo:()=>travelHistory(1),
+  save:()=>{if(hasUnsavedChanges())saveDraft();},
 });
 function markChanged(group=null) {
   const next=snapshot(draft);
