@@ -41,7 +41,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
         y=above>=16?above:box.bottom-top+gap;
       }
     }
-    if(phase==='share'&&targets.buttons?.length) {
+    if(phase==='share'&&targets.buttons?.length&&!tour.contains(targets.buttons[0])) {
       if(!mobile){y=boxFor(targets.buttons[0]).bottom-top+20;}
     }
     tour.style.left=`${left+Math.max(16,Math.min(x,width-tour.offsetWidth-16))}px`;
@@ -52,6 +52,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     const highlighted=['preview','share'].includes(phase)?(targets.buttons||[]).map(button=>[button,'button']):phase==='voice'?[[voiceAnchor,'handle']]:[[targets.handle,'handle'],[targets.destination,'destination']];
     for (const [element,kind] of highlighted) {
       if (!element?.isConnected) continue;
+      if(tour.contains(element))continue;
       const box=boxFor(element),rect=document.createElementNS(svgNS,'rect');
       for (const [name,value] of Object.entries({x:box.left-5,y:box.top-5,width:box.width+10,height:box.height+10,rx:kind==='handle'?5:0}))rect.setAttribute(name,value);
       rect.setAttribute('fill','none');rect.setAttribute('stroke','#bd935c');rect.setAttribute('stroke-width',kind==='handle'?'3':'2');
@@ -117,7 +118,8 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     tour.className=`tour-experience tour-${phase} tour-preparing`;
     $('tour-progress').textContent=phase==='welcome'?'FOLIO LAB / YOUR STUDIO':phase==='arrange'?'MAKE IT YOURS':'YOUR POINT OF VIEW';
     $('tour-skip').textContent=phase==='welcome'?'I’ll explore myself':'Finish exploring';
-    $('tour-back').hidden=phase!=='result';$('tour-back').textContent='Keep original order';
+    $('tour-back').hidden=phase==='welcome';$('tour-back').textContent='← Back';
+    $('tour-share-actions').hidden=phase!=='share';
     alternative.hidden=phase!=='arrange';alternative.textContent='Switch their order for me';
     $('tour-next').disabled=true;$('tour-next').hidden=false;
     $('tour-title').textContent=phase==='welcome'?'Welcome to your Studio.':phase==='arrange'?'Which photograph should lead?':'A different opening. Still you.';
@@ -125,7 +127,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     $('tour-next').textContent=phase==='welcome'?'Let’s explore':phase==='arrange'?'I like this order':'Keep this arrangement';
     if(phase==='arrange' && matchMedia('(max-width:900px)').matches) {
       $('tour-title').textContent='Choose your opening.';
-      $('tour-copy').textContent='Drag by the dots onto the next photo to try a new order.';
+      $('tour-copy').textContent='Drag the dots to move a photo. Try a new opening.';
       alternative.textContent='Switch them for me';
     }
     if(phase==='voice') {
@@ -137,7 +139,9 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     if(phase==='preview') {
       $('tour-progress').textContent='THROUGH THEIR EYES';
       $('tour-title').textContent='See your work take the stage.';
-      $('tour-copy').textContent='Scroll, open photos, and explore your pages. Try Desktop or Mobile above to see how your website feels.';
+      $('tour-copy').textContent=matchMedia('(max-width:900px)').matches
+        ? 'Scroll, open photos, and explore. Open Studio menu to switch pages or try the Desktop preview.'
+        : 'Scroll, open photos, and explore your pages. Try Desktop or Mobile above to see how your website feels.';
       $('tour-next').textContent='How do I share it?';
       alternative.hidden=false;alternative.textContent='More room to look';
     }
@@ -146,15 +150,18 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       $('tour-title').textContent='Share it when you’re ready.';
       const copy=$('tour-copy');copy.replaceChildren();
       const lines=localTrial
-        ? [['Save draft','Keeps your edits on this device. Your live website stays unchanged.'],['Publish','In your signed-in Studio, makes your edits visible on your live website. It’s unavailable in this local trial.']]
-        : [['Save draft','Keeps your edits privately for later. Visitors still see your last published website.'],['Publish','Makes your edits visible to everyone on your live website.']];
+        ? [['Save draft','Keeps edits on this device. Your website stays unchanged.'],['Publish','Makes edits live. Available in your signed-in Studio.']]
+        : [['Save draft','Keeps your edits privately. Visitors see your last published website.'],['Publish','Makes your edits visible on your live website.']];
       for(const [label,text] of lines){const line=document.createElement('span'),strong=document.createElement('strong');strong.textContent=`${label}: `;line.append(strong,text);copy.append(line);}
+      const hint=document.createElement('span');hint.className='tour-save-reminder';hint.textContent='These buttons are shown for guidance during the tour.';copy.append(hint);
       if(hasUnsavedChanges()) {
         const reminder=document.createElement('span');reminder.className='tour-save-reminder';
         reminder.textContent='Your edits aren’t saved yet. Choose Save draft after the tour to keep them.';copy.append(reminder);
       }
       $('tour-next').textContent='Back to my Studio';
     }
+    if(phase==='result'){alternative.hidden=false;alternative.textContent='Keep original order';}
+    if(phase!=='welcome')$('tour-progress').textContent=`${({arrange:1,result:1,voice:2,preview:3,share:4})[phase]} of 4`;
     position();
     const preparedTargets=await prepareStep(phase);
     if(!running||token!==generation)return;
@@ -171,7 +178,8 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     if(phase==='arrange' && targets.handle) {
       const dragObserver=new MutationObserver(()=>tour.classList.toggle('tour-drag-active',targets.doc.documentElement.classList.contains('visual-dragging')));
       dragObserver.observe(targets.doc.documentElement,{attributes:true,attributeFilter:['class']});listeners.push(()=>dragObserver.disconnect());
-      listen(window,'visual-studio-change',()=>{if(photoOrder()!==originalOrder && !preparing)show('result');});
+      const orderAtStart=photoOrder();
+      listen(window,'visual-studio-change',()=>{if(photoOrder()!==orderAtStart && !preparing)show('result');});
     }
     if(phase==='preview') {
       for(const button of targets.buttons||[])listen(button,'click',compactPreview);
@@ -182,6 +190,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       const updateVoiceGuide=()=>{
         if(!running||phase!=='voice')return;
         const active=document.body.classList.contains('inline-editing');
+        $('tour-back').hidden=active;
         tour.classList.toggle('tour-voice-active',active);
         $('tour-title').textContent=active?'How does it feel?':'Make it sound like you.';
         $('tour-copy').textContent=active?'Choose Done when it feels right.':'Tap this introduction and make it your own. Choose Done when you’re ready.';
@@ -221,10 +230,12 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
       const compact=tour.classList.toggle('tour-preview-compact');alternative.textContent=compact?'Show guide':'More room to look';position();return;
     }
     if(phase==='voice'){show('preview');return;}
+    if(phase==='result'){preparing=true;await restorePractice();keeping=true;await show('voice');return;}
     alternative.disabled=true;await switchPhotos();alternative.disabled=false;
   });
   $('tour-back').addEventListener('click',async()=>{
-    if(preparing)return;preparing=true;await restorePractice();keeping=true;await show('voice');
+    if(preparing)return;
+    await show(({arrange:'welcome',result:'arrange',voice:'arrange',preview:'voice',share:'preview'})[phase]);
   });
   $('tour-next').addEventListener('click',()=>{
     if(preparing)return;

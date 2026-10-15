@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#faf8f4">
   <meta name="robots" content="noindex,nofollow">
   <title>Visual Studio · Folio Lab</title>
-  <link rel="stylesheet" href="visual.css?v=45">
-  <script src="visual.js?v=106" type="module"></script>
+  <link rel="stylesheet" href="visual.css?v=48">
+  <script src="visual.js?v=109" type="module"></script>
 </head>
 <body>
   <header class="toolbar">
     <div class="identity"><strong><span class="brand-name">Folio Lab </span><em>Studio</em></strong><button id="sign-out" hidden>Sign out</button></div>
-    <button id="mobile-tools" type="button" aria-expanded="false" aria-controls="studio-options studio-navigation">Tools</button>
+    <button id="mobile-tools" type="button" aria-expanded="false" aria-controls="studio-options studio-navigation">Studio menu</button>
     <div class="switches" id="studio-options">
       <div class="segment" aria-label="Editing mode"><button id="edit" aria-pressed="true">Edit</button><button id="view" aria-pressed="false">Preview</button></div>
       <div class="segment" aria-label="Preview size"><button id="desktop" aria-pressed="true">Desktop</button><button id="mobile" aria-pressed="false">Mobile</button></div>
@@ -54,6 +54,7 @@
     <div class="tour-heading"><span id="tour-progress" aria-live="polite">1 of 4</span><button id="tour-skip" type="button">Skip tour</button></div>
     <h2 id="tour-title"></h2>
     <p id="tour-copy"></p>
+    <div id="tour-share-actions" aria-label="Saving and publishing" hidden></div>
     <div class="tour-footer"><button id="tour-back" type="button">Back</button><button id="tour-next" type="button">Next</button></div>
   </dialog>
   <input id="add-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif" multiple hidden>
