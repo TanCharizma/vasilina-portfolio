@@ -10,6 +10,23 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
   let running = false, dismissed = false, preparing = false, phase = 'welcome', generation = 0;
   let previousFocus, originalOrder, targets = {}, listeners = [], keeping = false;
   const boundDocuments = new Set();
+  let mobileHighlight=null;
+  function highlightMobile(element) {
+    if(mobileHighlight===element)return;
+    mobileHighlight?.classList.remove('tour-mobile-target');
+    mobileHighlight=element;
+    mobileHighlight?.classList.add('tour-mobile-target');
+  }
+  function revealMobileTarget() {
+    if(!running||preparing||!matchMedia('(max-width:900px)').matches||document.body.classList.contains('inline-editing'))return;
+    const element=phase==='arrange'?targets.source:phase==='voice'?targets.text:null;
+    if(!element?.isConnected)return;
+    const win=element.ownerDocument.defaultView,frame=win.frameElement;
+    const scale=frame.getBoundingClientRect().width/frame.offsetWidth;
+    const desiredTop=Math.max(tour.getBoundingClientRect().bottom,boxFor(targets.doc.querySelector('nav')||element).bottom)+16;
+    const box=boxFor(element),bottom=(window.visualViewport?.offsetTop||0)+(window.visualViewport?.height||innerHeight)-16;
+    if(box.top<desiredTop||box.bottom>bottom)win.scrollBy({top:(box.top-desiredTop)/scale,behavior:'instant'});
+  }
   function boxFor(element) {
     const box = element.getBoundingClientRect(), ownerFrame = element.ownerDocument.defaultView.frameElement;
     if (!ownerFrame) return box;
@@ -48,7 +65,10 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     tour.style.left=`${left+Math.max(16,Math.min(x,width-tour.offsetWidth-16))}px`;
     tour.style.top=`${top+Math.max(mobile?0:16,Math.min(y,height-tour.offsetHeight-16))}px`;
     shade.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
+    shade.style.width=`${innerWidth}px`;shade.style.height=`${innerHeight}px`;
     const outlines=shade.querySelector('.tour-outlines');outlines.replaceChildren();
+    highlightMobile(mobile&&!tour.classList.contains('tour-drag-active')?(phase==='arrange'?targets.handle:phase==='voice'?voiceAnchor:null):null);
+    if(mobile)return;
     if(tour.classList.contains('tour-drag-active'))return;
     if (!['arrange','voice','preview','share'].includes(phase)) return;
     const highlighted=['preview','share'].includes(phase)?(targets.buttons||[]).map(button=>[button,'button']):phase==='voice'?[[voiceAnchor,'handle']]:[[targets.handle,'handle'],[targets.destination,'destination']];
@@ -77,6 +97,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     target.addEventListener(event,handler,capture);listeners.push(()=>target.removeEventListener(event,handler,capture));
   }
   function clearStep() {
+    highlightMobile(null);
     listeners.forEach(remove=>remove());listeners=[];boundDocuments.clear();
     targets.handle?.classList.remove('tour-highlight'); targets.doc?.documentElement.classList.remove('tour-arranging');
     tour.classList.remove('tour-drag-active');targets={};
@@ -176,6 +197,8 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     targets.handle?.classList.add('tour-highlight');
     if(phase==='arrange')targets.doc?.documentElement.classList.add('tour-arranging');
     tour.classList.remove('tour-preparing');position();
+    revealMobileTarget();
+    requestAnimationFrame(()=>{if(running&&token===generation){position();revealMobileTarget();}});
     for(const doc of [document,targets.doc])bindDocument(doc);
     if(phase==='arrange' && targets.handle) {
       const desktopDragObserver=new MutationObserver(()=>{

@@ -171,8 +171,10 @@ dialog#studio-tour.tour-preview-compact{display:grid;grid-template-columns:1fr a
 #studio-screen-size{position:fixed;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none}
 dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animation:none}
 @media(max-width:900px){
-  html{background:#faf8f4;min-height:100%;overflow:hidden;overscroll-behavior:none}
-  body{min-height:100%;overflow:hidden;overscroll-behavior:none;background:#faf8f4;padding-top:var(--studio-toolbar-bottom,56px)}
+  html{background:#faf8f4;min-height:100%;overflow-x:clip;overflow-y:auto;overscroll-behavior:none}
+  body{min-height:100lvh;overflow:visible;overscroll-behavior:none;background:#faf8f4;padding-top:var(--studio-toolbar-bottom,56px)}
+  #workspace{overflow:visible}
+  .tour-mobile-target{outline:2px solid #bd935c!important;outline-offset:4px!important}
   body::before{content:'';position:fixed;z-index:-1;pointer-events:none;left:0;right:0;top:-20lvh;height:140lvh;background:#faf8f4}
   .toolbar,.tour-photo-practice .toolbar{display:flex;flex-wrap:nowrap;gap:4px;min-height:56px;padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));padding-top:calc(6px + env(safe-area-inset-top));position:fixed;top:var(--studio-visual-top,0px);left:0;right:0;z-index:65}
   .toolbar .identity{margin-right:auto;min-width:0}
