@@ -48,6 +48,7 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     tour.style.top=`${top+Math.max(mobile?0:16,Math.min(y,height-tour.offsetHeight-16))}px`;
     shade.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
     const outlines=shade.querySelector('.tour-outlines');outlines.replaceChildren();
+    if(tour.classList.contains('tour-drag-active'))return;
     if (!['arrange','voice','preview','share'].includes(phase)) return;
     const highlighted=['preview','share'].includes(phase)?(targets.buttons||[]).map(button=>[button,'button']):phase==='voice'?[[voiceAnchor,'handle']]:[[targets.handle,'handle'],[targets.destination,'destination']];
     for (const [element,kind] of highlighted) {
@@ -176,8 +177,11 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
     tour.classList.remove('tour-preparing');position();
     for(const doc of [document,targets.doc])bindDocument(doc);
     if(phase==='arrange' && targets.handle) {
-      const dragObserver=new MutationObserver(()=>tour.classList.toggle('tour-drag-active',targets.doc.documentElement.classList.contains('visual-dragging')));
-      dragObserver.observe(targets.doc.documentElement,{attributes:true,attributeFilter:['class']});listeners.push(()=>dragObserver.disconnect());
+      const desktopDragObserver=new MutationObserver(()=>{
+        if(!matchMedia('(max-width:900px)').matches)tour.classList.toggle('tour-drag-active',targets.doc.documentElement.classList.contains('visual-dragging'));
+      });
+      desktopDragObserver.observe(targets.doc.documentElement,{attributes:true,attributeFilter:['class']});
+      listeners.push(()=>desktopDragObserver.disconnect());
       const orderAtStart=photoOrder();
       listen(window,'visual-studio-change',()=>{if(photoOrder()!==orderAtStart && !preparing)show('result');});
     }
@@ -248,6 +252,20 @@ export function createStudioTour({ ready, beforeStart, prepareStep, finishPracti
   tour.addEventListener('close',finish);
   window.addEventListener('resize',position);window.visualViewport?.addEventListener('resize',position);window.visualViewport?.addEventListener('scroll',position);
   return {
+    dragging(active,handle) {
+      if(!running||phase!=='arrange'||handle!==targets.handle||!matchMedia('(max-width:900px)').matches)return;
+      if(tour.classList.contains('tour-drag-active')===active)return;
+      const image=targets.source,win=image?.ownerDocument.defaultView;
+      const before=image?boxFor(image).top:null;
+      tour.classList.toggle('tour-drag-active',active);
+      position();
+      // The frame grows upward; compensate its scroll to keep the photo under the finger.
+      if(image&&before!==null) {
+        const scale=win.frameElement.getBoundingClientRect().width/win.frameElement.offsetWidth;
+        win.scrollBy(0,(boxFor(image).top-before)/scale);
+      }
+      position();
+    },
     maybeStart(){let seen=dismissed;try{seen ||= localStorage.getItem(seenKey)==='seen';}catch{}if(!seen)start();},
     previewLoaded(doc){if(running&&phase==='preview'&&!preparing){targets.doc=doc;bindDocument(doc);position();}},
     close(){if(tour.open)tour.close();}

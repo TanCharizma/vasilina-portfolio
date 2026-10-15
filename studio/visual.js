@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=29';
+import { createStudioTour } from './visual-tour.js?v=30';
 import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
@@ -279,6 +279,7 @@ function enableDirectDrag(handle,image,group,id) {
     win.cancelAnimationFrame(raf);clear();marker?.remove();marker=null;ghost?.remove();ghost=null;image.style.opacity='';
     doc.documentElement.classList.remove('visual-dragging');
     const captured=pointer;pointer=null;if(handle.hasPointerCapture(captured))handle.releasePointerCapture(captured);
+    studioTour.dragging(false,handle);
     if(commit&&moved&&destination) {
       movedItem={group,id};followMovedItem=true;
       if(api.reorderPhotos(group,id,destination)) {
@@ -292,6 +293,11 @@ function enableDirectDrag(handle,image,group,id) {
     if(!editing||!event.isPrimary||event.button!==0)return;
     event.preventDefault();event.stopPropagation();pointer=event.pointerId;moved=false;
     startX=x=event.clientX;startY=y=event.clientY;handle.setPointerCapture(pointer);
+    const oldFrame=frame.getBoundingClientRect(),oldScale=oldFrame.width/frame.offsetWidth;
+    const screenX=oldFrame.left+x*oldScale,screenY=oldFrame.top+y*oldScale;
+    studioTour.dragging(true,handle);
+    const newFrame=frame.getBoundingClientRect(),newScale=newFrame.width/frame.offsetWidth;
+    startX=x=(screenX-newFrame.left)/newScale;startY=y=(screenY-newFrame.top)/newScale;
   });
   handle.addEventListener('pointermove',event=>{
     if(event.pointerId!==pointer)return;x=event.clientX;y=event.clientY;
