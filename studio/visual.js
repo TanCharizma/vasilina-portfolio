@@ -3,7 +3,7 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=31';
+import { createStudioTour } from './visual-tour.js?v=32';
 import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
@@ -102,6 +102,11 @@ const studioTour = createStudioTour({
     if(phase==='result'&&movedElement(doc))followMove(doc);
     else photos[0]?.scrollIntoView({block:matchMedia('(max-width:900px)').matches?'start':'center',behavior:'instant'});
     if (phase === 'arrange') {
+      if(matchMedia('(max-width:900px)').matches&&photos[0]) {
+        const frameBox=frame.getBoundingClientRect(),scale=frameBox.width/frame.offsetWidth;
+        const clearTop=($('studio-tour').getBoundingClientRect().bottom-frameBox.top+16)/scale;
+        doc.defaultView.scrollBy({top:photos[0].getBoundingClientRect().top-clearTop,behavior:'instant'});
+      }
       revealPhotoTools(photos[0]);
       const handle=[...doc.querySelectorAll('.visual-drag-chip')].find(button=>button.photoElement===photos[0]);
       return { doc, source:photos[0], destination:photos[1], handle };
@@ -186,16 +191,20 @@ function fit() {
   const typing=document.body.classList.contains('inline-editing');
   const actionHeight=mobileHost&&typing?actionBar?.offsetHeight||0:0;
   const workspaceBottom=mobileHost?visibleBottom-actionHeight:innerHeight;
-  const workspaceHeight=Math.max(120,workspaceBottom-workspace.getBoundingClientRect().top);
-  workspace.style.height=`${workspaceHeight}px`;
+  const workspaceTop=workspace.getBoundingClientRect().top;
+  const visibleHeight=Math.max(120,workspaceBottom-workspaceTop);
+  // Keep artwork beneath Safari's translucent bars while controls use the visible area.
+  const canvasHeight=mobileHost&&!typing?Math.max(visibleHeight,$('studio-screen-size').offsetHeight-workspaceTop):visibleHeight;
+  workspace.style.height=`${canvasHeight}px`;
   const width=device==='mobile'?390:Math.max(1280,workspace.clientWidth);
   const scale=Math.min(1,workspace.clientWidth/width);
-  frame.style.width=`${width}px`;frame.style.height=`${workspace.clientHeight/scale}px`;frame.style.transform=`scale(${scale})`;
+  // Safari's browser bars change the visible crop, not the website's layout height.
+  frame.style.width=`${width}px`;frame.style.height=`${canvasHeight/scale}px`;frame.style.transform=`scale(${scale})`;
   $('viewport').style.width=`${width*scale}px`;$('viewport').style.height=`${workspace.clientHeight}px`;
   for(const name of ['desktop','mobile'])$(name).setAttribute('aria-pressed',String(device===name));
   const doc=frame.contentDocument;
   doc?.documentElement.classList.toggle('visual-typing',mobileHost&&typing);
-  doc?.documentElement.style.setProperty('--studio-viewport-bleed',`${Math.max(0,workspaceBottom-visibleBottom)/scale}px`);
+  doc?.documentElement.style.setProperty('--studio-viewport-bleed',`${Math.max(0,canvasHeight-visibleHeight)/scale}px`);
   const nav=doc?.querySelector('nav');
   if(nav)doc.documentElement.style.setProperty('--visual-header-height',`${nav.offsetHeight}px`);
   positionPhotoLabels();
@@ -266,8 +275,11 @@ function enableDirectDrag(handle,image,group,id) {
   const draw=()=>{
     if(!ghost)return;
     const edge=70,top=doc.querySelector('nav')?.offsetHeight||70;
+    const frameBox=frame.getBoundingClientRect(),scale=frameBox.width/frame.offsetWidth;
+    const hostBottom=window.visualViewport?window.visualViewport.offsetTop+window.visualViewport.height:innerHeight;
+    const visibleHeight=Math.min(win.innerHeight,(hostBottom-frameBox.top)/scale);
     if(y<top+edge)win.scrollBy(0,-Math.min(14,(top+edge-y)/5));
-    else if(y>win.innerHeight-edge)win.scrollBy(0,Math.min(14,(y-win.innerHeight+edge)/5));
+    else if(y>visibleHeight-edge)win.scrollBy(0,Math.min(14,(y-visibleHeight+edge)/5));
     ghost.style.left=`${x-ghost.offsetWidth/2}px`;ghost.style.top=`${y-ghost.offsetHeight/2}px`;
     const next=groupItems().find(node=>{
       if(node===image||node.dataset.dragGroup!==group)return false;
@@ -298,18 +310,12 @@ function enableDirectDrag(handle,image,group,id) {
     event.preventDefault();event.stopPropagation();pointer=event.pointerId;moved=false;
     doc.getSelection()?.removeAllRanges();
     startX=x=event.clientX;startY=y=event.clientY;handle.setPointerCapture(pointer);
+    studioTour.dragging(true,handle);
   });
   handle.addEventListener('pointermove',event=>{
     if(event.pointerId!==pointer)return;x=event.clientX;y=event.clientY;
     if(!moved&&Math.hypot(x-startX,y-startY)<6)return;
     if(!moved){
-      // Wait for a real drag before resizing the tour. A touch-and-hold alone
-      // should not move the iframe underneath the user's finger in Safari.
-      const oldFrame=frame.getBoundingClientRect(),oldScale=oldFrame.width/frame.offsetWidth;
-      const screenX=oldFrame.left+x*oldScale,screenY=oldFrame.top+y*oldScale;
-      studioTour.dragging(true,handle);
-      const newFrame=frame.getBoundingClientRect(),newScale=newFrame.width/frame.offsetWidth;
-      startX=x=(screenX-newFrame.left)/newScale;startY=y=(screenY-newFrame.top)/newScale;
       moved=true;const r=image.getBoundingClientRect();ghost=image.tagName==='IMG'?image.cloneNode():doc.createElement('div');
       if(image.tagName!=='IMG')ghost.textContent='Moving video';
       for(const attribute of ['data-visual-section','data-drag-group','data-drag-id','data-visual-photo-id'])ghost.removeAttribute(attribute);
@@ -766,7 +772,7 @@ frame.addEventListener('load',()=>{
   previewStyle.textContent='.visual-edit .visual-selectable-photo,.visual-edit .visual-drag-chip{-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}';
   previewStyle.textContent+='.visual-edit body,.visual-edit body *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}.visual-edit [contenteditable],.visual-edit [contenteditable] *,.visual-edit input,.visual-edit textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default}';
   previewStyle.textContent+='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
-  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
+  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-edit img[data-drag-group]{transform:none!important;transition:none!important;overflow-anchor:none}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}.visual-just-moved{outline:2px solid #b99b79!important;outline-offset:4px}';
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
   quietStyle.textContent='.visual-section-toolbar{display:none;position:relative;z-index:30;width:100%;flex:0 0 100%;grid-column:1/-1;margin:0 0 16px;padding-right:32px;justify-content:flex-end;gap:8px}.visual-edit .visual-section-toolbar{display:flex}.visual-section-toolbar>.visual-chip{position:static;box-shadow:none;padding:9px 12px;font-size:12px!important}.visual-opening-toolbar{position:absolute;top:calc(var(--visual-header-height,68px) + 16px);right:32px;width:auto;margin:0;padding-right:0}.visual-edit .chapter-heading,.visual-edit #highlights .home-section-heading,.visual-edit .motion-heading,.visual-edit .digitals-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 20px}.visual-edit .visual-photo-chip,.visual-edit .visual-drag-chip{opacity:0;pointer-events:none;transition:opacity .15s}.visual-edit .visual-tool-visible,.visual-edit .visual-photo-chip:focus-visible,.visual-edit .visual-drag-chip:focus-visible{opacity:1;pointer-events:auto}.visual-selectable-photo:focus-visible{outline:2px solid #916a40;outline-offset:3px}@media(max-width:600px){.visual-opening-toolbar{right:24px;padding-right:0}.visual-section-toolbar{margin-bottom:12px;padding-right:24px}.visual-edit .visual-section-heading{padding-right:24px}}';

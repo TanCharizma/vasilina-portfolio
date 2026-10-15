@@ -168,10 +168,11 @@ dialog#studio-tour.tour-preview-compact{display:grid;grid-template-columns:1fr a
 }
 
 #mobile-tools,#mobile-tour-space{display:none}
+#studio-screen-size{position:fixed;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none}
 dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animation:none}
 @media(max-width:900px){
-  html{background:#faf8f4;min-height:100%;overflow:hidden}
-  body{min-height:100%;overflow:hidden;background:#faf8f4;padding-top:var(--studio-toolbar-bottom,56px)}
+  html{background:#faf8f4;min-height:100%;overflow:hidden;overscroll-behavior:none}
+  body{min-height:100%;overflow:hidden;overscroll-behavior:none;background:#faf8f4;padding-top:var(--studio-toolbar-bottom,56px)}
   body::before{content:'';position:fixed;z-index:-1;pointer-events:none;left:0;right:0;top:-20lvh;height:140lvh;background:#faf8f4}
   .toolbar,.tour-photo-practice .toolbar{display:flex;flex-wrap:nowrap;gap:4px;min-height:56px;padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));padding-top:calc(6px + env(safe-area-inset-top));position:fixed;top:var(--studio-visual-top,0px);left:0;right:0;z-index:65}
   .toolbar .identity{margin-right:auto;min-width:0}
@@ -209,9 +210,7 @@ dialog#studio-tour.tour-preparing{visibility:hidden;pointer-events:none;animatio
   dialog#studio-tour.tour-voice-active{width:calc(100vw - 24px);padding:10px 14px}
   .tour-voice-active .tour-heading,.tour-voice-active #tour-title{display:none}
   .tour-voice-active #tour-copy{margin:0}
-  dialog#studio-tour.tour-drag-active{opacity:1;pointer-events:none;padding:8px 14px;height:auto;min-height:0}
-  dialog#studio-tour.tour-drag-active>*{display:none!important}
-  dialog#studio-tour.tour-drag-active::before{content:'Drag to rearrange';display:block;font:13px/20px Arial,sans-serif;color:#5f5549}
+  dialog#studio-tour.tour-drag-active{opacity:0;pointer-events:none}
   .tour-handle-outline{animation:none}
   dialog#studio-tour.tour-preview-compact{width:calc(100vw - 24px);padding:8px 14px}
   .tour-preview-compact .tour-heading{grid-column:1/-1;justify-content:flex-end;min-height:28px}
