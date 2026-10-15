@@ -18,6 +18,7 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
     const viewport = window.visualViewport;
     const keyboard = Math.max(0, innerHeight - (viewport?.height || innerHeight) - (viewport?.offsetTop || 0));
     bar.style.bottom = `${keyboard}px`;
+    bar.style.setProperty('--inline-actions-padding',keyboard>120?'8px':'max(8px,env(safe-area-inset-bottom))');
     active?.node.ownerDocument.documentElement.style.setProperty('--inline-keyboard', `${keyboard}px`);
   };
   const fieldValue = field => ['TEXTAREA', 'INPUT'].includes(field.tagName) ? field.value : field.innerText;
@@ -55,9 +56,14 @@ export function createInlineBiography({ enabled, commit, changed, closeEditor, l
   };
   // Keep the keyboard open until the action has been handled.
   for (const button of [done, cancel, remove]) button.addEventListener('pointerdown', event => event.preventDefault());
+  let keyboardSettled;
   window.visualViewport?.addEventListener('resize', () => {
     position();
-    if (active) requestAnimationFrame(() => active?.node.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    clearTimeout(keyboardSettled);
+    // Wait for Safari's keyboard animation before scrolling the embedded page.
+    keyboardSettled=setTimeout(()=>{
+      if(active){layoutChanged();active.node.scrollIntoView({block:'center',behavior:'instant'});}
+    },160);
   });
   window.visualViewport?.addEventListener('scroll', position);
   function begin(node, index, lang, options = null) {

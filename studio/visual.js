@@ -3,8 +3,8 @@ import { BOOKING_TEXT_FIELDS } from '../portfolio-booking.js?v=4';
 import { HOME_TEXT_FIELDS, MEASUREMENT_FIELDS } from '../portfolio-home-text.js?v=8';
 import { ABOUT_TEXT_FIELDS } from '../portfolio-about-text.js?v=1';
 import { visualDraftStatus } from './visual-status.js?v=1';
-import { createStudioTour } from './visual-tour.js?v=26';
-import { createInlineBiography } from './inline-biography.js?v=25';
+import { createStudioTour } from './visual-tour.js?v=27';
+import { createInlineBiography } from './inline-biography.js?v=26';
 import { installStudioShortcuts } from './keyboard-shortcuts.js?v=2';
 
 const $ = id => document.getElementById(id);
@@ -146,15 +146,22 @@ const sectionPage = { about:'about',booking:'booking' };
 const sectionAnchor = {home:'#hero',portfolio:'#portfolio',digitals:'#digitals',motion:'#motion',identity:'#measurements',compCard:'#measurements',about:'#about-portrait',booking:'.booking-desk'};
 function notify(text) { $('notice').textContent=text; $('notice').hidden=false; clearTimeout(timer); timer=setTimeout(()=>$('notice').hidden=true,5500); }
 function fit() {
+  const mobileHost=matchMedia('(max-width:900px)').matches;
+  const viewport=window.visualViewport;
+  document.body.style.setProperty('--studio-visual-top',`${viewport?.offsetTop||0}px`);
+  const publishHome=mobileHost?$('mobile-publishing'):document.querySelector('.toolbar .actions');
+  if($('publish').parentElement!==publishHome)publishHome.append($('publish'));
+  if(mobileHost&&publishHome.parentElement!==$('studio-navigation'))$('studio-navigation').append(publishHome);
+  $('mobile-publishing').hidden=!mobileHost;
   dialog.style.setProperty('--editor-height',`${window.visualViewport?.height||innerHeight}px`);
   dialog.style.setProperty('--editor-top',`${window.visualViewport?.offsetTop||0}px`);
   const workspace=$('workspace');
   document.body.style.setProperty('--studio-toolbar-bottom',`${document.querySelector('.toolbar').getBoundingClientRect().bottom}px`);
   const visibleBottom=window.visualViewport?window.visualViewport.offsetTop+window.visualViewport.height:innerHeight;
-  const mobileHost=matchMedia('(max-width:900px)').matches;
-  const fullHeight=mobileHost?Math.max(innerHeight,parseFloat(getComputedStyle(document.body).minHeight)||0):innerHeight;
-  const keyboardOpen=document.body.classList.contains('inline-editing')&&fullHeight-(window.visualViewport?.height||innerHeight)>120;
-  const workspaceBottom=keyboardOpen?visibleBottom:fullHeight;
+  const actionBar=document.querySelector('.inline-edit-actions');
+  const typing=document.body.classList.contains('inline-editing');
+  const actionHeight=mobileHost&&typing?actionBar?.offsetHeight||0:0;
+  const workspaceBottom=mobileHost?visibleBottom-actionHeight:innerHeight;
   const workspaceHeight=Math.max(120,workspaceBottom-workspace.getBoundingClientRect().top);
   workspace.style.height=`${workspaceHeight}px`;
   const width=device==='mobile'?390:Math.max(1280,workspace.clientWidth);
@@ -163,6 +170,7 @@ function fit() {
   $('viewport').style.width=`${width*scale}px`;$('viewport').style.height=`${workspace.clientHeight}px`;
   for(const name of ['desktop','mobile'])$(name).setAttribute('aria-pressed',String(device===name));
   const doc=frame.contentDocument;
+  doc?.documentElement.classList.toggle('visual-typing',mobileHost&&typing);
   doc?.documentElement.style.setProperty('--studio-viewport-bleed',`${Math.max(0,workspaceBottom-visibleBottom)/scale}px`);
   const nav=doc?.querySelector('nav');
   if(nav)doc.documentElement.style.setProperty('--visual-header-height',`${nav.offsetHeight}px`);
@@ -715,7 +723,7 @@ frame.addEventListener('load',()=>{
   doc.head.append(style);
   const previewStyle=doc.createElement('style');
   previewStyle.textContent='.app-transition-curtain{display:none!important}@media(max-width:600px){.visual-cover-chip{top:85px;bottom:auto}}';
-  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}';
+  previewStyle.textContent+='body{padding-bottom:var(--studio-viewport-bleed,0px)}.visual-typing nav{visibility:hidden!important;pointer-events:none!important}';
   doc.head.append(previewStyle);
   const quietStyle=doc.createElement('style');
   quietStyle.textContent='.visual-section-toolbar{display:none;position:relative;z-index:30;width:100%;flex:0 0 100%;grid-column:1/-1;margin:0 0 16px;padding-right:32px;justify-content:flex-end;gap:8px}.visual-edit .visual-section-toolbar{display:flex}.visual-section-toolbar>.visual-chip{position:static;box-shadow:none;padding:9px 12px;font-size:12px!important}.visual-opening-toolbar{position:absolute;top:calc(var(--visual-header-height,68px) + 16px);right:32px;width:auto;margin:0;padding-right:0}.visual-edit .chapter-heading,.visual-edit #highlights .home-section-heading,.visual-edit .motion-heading,.visual-edit .digitals-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 20px}.visual-edit .visual-photo-chip,.visual-edit .visual-drag-chip{opacity:0;pointer-events:none;transition:opacity .15s}.visual-edit .visual-tool-visible,.visual-edit .visual-photo-chip:focus-visible,.visual-edit .visual-drag-chip:focus-visible{opacity:1;pointer-events:auto}.visual-selectable-photo:focus-visible{outline:2px solid #916a40;outline-offset:3px}@media(max-width:600px){.visual-opening-toolbar{right:24px;padding-right:0}.visual-section-toolbar{margin-bottom:12px;padding-right:24px}.visual-edit .visual-section-heading{padding-right:24px}}';
@@ -864,6 +872,7 @@ for(const mode of ['edit','view'])$(mode).onclick=()=>{
 };
 window.addEventListener('resize',fit);
 window.visualViewport?.addEventListener('resize',fit);
+window.visualViewport?.addEventListener('scroll',fit);
 window.addEventListener('beforeunload',event=>{if(api?.dirty||inlineBiography.dirty){event.preventDefault();event.returnValue='';}});
 document.body.classList.add('signed-out');
 controls.src=localTrial?'./?visual-local=1&v=controls-35':'./?visual-connected=1&v=controls-35';
